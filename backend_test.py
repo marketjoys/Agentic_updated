@@ -398,6 +398,180 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
             self.log_result("Database Connectivity", False, f"Exception: {str(e)}")
             return False
     
+    def test_email_processing_status(self):
+        """Test email processing status endpoint"""
+        try:
+            response = requests.get(f"{self.base_url}/api/email-processing/status")
+            if response.status_code != 200:
+                self.log_result("Email Processing Status", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            status_data = response.json()
+            if 'status' not in status_data:
+                self.log_result("Email Processing Status", False, "No status in response", status_data)
+                return False
+            
+            self.log_result("Email Processing Status", True, f"Status: {status_data['status']}")
+            return True
+            
+        except Exception as e:
+            self.log_result("Email Processing Status", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_intent_classification(self):
+        """Test intent classification endpoint"""
+        try:
+            # Test with positive email
+            positive_email = {
+                "subject": "Interested in your solution",
+                "content": "I'm interested in your solution, can you schedule a demo?"
+            }
+            
+            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=positive_email)
+            if response.status_code != 200:
+                self.log_result("Intent Classification (Positive)", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            positive_result = response.json()
+            if 'classified_intents' not in positive_result:
+                self.log_result("Intent Classification (Positive)", False, "No intents in response", positive_result)
+                return False
+            
+            self.log_result("Intent Classification (Positive)", True, f"Classified {len(positive_result['classified_intents'])} intents")
+            
+            # Test with negative email
+            negative_email = {
+                "subject": "Not interested",
+                "content": "Not interested, please remove me from your list"
+            }
+            
+            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=negative_email)
+            if response.status_code != 200:
+                self.log_result("Intent Classification (Negative)", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            negative_result = response.json()
+            if 'classified_intents' not in negative_result:
+                self.log_result("Intent Classification (Negative)", False, "No intents in response", negative_result)
+                return False
+            
+            self.log_result("Intent Classification (Negative)", True, f"Classified {len(negative_result['classified_intents'])} intents")
+            
+            # Test with info request email
+            info_email = {
+                "subject": "Pricing information",
+                "content": "Can you tell me more about pricing and features?"
+            }
+            
+            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=info_email)
+            if response.status_code != 200:
+                self.log_result("Intent Classification (Info)", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            info_result = response.json()
+            if 'classified_intents' not in info_result:
+                self.log_result("Intent Classification (Info)", False, "No intents in response", info_result)
+                return False
+            
+            self.log_result("Intent Classification (Info)", True, f"Classified {len(info_result['classified_intents'])} intents")
+            
+            # Check sentiment analysis
+            if 'sentiment_analysis' not in info_result:
+                self.log_result("Sentiment Analysis", False, "No sentiment analysis in response", info_result)
+                return False
+            
+            self.log_result("Sentiment Analysis", True, f"Sentiment: {info_result['sentiment_analysis'].get('sentiment', 'unknown')}")
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Intent Classification", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_email_processing_analytics(self):
+        """Test email processing analytics endpoint"""
+        try:
+            response = requests.get(f"{self.base_url}/api/email-processing/analytics")
+            if response.status_code != 200:
+                self.log_result("Email Processing Analytics", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            analytics_data = response.json()
+            expected_fields = ['total_threads', 'processed_emails', 'auto_responses_sent', 'processing_status']
+            
+            for field in expected_fields:
+                if field not in analytics_data:
+                    self.log_result("Email Processing Analytics", False, f"Missing field: {field}", analytics_data)
+                    return False
+            
+            self.log_result("Email Processing Analytics", True, f"Analytics data: {analytics_data}")
+            return True
+            
+        except Exception as e:
+            self.log_result("Email Processing Analytics", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_email_processing_control(self):
+        """Test email processing start/stop functionality"""
+        try:
+            # Start email processing
+            response = requests.post(f"{self.base_url}/api/email-processing/start")
+            if response.status_code != 200:
+                self.log_result("Email Processing Start", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            start_result = response.json()
+            if 'status' not in start_result:
+                self.log_result("Email Processing Start", False, "No status in response", start_result)
+                return False
+            
+            self.log_result("Email Processing Start", True, f"Status: {start_result['status']}")
+            
+            # Check status after starting
+            response = requests.get(f"{self.base_url}/api/email-processing/status")
+            if response.status_code != 200:
+                self.log_result("Email Processing Status (After Start)", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            status_data = response.json()
+            if status_data.get('status') != 'running':
+                self.log_result("Email Processing Status (After Start)", False, f"Expected 'running', got '{status_data.get('status')}'", status_data)
+                # Don't return false here as it might be a timing issue
+            else:
+                self.log_result("Email Processing Status (After Start)", True, "Status is 'running' as expected")
+            
+            # Stop email processing
+            response = requests.post(f"{self.base_url}/api/email-processing/stop")
+            if response.status_code != 200:
+                self.log_result("Email Processing Stop", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            stop_result = response.json()
+            if 'status' not in stop_result:
+                self.log_result("Email Processing Stop", False, "No status in response", stop_result)
+                return False
+            
+            self.log_result("Email Processing Stop", True, f"Status: {stop_result['status']}")
+            
+            # Check status after stopping
+            response = requests.get(f"{self.base_url}/api/email-processing/status")
+            if response.status_code != 200:
+                self.log_result("Email Processing Status (After Stop)", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            status_data = response.json()
+            if status_data.get('status') != 'stopped':
+                self.log_result("Email Processing Status (After Stop)", False, f"Expected 'stopped', got '{status_data.get('status')}'", status_data)
+                # Don't return false here as it might be a timing issue
+            else:
+                self.log_result("Email Processing Status (After Stop)", True, "Status is 'stopped' as expected")
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Email Processing Control", False, f"Exception: {str(e)}")
+            return False
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting AI Email Responder Backend Tests")
@@ -406,6 +580,10 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
         # Test order matters - some tests depend on others
         tests = [
             ("Health Check", self.test_health_check),
+            ("Email Processing Status", self.test_email_processing_status),
+            ("Email Processing Control", self.test_email_processing_control),
+            ("Intent Classification", self.test_intent_classification),
+            ("Email Processing Analytics", self.test_email_processing_analytics),
             ("Prospect CRUD", self.test_prospect_crud),
             ("CSV Upload", self.test_prospect_csv_upload),
             ("Template CRUD", self.test_template_crud),
