@@ -52,19 +52,33 @@ const Prospects = () => {
     }
   };
 
-  const downloadSampleCSV = () => {
-    const csvContent = `email,first_name,last_name,company,phone
-john.doe@example.com,John,Doe,Example Corp,+1-555-0123
-jane.smith@test.com,Jane,Smith,Test Inc,+1-555-0456
-mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'prospects_sample.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const downloadSampleCSV = async () => {
+    try {
+      const response = await apiService.api.get('/api/sample-csv');
+      const csvContent = response.data.content;
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = response.data.filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      // Fallback to hardcoded CSV if API fails
+      const csvContent = `email,first_name,last_name,company,phone,linkedin_url,company_domain,industry,company_linkedin_url,job_title,location,company_size,annual_revenue,lead_source
+john.doe@example.com,John,Doe,Example Corp,+1-555-0123,https://linkedin.com/in/john-doe,example.com,Technology,https://linkedin.com/company/example-corp,CEO,San Francisco CA,100-500,$10M-$50M,Website
+jane.smith@test.com,Jane,Smith,Test Inc,+1-555-0456,https://linkedin.com/in/jane-smith,test.com,Software,https://linkedin.com/company/test-inc,CTO,New York NY,50-100,$5M-$10M,LinkedIn
+mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com/in/mark-wilson,demo.org,Consulting,https://linkedin.com/company/demo-solutions,VP Sales,Austin TX,200-500,$25M-$50M,Referral`;
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'prospects_sample.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
   };
 
   const filteredProspects = prospects.filter(prospect =>
