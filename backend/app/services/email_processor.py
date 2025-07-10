@@ -282,6 +282,20 @@ class EmailProcessor:
         except Exception as e:
             logger.error(f"Error sending automatic response: {str(e)}")
     
+    async def _stop_follow_ups_for_prospect(self, prospect_id: str):
+        """Stop any scheduled follow-ups for a prospect who has responded"""
+        try:
+            # Update prospect status to indicate they've responded
+            await db_service.update_prospect_status(prospect_id, "responded")
+            
+            # Mark any pending follow-up emails as cancelled
+            await db_service.cancel_pending_follow_ups(prospect_id)
+            
+            logger.info(f"Follow-ups stopped for prospect: {prospect_id}")
+            
+        except Exception as e:
+            logger.error(f"Error stopping follow-ups: {str(e)}")
+    
     def _decode_header(self, header_value: str) -> str:
         """Decode email header"""
         try:
