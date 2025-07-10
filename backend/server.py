@@ -336,7 +336,8 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
 async def create_intent(intent: IntentConfig):
     intent.id = generate_id()
     intent_dict = intent.dict()
-    await db.intents.insert_one(intent_dict)
+    result = await db.intents.insert_one(intent_dict)
+    intent_dict.pop('_id', None)
     return intent_dict
 
 @app.get("/api/intents")
