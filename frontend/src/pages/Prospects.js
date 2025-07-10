@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Plus, Search, Users, Mail, Building, Phone } from 'lucide-react';
+import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -52,6 +52,21 @@ const Prospects = () => {
     }
   };
 
+  const downloadSampleCSV = () => {
+    const csvContent = `email,first_name,last_name,company,phone
+john.doe@example.com,John,Doe,Example Corp,+1-555-0123
+jane.smith@test.com,Jane,Smith,Test Inc,+1-555-0456
+mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'prospects_sample.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const filteredProspects = prospects.filter(prospect =>
     prospect.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     prospect.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,20 +76,43 @@ const Prospects = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="loading-spinner mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading prospects...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-secondary-900">Prospects</h1>
-        <div className="flex space-x-4">
-          <label className="btn btn-secondary cursor-pointer">
-            <Upload className="h-4 w-4 mr-2" />
-            {uploading ? 'Uploading...' : 'Upload CSV'}
+        <div>
+          <h1 className="text-4xl font-bold gradient-text">Prospects</h1>
+          <p className="text-gray-600 mt-2">Manage your email prospects and leads</p>
+        </div>
+        <div className="flex space-x-3">
+          <button
+            onClick={downloadSampleCSV}
+            className="btn btn-secondary flex items-center space-x-2"
+          >
+            <Download className="h-4 w-4" />
+            <span>Sample CSV</span>
+          </button>
+          <label className="btn btn-secondary cursor-pointer flex items-center space-x-2">
+            {uploading ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4" />
+                <span>Upload CSV</span>
+              </>
+            )}
             <input
               type="file"
               accept=".csv"
@@ -85,114 +123,197 @@ const Prospects = () => {
           </label>
           <button
             onClick={() => setShowAddModal(true)}
-            className="btn btn-primary"
+            className="btn btn-primary flex items-center space-x-2"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Prospect
+            <Plus className="h-4 w-4" />
+            <span>Add Prospect</span>
           </button>
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="stat-card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Prospects</p>
+                <p className="text-2xl font-bold text-gray-900">{prospects.length}</p>
+              </div>
+              <div className="icon-wrapper bg-gradient-to-r from-blue-500 to-blue-600">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {prospects.filter(p => p.status === 'active').length}
+                </p>
+              </div>
+              <div className="icon-wrapper bg-gradient-to-r from-emerald-500 to-emerald-600">
+                <UserCheck className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">With Companies</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {prospects.filter(p => p.company && p.company.length > 0).length}
+                </p>
+              </div>
+              <div className="icon-wrapper bg-gradient-to-r from-purple-500 to-purple-600">
+                <Building className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Recently Added</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {prospects.filter(p => {
+                    const created = new Date(p.created_at);
+                    const today = new Date();
+                    const diffTime = Math.abs(today - created);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= 7;
+                  }).length}
+                </p>
+              </div>
+              <div className="icon-wrapper bg-gradient-to-r from-orange-500 to-orange-600">
+                <AlertCircle className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-        <input
-          type="text"
-          placeholder="Search prospects..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="input pl-10"
-        />
+      <div className="card">
+        <div className="card-body">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search prospects by name, email, or company..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input pl-10"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Upload Instructions */}
       <div className="card">
         <div className="card-body">
-          <h3 className="text-lg font-semibold text-secondary-900 mb-2">CSV Upload Instructions</h3>
-          <p className="text-sm text-secondary-600 mb-4">
-            Upload a CSV file with the following required columns: email, first_name, last_name
-          </p>
-          <p className="text-sm text-secondary-600">
-            Optional columns: company, phone
-          </p>
+          <div className="flex items-start space-x-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Upload className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">CSV Upload Instructions</h3>
+              <p className="text-gray-600 mb-3">
+                Upload a CSV file with the following required columns: <strong>email</strong>, <strong>first_name</strong>, <strong>last_name</strong>
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Optional columns: <strong>company</strong>, <strong>phone</strong>
+              </p>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={downloadSampleCSV}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Download Sample CSV
+                </button>
+                <span className="text-gray-300">|</span>
+                <a
+                  href="/sample_prospects.csv"
+                  download
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Download Pre-filled Sample
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Prospects Table */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-lg font-semibold text-secondary-900">
+          <h3 className="text-xl font-bold text-gray-900">
             All Prospects ({filteredProspects.length})
           </h3>
         </div>
         <div className="card-body p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-secondary-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Company
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Phone
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Added
-                  </th>
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="table-header">Name</th>
+                  <th className="table-header">Email</th>
+                  <th className="table-header">Company</th>
+                  <th className="table-header">Phone</th>
+                  <th className="table-header">Status</th>
+                  <th className="table-header">Added</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-secondary-200">
+              <tbody className="divide-y divide-gray-100">
                 {filteredProspects.map((prospect) => (
-                  <tr key={prospect.id} className="hover:bg-secondary-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary-600" />
+                  <tr key={prospect.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
+                          <Users className="h-4 w-4 text-blue-600" />
                         </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-secondary-900">
+                        <div>
+                          <div className="font-medium text-gray-900">
                             {prospect.first_name} {prospect.last_name}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 text-secondary-400 mr-2" />
-                        <span className="text-sm text-secondary-900">{prospect.email}</span>
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{prospect.email}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Building className="h-4 w-4 text-secondary-400 mr-2" />
-                        <span className="text-sm text-secondary-900">{prospect.company || 'N/A'}</span>
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Building className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{prospect.company || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 text-secondary-400 mr-2" />
-                        <span className="text-sm text-secondary-900">{prospect.phone || 'N/A'}</span>
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span className="text-gray-900">{prospect.phone || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
+                    <td className="table-cell">
+                      <span className={`badge ${
                         prospect.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'badge-success' 
+                          : 'badge-danger'
                       }`}>
                         {prospect.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                    <td className="table-cell text-gray-500">
                       {new Date(prospect.created_at).toLocaleDateString()}
                     </td>
                   </tr>
@@ -236,94 +357,99 @@ const AddProspectModal = ({ onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="fixed inset-0 bg-black opacity-30"></div>
-        <div className="relative bg-white rounded-lg max-w-md w-full p-6">
-          <h3 className="text-lg font-semibold text-secondary-900 mb-4">Add New Prospect</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">Add New Prospect</h3>
+          <p className="text-gray-600 mt-1">Add a new prospect to your database</p>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="input"
+              required
+              placeholder="john.doe@example.com"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Email *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="input"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
-                  First Name *
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  className="input"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Company
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
               </label>
               <input
                 type="text"
-                name="company"
-                value={formData.company}
+                name="first_name"
+                value={formData.first_name}
                 onChange={handleChange}
                 className="input"
+                required
+                placeholder="John"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Phone
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
               </label>
               <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
+                type="text"
+                name="last_name"
+                value={formData.last_name}
                 onChange={handleChange}
                 className="input"
+                required
+                placeholder="Doe"
               />
             </div>
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-              >
-                Add Prospect
-              </button>
-            </div>
-          </form>
-        </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Company
+            </label>
+            <input
+              type="text"
+              name="company"
+              value={formData.company}
+              onChange={handleChange}
+              className="input"
+              placeholder="Example Corp"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="input"
+              placeholder="+1-555-0123"
+            />
+          </div>
+          <div className="flex justify-end space-x-3 pt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+            >
+              Add Prospect
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
