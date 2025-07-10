@@ -262,6 +262,7 @@ async def get_campaign(campaign_id: str):
     campaign = await db.campaigns.find_one({"id": campaign_id})
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
+    campaign.pop('_id', None)
     return campaign
 
 @app.post("/api/campaigns/{campaign_id}/send")
