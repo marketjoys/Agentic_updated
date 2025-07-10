@@ -15,7 +15,122 @@ class FollowUpStatus(str, Enum):
     COMPLETED = "completed"
     STOPPED = "stopped"
 
-class ProspectList(BaseModel):
+class EmailProvider(BaseModel):
+    id: str = None
+    name: str
+    provider_type: EmailProviderType
+    email_address: EmailStr
+    display_name: str = ""
+    
+    # SMTP Settings
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    smtp_use_ssl: bool = False
+    
+    # IMAP Settings
+    imap_host: str = ""
+    imap_port: int = 993
+    imap_username: str = ""
+    imap_password: str = ""
+    imap_use_ssl: bool = True
+    
+    # OAuth2 Settings (for Gmail, Outlook)
+    oauth2_client_id: str = ""
+    oauth2_client_secret: str = ""
+    oauth2_refresh_token: str = ""
+    oauth2_access_token: str = ""
+    oauth2_token_expires: Optional[datetime] = None
+    
+    # Provider-specific settings
+    provider_settings: Dict[str, Any] = {}
+    
+    # Status and configuration
+    is_active: bool = True
+    is_default: bool = False
+    last_sync: Optional[datetime] = None
+    daily_send_limit: int = 500
+    hourly_send_limit: int = 50
+    current_daily_count: int = 0
+    current_hourly_count: int = 0
+    
+    # Metadata
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    
+class KnowledgeBase(BaseModel):
+    id: str = None
+    title: str
+    content: str
+    category: str = "general"
+    tags: List[str] = []
+    keywords: List[str] = []
+    
+    # AI Integration
+    embedding_vector: List[float] = []  # Vector embeddings for AI search
+    relevance_score: float = 0.0
+    
+    # Usage tracking
+    usage_count: int = 0
+    last_used: Optional[datetime] = None
+    
+    # Metadata
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    is_active: bool = True
+
+class SystemPrompt(BaseModel):
+    id: str = None
+    name: str
+    description: str = ""
+    prompt_text: str
+    prompt_type: str = "general"  # general, intent_classification, response_generation
+    
+    # Configuration
+    is_active: bool = True
+    is_default: bool = False
+    temperature: float = 0.7
+    max_tokens: int = 1000
+    
+    # Usage tracking
+    usage_count: int = 0
+    last_used: Optional[datetime] = None
+    
+    # Metadata
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+
+class FollowUpRule(BaseModel):
+    id: str = None
+    name: str
+    description: str = ""
+    
+    # Trigger conditions
+    trigger_after_days: int = 3
+    max_follow_ups: int = 3
+    stop_on_response: bool = True
+    stop_on_auto_reply: bool = False
+    
+    # Email content
+    template_ids: List[str] = []  # Templates for each follow-up
+    subject_templates: List[str] = []
+    
+    # Timing
+    send_time_start: str = "09:00"
+    send_time_end: str = "17:00"
+    timezone: str = "UTC"
+    exclude_weekends: bool = True
+    
+    # Conditions
+    only_if_no_response: bool = True
+    only_if_not_opened: bool = False
+    
+    # Metadata
+    created_at: datetime = datetime.utcnow()
+    updated_at: datetime = datetime.utcnow()
+    is_active: bool = True
     id: str = None
     name: str
     description: str = ""
