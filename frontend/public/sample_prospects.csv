@@ -1,11 +1,11 @@
-email,first_name,last_name,company,phone
-john.doe@techcorp.com,John,Doe,TechCorp Inc,+1-555-0123
-sarah.smith@innovatesoft.com,Sarah,Smith,InnovateSoft,+1-555-0456
-mike.johnson@datascience.ai,Mike,Johnson,DataScience AI,+1-555-0789
-lisa.brown@cloudtech.io,Lisa,Brown,CloudTech Solutions,+1-555-0321
-david.wilson@startupxyz.com,David,Wilson,StartupXYZ,+1-555-0654
-emma.davis@fintech.co,Emma,Davis,FinTech Co,+1-555-0987
-ryan.martinez@ecommerce.net,Ryan,Martinez,E-Commerce Solutions,+1-555-0246
-ashley.taylor@healthtech.org,Ashley,Taylor,HealthTech Inc,+1-555-0135
-kevin.anderson@ai-startup.com,Kevin,Anderson,AI Startup,+1-555-0864
-jennifer.white@marketing.pro,Jennifer,White,Marketing Pro,+1-555-0579
+email,first_name,last_name,company,phone,linkedin_url,company_domain,industry,company_linkedin_url,job_title,location,company_size,annual_revenue,lead_source
+john.doe@techcorp.com,John,Doe,TechCorp Inc,+1-555-0123,https://linkedin.com/in/john-doe,techcorp.com,Technology,https://linkedin.com/company/techcorp,CEO,San Francisco CA,500-1000,$50M-$100M,Website
+sarah.smith@innovatesoft.com,Sarah,Smith,InnovateSoft,+1-555-0456,https://linkedin.com/in/sarah-smith,innovatesoft.com,Software,https://linkedin.com/company/innovatesoft,CTO,New York NY,100-500,$10M-$50M,LinkedIn
+mike.johnson@datascience.ai,Mike,Johnson,DataScience AI,+1-555-0789,https://linkedin.com/in/mike-johnson,datascience.ai,Artificial Intelligence,https://linkedin.com/company/datascience-ai,Head of AI,Austin TX,50-100,$5M-$10M,Conference
+lisa.brown@cloudtech.io,Lisa,Brown,CloudTech Solutions,+1-555-0321,https://linkedin.com/in/lisa-brown,cloudtech.io,Cloud Computing,https://linkedin.com/company/cloudtech-solutions,VP of Engineering,Seattle WA,200-500,$25M-$50M,Referral
+david.wilson@startupxyz.com,David,Wilson,StartupXYZ,+1-555-0654,https://linkedin.com/in/david-wilson,startupxyz.com,Startup,https://linkedin.com/company/startupxyz,Founder,Boston MA,10-50,$1M-$5M,Social Media
+emma.davis@fintech.co,Emma,Davis,FinTech Co,+1-555-0987,https://linkedin.com/in/emma-davis,fintech.co,Financial Technology,https://linkedin.com/company/fintech-co,Head of Product,Chicago IL,100-500,$15M-$25M,Partnership
+ryan.martinez@ecommerce.net,Ryan,Martinez,E-Commerce Solutions,+1-555-0246,https://linkedin.com/in/ryan-martinez,ecommerce.net,E-commerce,https://linkedin.com/company/ecommerce-solutions,CMO,Los Angeles CA,50-100,$8M-$15M,Advertisement
+ashley.taylor@healthtech.org,Ashley,Taylor,HealthTech Inc,+1-555-0135,https://linkedin.com/in/ashley-taylor,healthtech.org,Healthcare Technology,https://linkedin.com/company/healthtech-inc,VP Operations,Denver CO,200-500,$30M-$50M,Trade Show
+kevin.anderson@ai-startup.com,Kevin,Anderson,AI Startup,+1-555-0864,https://linkedin.com/in/kevin-anderson,ai-startup.com,Artificial Intelligence,https://linkedin.com/company/ai-startup,Co-founder,Miami FL,25-50,$2M-$5M,Investor Network
+jennifer.white@marketing.pro,Jennifer,White,Marketing Pro,+1-555-0579,https://linkedin.com/in/jennifer-white,marketing.pro,Marketing,https://linkedin.com/company/marketing-pro,Director of Marketing,Portland OR,75-100,$10M-$15M,Content Marketing
