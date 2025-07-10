@@ -254,7 +254,8 @@ async def init_seed_data():
         
         # Store template IDs for intent linking
         template_ids = [t["id"] for t in seed_templates]
-        auto_response_template_id = template_ids[2]  # "Auto Response - Positive"
+        positive_response_template_id = template_ids[2]  # "Intelligent Auto-Response"
+        not_interested_template_id = template_ids[3]     # "Not Interested Response"
         
         # Seed intents with correct template references
         seed_intents = [
@@ -263,13 +264,13 @@ async def init_seed_data():
                 "name": "Positive Response",
                 "description": "When someone shows interest, says yes, or wants to learn more",
                 "keywords": ["interested", "yes", "tell me more", "schedule", "demo", "call"],
-                "primary_template_id": auto_response_template_id,
-                "fallback_template_id": auto_response_template_id,
+                "primary_template_id": positive_response_template_id,
+                "fallback_template_id": positive_response_template_id,
                 "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 5,
                 "response_delay_max": 30,
-                "confidence_threshold": 0.8,
+                "confidence_threshold": 0.7,
                 "escalate_to_human": False,
                 "created_at": datetime.utcnow()
             },
@@ -278,13 +279,13 @@ async def init_seed_data():
                 "name": "Not Interested",
                 "description": "When someone explicitly says they're not interested",
                 "keywords": ["not interested", "no thanks", "remove", "unsubscribe"],
-                "primary_template_id": auto_response_template_id,
-                "fallback_template_id": auto_response_template_id,
+                "primary_template_id": not_interested_template_id,
+                "fallback_template_id": not_interested_template_id,
                 "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 10,
                 "response_delay_max": 60,
-                "confidence_threshold": 0.9,
+                "confidence_threshold": 0.8,
                 "escalate_to_human": False,
                 "created_at": datetime.utcnow()
             },
@@ -293,14 +294,14 @@ async def init_seed_data():
                 "name": "Request More Info",
                 "description": "When someone asks for more information or has questions",
                 "keywords": ["more info", "questions", "details", "pricing", "features"],
-                "primary_template_id": auto_response_template_id,
-                "fallback_template_id": auto_response_template_id,
+                "primary_template_id": positive_response_template_id,
+                "fallback_template_id": positive_response_template_id,
                 "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 15,
                 "response_delay_max": 45,
                 "confidence_threshold": 0.7,
-                "escalate_to_human": True,
+                "escalate_to_human": False,
                 "created_at": datetime.utcnow()
             }
         ]
