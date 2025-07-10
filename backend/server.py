@@ -170,6 +170,9 @@ async def create_prospect(prospect: Prospect):
 @app.get("/api/prospects")
 async def get_prospects(skip: int = 0, limit: int = 100):
     prospects = await db.prospects.find().skip(skip).limit(limit).to_list(length=limit)
+    # Remove MongoDB's _id field from all prospects
+    for prospect in prospects:
+        prospect.pop('_id', None)
     return prospects
 
 @app.post("/api/prospects/upload")
