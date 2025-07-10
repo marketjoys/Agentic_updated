@@ -27,6 +27,14 @@ async def get_prospects(skip: int = 0, limit: int = 100):
     prospects = await db_service.get_prospects(skip, limit)
     return prospects
 
+@router.get("/prospects/{prospect_id}")
+async def get_prospect(prospect_id: str):
+    """Get a specific prospect by ID"""
+    prospect = await db_service.get_prospect_by_id(prospect_id)
+    if not prospect:
+        raise HTTPException(status_code=404, detail="Prospect not found")
+    return prospect
+
 @router.post("/prospects/upload")
 async def upload_prospects(file: UploadFile = File(...)):
     """Upload prospects from CSV file with email duplication handling"""
