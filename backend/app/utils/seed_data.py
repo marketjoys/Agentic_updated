@@ -154,7 +154,7 @@ async def init_seed_data():
             }
         ]
         
-        # Seed templates
+        # Seed templates with enhanced multi-intent support
         seed_templates = [
             {
                 "id": generate_id(),
@@ -196,14 +196,52 @@ async def init_seed_data():
             },
             {
                 "id": generate_id(),
-                "name": "Auto Response - Positive",
-                "subject": "Great to hear from you!",
+                "name": "Intelligent Auto-Response",
+                "subject": "Re: Your inquiry about AI Email Solutions",
                 "content": """
                 <html>
                 <body>
                     <h2>Hi {{first_name}},</h2>
-                    <p>Thank you for your interest! I'm excited to learn more about how we can help {{company}}.</p>
-                    <p>I'll reach out shortly to schedule a personalized demo.</p>
+                    <p>Thank you for your interest in our AI Email Responder platform! I'm excited to help {{company}} transform your email communications.</p>
+                    
+                    <p><strong>About Our Solution:</strong></p>
+                    <ul>
+                        <li>AI-powered intent classification with 95% accuracy</li>
+                        <li>Intelligent conversation context management</li>
+                        <li>Multi-intent email handling capabilities</li>
+                        <li>Seamless integration with existing email systems</li>
+                    </ul>
+                    
+                    <p><strong>Pricing & Options:</strong></p>
+                    <p>We offer flexible pricing starting at $99/month for small businesses, with enterprise solutions scaled to your needs. Given {{company}}'s size and industry ({{industry}}), I'd love to provide a customized quote.</p>
+                    
+                    <p><strong>Next Steps:</strong></p>
+                    <p>I'd be happy to schedule a personalized 15-minute demo where I can show you exactly how our platform would work for {{company}}. We can also address any technical questions you might have.</p>
+                    
+                    <p>Are you available for a brief call this week? I have openings on Tuesday and Thursday afternoon.</p>
+                    
+                    <p>Looking forward to helping {{company}} achieve better email engagement!</p>
+                    
+                    <p>Best regards,<br>Sarah Chen<br>AI Solutions Specialist<br>AI Email Responder Team</p>
+                </body>
+                </html>
+                """,
+                "type": "auto_response",
+                "placeholders": ["{{first_name}}", "{{company}}", "{{industry}}"],
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Not Interested Response",
+                "subject": "Thank you for your time",
+                "content": """
+                <html>
+                <body>
+                    <h2>Hi {{first_name}},</h2>
+                    <p>Thank you for taking the time to respond. I completely understand that our AI Email Responder solution may not be the right fit for {{company}} at this time.</p>
+                    <p>I'll make sure to remove you from our outreach list immediately.</p>
+                    <p>If circumstances change in the future and you'd like to learn about our latest developments, please feel free to reach out.</p>
+                    <p>Wishing you and {{company}} continued success!</p>
                     <p>Best regards,<br>AI Email Team</p>
                 </body>
                 </html>
