@@ -13,7 +13,7 @@ import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "http://localhost:8001"  # Using the configured backend URL
+BACKEND_URL = "https://6b62dee1-5327-415a-9c56-b9cabfcdef65.preview.emergentagent.com"  # Using the configured backend URL
 
 class BackendTester:
     def __init__(self):
