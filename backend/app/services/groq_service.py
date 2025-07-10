@@ -196,6 +196,28 @@ class GroqService:
                 prospect_context += f"- Job Title: {prospect_data.get('job_title', '')}\n"
                 prospect_context += f"- Industry: {prospect_data.get('industry', '')}\n"
             
+            # Convert templates to JSON-safe format
+            safe_templates = []
+            for template in templates:
+                safe_template = {}
+                for key, value in template.items():
+                    if hasattr(value, 'isoformat'):  # datetime object
+                        safe_template[key] = value.isoformat()
+                    else:
+                        safe_template[key] = value
+                safe_templates.append(safe_template)
+            
+            # Convert classified_intents to JSON-safe format  
+            safe_intents = []
+            for intent in classified_intents:
+                safe_intent = {}
+                for key, value in intent.items():
+                    if hasattr(value, 'isoformat'):  # datetime object
+                        safe_intent[key] = value.isoformat()
+                    else:
+                        safe_intent[key] = value
+                safe_intents.append(safe_intent)
+            
             # Create response generation prompt with enhanced context handling
             prompt = f"""
             Generate a personalized email response that addresses ALL identified intents and uses conversation context effectively.
@@ -204,10 +226,10 @@ class GroqService:
             Original Email Content: {email_content}
 
             Classified Intents (prioritized by confidence):
-            {json.dumps(classified_intents, indent=2)}
+            {json.dumps(safe_intents, indent=2)}
 
             Available Templates:
-            {json.dumps(templates, indent=2)}
+            {json.dumps(safe_templates, indent=2)}
 
             {context_text}
             {prospect_context}
