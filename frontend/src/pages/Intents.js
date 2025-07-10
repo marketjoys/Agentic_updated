@@ -124,6 +124,7 @@ const Intents = () => {
             key={intent.id}
             intent={intent}
             onEdit={handleEditIntent}
+            onDelete={handleDeleteIntent}
           />
         ))}
       </div>
