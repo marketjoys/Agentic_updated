@@ -1,0 +1,73 @@
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
+
+// API methods
+export const apiService = {
+  // Health check
+  healthCheck: () => api.get('/api/health'),
+
+  // Prospects
+  getProspects: (skip = 0, limit = 100) => 
+    api.get(`/api/prospects?skip=${skip}&limit=${limit}`),
+  createProspect: (prospect) => api.post('/api/prospects', prospect),
+  uploadProspects: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/api/prospects/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // Templates
+  getTemplates: () => api.get('/api/templates'),
+  createTemplate: (template) => api.post('/api/templates', template),
+  getTemplate: (id) => api.get(`/api/templates/${id}`),
+  updateTemplate: (id, template) => api.put(`/api/templates/${id}`, template),
+
+  // Campaigns
+  getCampaigns: () => api.get('/api/campaigns'),
+  createCampaign: (campaign) => api.post('/api/campaigns', campaign),
+  getCampaign: (id) => api.get(`/api/campaigns/${id}`),
+  sendCampaign: (id) => api.post(`/api/campaigns/${id}/send`),
+
+  // Intents
+  getIntents: () => api.get('/api/intents'),
+  createIntent: (intent) => api.post('/api/intents', intent),
+
+  // Analytics
+  getCampaignAnalytics: (campaignId) => api.get(`/api/analytics/campaign/${campaignId}`),
+};
+
+export default api;
