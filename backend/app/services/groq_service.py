@@ -272,7 +272,38 @@ class GroqService:
                 max_tokens=500
             )
             
-            result = json.loads(response.choices[0].message.content)
+            try:
+                result = json.loads(response.choices[0].message.content)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, create a fallback response
+                content = response.choices[0].message.content
+                print(f"Failed to parse JSON from Groq sentiment response: {content}")
+                
+                # Simple keyword-based sentiment analysis
+                content_lower = email_content.lower()
+                sentiment = "neutral"
+                urgency = "medium"
+                
+                positive_words = ["interested", "yes", "great", "awesome", "love", "want", "need"]
+                negative_words = ["no", "not interested", "stop", "remove", "unsubscribe"]
+                urgent_words = ["urgent", "asap", "immediately", "now", "quick", "fast"]
+                
+                if any(word in content_lower for word in positive_words):
+                    sentiment = "positive"
+                elif any(word in content_lower for word in negative_words):
+                    sentiment = "negative"
+                
+                if any(word in content_lower for word in urgent_words):
+                    urgency = "high"
+                
+                result = {
+                    "sentiment": sentiment,
+                    "urgency": urgency,
+                    "emotion_detected": "neutral",
+                    "confidence": 0.5,
+                    "key_phrases": []
+                }
+            
             return result
             
         except Exception as e:
