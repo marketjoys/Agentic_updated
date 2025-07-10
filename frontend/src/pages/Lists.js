@@ -259,6 +259,19 @@ const Lists = () => {
           onSubmit={handleUpdateList}
         />
       )}
+
+      {/* Add Prospects to List Modal */}
+      {showAddProspectsModal && selectedList && (
+        <AddProspectsToListModal
+          list={selectedList}
+          prospects={prospects}
+          onClose={() => {
+            setShowAddProspectsModal(false);
+            setSelectedList(null);
+          }}
+          onSubmit={(prospectIds) => handleAddProspectsToList(selectedList.id, prospectIds)}
+        />
+      )}
     </div>
   );
 };
