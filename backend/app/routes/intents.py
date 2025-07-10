@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.models import IntentConfig
 from app.services.database import db_service
 from app.utils.helpers import generate_id
