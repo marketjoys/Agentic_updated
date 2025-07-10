@@ -11,8 +11,8 @@ import json
 import pandas as pd
 from groq import Groq
 import aiosmtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from jinja2 import Template
 import asyncio
 from dotenv import load_dotenv
@@ -117,12 +117,12 @@ async def send_email(to_email: str, subject: str, content: str):
         if not all([smtp_host, smtp_username, smtp_password]):
             raise HTTPException(status_code=500, detail="SMTP configuration incomplete")
         
-        message = MimeMultipart()
+        message = MIMEMultipart()
         message["From"] = smtp_username
         message["To"] = to_email
         message["Subject"] = subject
         
-        message.attach(MimeText(content, "html"))
+        message.attach(MIMEText(content, "html"))
         
         await aiosmtplib.send(
             message,
