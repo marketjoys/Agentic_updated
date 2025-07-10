@@ -265,6 +265,11 @@ class DatabaseService:
         )
         return result
     
+    async def delete_intent(self, intent_id: str):
+        """Delete an intent"""
+        result = await self.db.intents.delete_one({"id": intent_id})
+        return result
+    
     # Enhanced Prospect operations
     async def get_prospect_by_id(self, prospect_id: str):
         """Get prospect by ID"""
