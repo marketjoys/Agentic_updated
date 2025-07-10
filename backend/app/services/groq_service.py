@@ -83,7 +83,18 @@ class GroqService:
             
             # Parse AI response
             try:
-                result = json.loads(response.choices[0].message.content)
+                response_content = response.choices[0].message.content.strip()
+                
+                # Try to extract JSON from the response
+                if '{' in response_content and '}' in response_content:
+                    # Find the JSON part
+                    start_idx = response_content.find('{')
+                    end_idx = response_content.rfind('}') + 1
+                    json_str = response_content[start_idx:end_idx]
+                    result = json.loads(json_str)
+                else:
+                    result = json.loads(response_content)
+                    
             except json.JSONDecodeError:
                 # If JSON parsing fails, try to extract content and create a manual response
                 content = response.choices[0].message.content
