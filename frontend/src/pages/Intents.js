@@ -177,7 +177,10 @@ const IntentCard = ({ intent, onEdit, onDelete }) => {
             >
               <Edit className="h-4 w-4" />
             </button>
-            <button className="p-1 text-secondary-400 hover:text-red-600">
+            <button 
+              onClick={() => onDelete(intent.id)}
+              className="p-1 text-secondary-400 hover:text-red-600"
+            >
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
