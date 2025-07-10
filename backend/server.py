@@ -210,7 +210,8 @@ async def upload_prospects(file: UploadFile = File(...)):
 async def create_template(template: Template):
     template.id = generate_id()
     template_dict = template.dict()
-    await db.templates.insert_one(template_dict)
+    result = await db.templates.insert_one(template_dict)
+    template_dict.pop('_id', None)
     return template_dict
 
 @app.get("/api/templates")
