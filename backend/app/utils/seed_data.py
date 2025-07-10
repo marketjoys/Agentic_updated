@@ -214,19 +214,20 @@ async def init_seed_data():
             }
         ]
         
-        # Seed intents with enhanced template system
+        # Store template IDs for intent linking
+        template_ids = [t["id"] for t in seed_templates]
+        auto_response_template_id = template_ids[2]  # "Auto Response - Positive"
+        
+        # Seed intents with correct template references
         seed_intents = [
             {
                 "id": generate_id(),
                 "name": "Positive Response",
                 "description": "When someone shows interest, says yes, or wants to learn more",
                 "keywords": ["interested", "yes", "tell me more", "schedule", "demo", "call"],
-                "primary_template_id": "template_positive_1",
-                "fallback_template_id": "template_positive_fallback",
-                "combination_templates": [
-                    {"intent_combination": "positive+pricing", "template_id": "template_positive_pricing"},
-                    {"intent_combination": "positive+demo", "template_id": "template_positive_demo"}
-                ],
+                "primary_template_id": auto_response_template_id,
+                "fallback_template_id": auto_response_template_id,
+                "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 5,
                 "response_delay_max": 30,
@@ -239,8 +240,8 @@ async def init_seed_data():
                 "name": "Not Interested",
                 "description": "When someone explicitly says they're not interested",
                 "keywords": ["not interested", "no thanks", "remove", "unsubscribe"],
-                "primary_template_id": "template_not_interested",
-                "fallback_template_id": "template_polite_goodbye",
+                "primary_template_id": auto_response_template_id,
+                "fallback_template_id": auto_response_template_id,
                 "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 10,
@@ -254,12 +255,9 @@ async def init_seed_data():
                 "name": "Request More Info",
                 "description": "When someone asks for more information or has questions",
                 "keywords": ["more info", "questions", "details", "pricing", "features"],
-                "primary_template_id": "template_more_info",
-                "fallback_template_id": "template_general_info",
-                "combination_templates": [
-                    {"intent_combination": "info+pricing", "template_id": "template_pricing_details"},
-                    {"intent_combination": "info+technical", "template_id": "template_technical_specs"}
-                ],
+                "primary_template_id": auto_response_template_id,
+                "fallback_template_id": auto_response_template_id,
+                "combination_templates": [],
                 "auto_respond": True,
                 "response_delay_min": 15,
                 "response_delay_max": 45,
