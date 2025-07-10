@@ -9,6 +9,7 @@ import Lists from './pages/Lists';
 import Templates from './pages/Templates';
 import Intents from './pages/Intents';
 import Analytics from './pages/Analytics';
+import EmailProcessing from './pages/EmailProcessing';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/templates" element={<Templates />} />
             <Route path="/intents" element={<Intents />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/email-processing" element={<EmailProcessing />} />
           </Routes>
         </Layout>
         <Toaster position="top-right" />
