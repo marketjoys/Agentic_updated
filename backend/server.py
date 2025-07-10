@@ -282,6 +282,8 @@ async def init_seed_data():
                 "company_size": "100-500",
                 "annual_revenue": "$10M-$50M",
                 "lead_source": "LinkedIn",
+                "list_ids": ["list_1", "list_2"],  # Technology + Enterprise
+                "tags": ["cto", "tech", "decision-maker"],
                 "additional_fields": {"timezone": "EST", "preferred_contact": "phone"},
                 "status": "active",
                 "created_at": datetime.utcnow()
@@ -302,6 +304,8 @@ async def init_seed_data():
                 "company_size": "50-100",
                 "annual_revenue": "$5M-$10M",
                 "lead_source": "Conference",
+                "list_ids": ["list_1"],  # Technology
+                "tags": ["ai", "tech", "innovation"],
                 "additional_fields": {"timezone": "CST", "preferred_contact": "email"},
                 "status": "active",
                 "created_at": datetime.utcnow()
@@ -322,6 +326,8 @@ async def init_seed_data():
                 "company_size": "200-500",
                 "annual_revenue": "$25M-$50M",
                 "lead_source": "Referral",
+                "list_ids": ["list_2", "list_3"],  # Enterprise + Warm
+                "tags": ["cloud", "engineering", "vp"],
                 "additional_fields": {"timezone": "PST", "preferred_contact": "email"},
                 "status": "active",
                 "created_at": datetime.utcnow()
@@ -342,6 +348,8 @@ async def init_seed_data():
                 "company_size": "10-50",
                 "annual_revenue": "$1M-$5M",
                 "lead_source": "Social Media",
+                "list_ids": ["list_1"],  # Technology
+                "tags": ["startup", "founder", "early-stage"],
                 "additional_fields": {"timezone": "EST", "preferred_contact": "phone"},
                 "status": "active",
                 "created_at": datetime.utcnow()
