@@ -65,6 +65,9 @@ export const apiService = {
   // Intents
   getIntents: () => api.get('/api/intents'),
   createIntent: (intent) => api.post('/api/intents', intent),
+  getIntent: (id) => api.get(`/api/intents/${id}`),
+  updateIntent: (id, intent) => api.put(`/api/intents/${id}`, intent),
+  deleteIntent: (id) => api.delete(`/api/intents/${id}`),
 
   // Analytics
   getCampaignAnalytics: (campaignId) => api.get(`/api/analytics/campaign/${campaignId}`),
