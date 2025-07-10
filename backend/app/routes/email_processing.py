@@ -32,7 +32,7 @@ async def get_processing_status():
     """Get email processing status"""
     return {
         "status": "running" if email_processor.processing else "stopped",
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 @router.post("/email-processing/test-classification")
