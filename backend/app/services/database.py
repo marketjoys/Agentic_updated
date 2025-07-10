@@ -204,6 +204,25 @@ class DatabaseService:
             {"$set": {"last_contact": last_contact}}
         )
         return result
+    
+    async def update_prospect_status(self, prospect_id: str, status: str):
+        """Update prospect status"""
+        result = await self.db.prospects.update_one(
+            {"id": prospect_id},
+            {"$set": {"status": status}}
+        )
+        return result
+    
+    async def cancel_pending_follow_ups(self, prospect_id: str):
+        """Cancel pending follow-up emails for a prospect"""
+        result = await self.db.emails.update_many(
+            {
+                "prospect_id": prospect_id,
+                "status": "pending"
+            },
+            {"$set": {"status": "cancelled"}}
+        )
+        return result
         
     # Analytics operations
     async def get_campaign_analytics(self, campaign_id: str):
