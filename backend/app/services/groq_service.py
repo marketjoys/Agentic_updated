@@ -82,7 +82,43 @@ class GroqService:
             )
             
             # Parse AI response
-            result = json.loads(response.choices[0].message.content)
+            try:
+                result = json.loads(response.choices[0].message.content)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, try to extract content and create a manual response
+                content = response.choices[0].message.content
+                print(f"Failed to parse JSON from Groq response: {content}")
+                
+                # Try to find intents mentioned in the response
+                result = {"intents": []}
+                content_lower = content.lower()
+                
+                # Check for intent keywords in the response
+                for intent in intents:
+                    intent_name = intent["name"].lower()
+                    if intent_name in content_lower:
+                        result["intents"].append({
+                            "intent_id": intent["id"],
+                            "intent_name": intent["name"],
+                            "confidence": 0.7,
+                            "reasoning": "Detected based on keyword match"
+                        })
+                
+                # If no intents found, create a fallback based on keywords
+                if not result["intents"]:
+                    email_lower = email_content.lower()
+                    for intent in intents:
+                        for keyword in intent.get("keywords", []):
+                            if keyword.lower() in email_lower:
+                                result["intents"].append({
+                                    "intent_id": intent["id"],
+                                    "intent_name": intent["name"],
+                                    "confidence": 0.6,
+                                    "reasoning": f"Keyword match: {keyword}"
+                                })
+                                break
+                        if result["intents"]:
+                            break
             
             # Filter and limit to top 3 intents
             classified_intents = []
