@@ -40,10 +40,10 @@ class GroqService:
                     "keywords": intent.get("keywords", [])
                 })
             
-            # Create classification prompt
+            # Create classification prompt with enhanced multi-intent detection
             prompt = f"""
             Analyze the following email and classify it into up to 3 most relevant intents from the available options. 
-            Return only the top 3 intents with confidence scores.
+            Pay special attention to detecting multiple intents in a single email.
 
             Email Subject: {subject}
             Email Content: {email_content}
@@ -52,11 +52,13 @@ class GroqService:
             {json.dumps(intent_descriptions, indent=2)}
 
             Instructions:
-            1. Analyze the email content and subject
-            2. Identify up to 3 most relevant intents
-            3. Assign confidence scores (0.0 to 1.0)
-            4. Only return intents with confidence >= 0.6
-            5. Return results in JSON format
+            1. Carefully analyze the email content and subject for multiple intentions
+            2. Look for combinations like: interest + questions, positive response + pricing inquiry, etc.
+            3. Identify up to 3 most relevant intents with confidence scores
+            4. Assign higher confidence for clearly expressed intents
+            5. Only return intents with confidence >= 0.6
+            6. If multiple intents are present, rank them by strength of evidence
+            7. Return results in JSON format
 
             Response Format:
             {{
@@ -65,7 +67,9 @@ class GroqService:
                         "intent_id": "intent_id_here",
                         "intent_name": "intent_name_here",
                         "confidence": 0.85,
-                        "reasoning": "Brief explanation why this intent matches"
+                        "reasoning": "Detailed explanation including specific keywords/phrases that indicate this intent",
+                        "keywords_found": ["keyword1", "keyword2"],
+                        "context_strength": "high/medium/low"
                     }}
                 ]
             }}
