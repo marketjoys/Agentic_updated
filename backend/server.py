@@ -201,7 +201,7 @@ async def upload_prospects(file: UploadFile = File(...)):
         prospects.append(prospect.dict())
     
     if prospects:
-        await db.prospects.insert_many(prospects)
+        result = await db.prospects.insert_many(prospects)
     
     return {"message": f"Uploaded {len(prospects)} prospects", "count": len(prospects)}
 
