@@ -372,12 +372,37 @@ const AddProspectModal = ({ onClose, onSubmit }) => {
     first_name: '',
     last_name: '',
     company: '',
-    phone: ''
+    phone: '',
+    linkedin_url: '',
+    company_domain: '',
+    industry: '',
+    company_linkedin_url: '',
+    job_title: '',
+    location: '',
+    company_size: '',
+    annual_revenue: '',
+    lead_source: ''
   });
+
+  const [additionalFields, setAdditionalFields] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Add additional fields to the form data
+    const additional_fields = {};
+    additionalFields.forEach(field => {
+      if (field.key && field.value) {
+        additional_fields[field.key] = field.value;
+      }
+    });
+    
+    const finalData = {
+      ...formData,
+      additional_fields: additional_fields
+    };
+    
+    onSubmit(finalData);
   };
 
   const handleChange = (e) => {
@@ -387,84 +412,294 @@ const AddProspectModal = ({ onClose, onSubmit }) => {
     });
   };
 
+  const addAdditionalField = () => {
+    setAdditionalFields([...additionalFields, { key: '', value: '' }]);
+  };
+
+  const removeAdditionalField = (index) => {
+    setAdditionalFields(additionalFields.filter((_, i) => i !== index));
+  };
+
+  const handleAdditionalFieldChange = (index, field, value) => {
+    const updated = [...additionalFields];
+    updated[index][field] = value;
+    setAdditionalFields(updated);
+  };
+
   return (
     <div className="modal-overlay">
-      <div className="modal-content">
+      <div className="modal-content max-w-4xl">
         <div className="p-6 border-b border-gray-100">
           <h3 className="text-xl font-bold text-gray-900">Add New Prospect</h3>
           <p className="text-gray-600 mt-1">Add a new prospect to your database</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Basic Information */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="input"
-              required
-              placeholder="john.doe@example.com"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name *
-              </label>
-              <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                className="input"
-                required
-                placeholder="John"
-              />
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="+1-555-0123"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name *
+                </label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                  placeholder="John"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name *
+                </label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className="input"
+                  required
+                  placeholder="Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Title
+                </label>
+                <input
+                  type="text"
+                  name="job_title"
+                  value={formData.job_title}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="CEO"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="San Francisco, CA"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name *
-              </label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className="input"
-                required
-                placeholder="Doe"
-              />
+          </div>
+
+          {/* Company Information */}
+          <div>
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Company Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company
+                </label>
+                <input
+                  type="text"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="Example Corp"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Domain
+                </label>
+                <input
+                  type="text"
+                  name="company_domain"
+                  value={formData.company_domain}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Industry
+                </label>
+                <input
+                  type="text"
+                  name="industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="Technology"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Size
+                </label>
+                <select
+                  name="company_size"
+                  value={formData.company_size}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">Select size...</option>
+                  <option value="1-10">1-10 employees</option>
+                  <option value="11-50">11-50 employees</option>
+                  <option value="51-100">51-100 employees</option>
+                  <option value="101-500">101-500 employees</option>
+                  <option value="501-1000">501-1000 employees</option>
+                  <option value="1000+">1000+ employees</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Annual Revenue
+                </label>
+                <select
+                  name="annual_revenue"
+                  value={formData.annual_revenue}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">Select range...</option>
+                  <option value="$0-$1M">$0-$1M</option>
+                  <option value="$1M-$5M">$1M-$5M</option>
+                  <option value="$5M-$10M">$5M-$10M</option>
+                  <option value="$10M-$50M">$10M-$50M</option>
+                  <option value="$50M-$100M">$50M-$100M</option>
+                  <option value="$100M+">$100M+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lead Source
+                </label>
+                <select
+                  name="lead_source"
+                  value={formData.lead_source}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">Select source...</option>
+                  <option value="Website">Website</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Conference">Conference</option>
+                  <option value="Social Media">Social Media</option>
+                  <option value="Cold Email">Cold Email</option>
+                  <option value="Partnership">Partnership</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
           </div>
+
+          {/* LinkedIn URLs */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company
-            </label>
-            <input
-              type="text"
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-              className="input"
-              placeholder="Example Corp"
-            />
+            <h4 className="text-lg font-medium text-gray-900 mb-4">LinkedIn Information</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  LinkedIn URL
+                </label>
+                <input
+                  type="url"
+                  name="linkedin_url"
+                  value={formData.linkedin_url}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="https://linkedin.com/in/john-doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company LinkedIn URL
+                </label>
+                <input
+                  type="url"
+                  name="company_linkedin_url"
+                  value={formData.company_linkedin_url}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="https://linkedin.com/company/example-corp"
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Additional Fields */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="input"
-              placeholder="+1-555-0123"
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-medium text-gray-900">Additional Fields</h4>
+              <button
+                type="button"
+                onClick={addAdditionalField}
+                className="btn btn-secondary text-sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Field
+              </button>
+            </div>
+            {additionalFields.map((field, index) => (
+              <div key={index} className="flex items-center space-x-3 mb-3">
+                <input
+                  type="text"
+                  placeholder="Field name"
+                  value={field.key}
+                  onChange={(e) => handleAdditionalFieldChange(index, 'key', e.target.value)}
+                  className="input flex-1"
+                />
+                <input
+                  type="text"
+                  placeholder="Field value"
+                  value={field.value}
+                  onChange={(e) => handleAdditionalFieldChange(index, 'value', e.target.value)}
+                  className="input flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeAdditionalField(index)}
+                  className="p-2 text-red-500 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
           </div>
+
           <div className="flex justify-end space-x-3 pt-6">
             <button
               type="button"
