@@ -5,6 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
 import os
+import io
 from datetime import datetime, timedelta
 import uuid
 import json
