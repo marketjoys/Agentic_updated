@@ -62,8 +62,9 @@ class BackendTester:
         """Test prospect CRUD operations"""
         try:
             # Test CREATE prospect
+            unique_timestamp = int(time.time())
             prospect_data = {
-                "email": "john.doe@techcorp.com",
+                "email": f"john.doe.{unique_timestamp}@techcorp.com",
                 "first_name": "John",
                 "last_name": "Doe",
                 "company": "TechCorp Inc",
