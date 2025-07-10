@@ -212,6 +212,37 @@ async def init_seed_data():
         if existing_prospects > 0:
             return
         
+        # Seed prospect lists
+        seed_lists = [
+            {
+                "id": "list_1",
+                "name": "Technology Companies",
+                "description": "Tech companies and startups",
+                "color": "#3B82F6",
+                "tags": ["tech", "software", "startup"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": "list_2", 
+                "name": "Enterprise Clients",
+                "description": "Large enterprise clients",
+                "color": "#10B981",
+                "tags": ["enterprise", "large", "corporate"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": "list_3",
+                "name": "Warm Leads",
+                "description": "Prospects who have shown interest",
+                "color": "#F59E0B",
+                "tags": ["warm", "interested", "engaged"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        ]
+        
         # Seed prospects
         seed_prospects = [
             {
