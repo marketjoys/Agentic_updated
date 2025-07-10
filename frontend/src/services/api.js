@@ -68,6 +68,15 @@ export const apiService = {
 
   // Analytics
   getCampaignAnalytics: (campaignId) => api.get(`/api/analytics/campaign/${campaignId}`),
+
+  // Prospect Lists
+  getLists: () => api.get('/api/lists'),
+  createList: (list) => api.post('/api/lists', list),
+  getList: (id) => api.get(`/api/lists/${id}`),
+  updateList: (id, list) => api.put(`/api/lists/${id}`, list),
+  deleteList: (id) => api.delete(`/api/lists/${id}`),
+  addProspectsToList: (listId, prospectIds) => api.post(`/api/lists/${listId}/prospects`, prospectIds),
+  removeProspectsFromList: (listId, prospectIds) => api.delete(`/api/lists/${listId}/prospects`, { data: prospectIds }),
 };
 
 export default api;
