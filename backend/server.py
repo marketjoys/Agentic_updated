@@ -57,6 +57,16 @@ class Prospect(BaseModel):
     last_name: str
     company: str = ""
     phone: str = ""
+    linkedin_url: str = ""
+    company_domain: str = ""
+    industry: str = ""
+    company_linkedin_url: str = ""
+    job_title: str = ""
+    location: str = ""
+    company_size: str = ""
+    annual_revenue: str = ""
+    lead_source: str = ""
+    additional_fields: Dict[str, str] = {}
     status: str = "active"
     campaign_id: str = ""
     last_contact: Optional[datetime] = None
