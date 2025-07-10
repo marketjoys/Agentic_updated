@@ -217,6 +217,8 @@ async def create_template(template: Template):
 @app.get("/api/templates")
 async def get_templates():
     templates = await db.templates.find().to_list(length=100)
+    for template in templates:
+        template.pop('_id', None)
     return templates
 
 @app.get("/api/templates/{template_id}")
