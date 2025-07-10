@@ -9,7 +9,8 @@ import {
   BarChart3, 
   Menu, 
   X,
-  Sparkles
+  Sparkles,
+  FolderOpen
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
