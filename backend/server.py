@@ -656,7 +656,93 @@ async def get_intents():
         intent.pop('_id', None)
     return intents
 
-# Email Analytics
+# List Management
+@app.post("/api/lists")
+async def create_list(prospect_list: ProspectList):
+    prospect_list.id = generate_id()
+    list_dict = prospect_list.dict()
+    result = await db.prospect_lists.insert_one(list_dict)
+    list_dict.pop('_id', None)
+    return list_dict
+
+@app.get("/api/lists")
+async def get_lists():
+    lists = await db.prospect_lists.find().to_list(length=100)
+    for list_item in lists:
+        list_item.pop('_id', None)
+        # Update prospect count
+        count = await db.prospects.count_documents({"list_ids": list_item["id"]})
+        list_item["prospect_count"] = count
+    return lists
+
+@app.get("/api/lists/{list_id}")
+async def get_list(list_id: str):
+    list_item = await db.prospect_lists.find_one({"id": list_id})
+    if not list_item:
+        raise HTTPException(status_code=404, detail="List not found")
+    list_item.pop('_id', None)
+    
+    # Get prospects in this list
+    prospects = await db.prospects.find({"list_ids": list_id}).to_list(length=1000)
+    for prospect in prospects:
+        prospect.pop('_id', None)
+    
+    list_item["prospects"] = prospects
+    list_item["prospect_count"] = len(prospects)
+    return list_item
+
+@app.put("/api/lists/{list_id}")
+async def update_list(list_id: str, prospect_list: ProspectList):
+    list_dict = prospect_list.dict()
+    list_dict.pop('id', None)
+    list_dict["updated_at"] = datetime.utcnow()
+    result = await db.prospect_lists.update_one(
+        {"id": list_id},
+        {"$set": list_dict}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="List not found")
+    return {"message": "List updated successfully"}
+
+@app.delete("/api/lists/{list_id}")
+async def delete_list(list_id: str):
+    # Remove list from all prospects
+    await db.prospects.update_many(
+        {"list_ids": list_id},
+        {"$pull": {"list_ids": list_id}}
+    )
+    
+    # Delete the list
+    result = await db.prospect_lists.delete_one({"id": list_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="List not found")
+    return {"message": "List deleted successfully"}
+
+@app.post("/api/lists/{list_id}/prospects")
+async def add_prospect_to_list(list_id: str, prospect_ids: List[str]):
+    """Add prospects to a list"""
+    # Verify list exists
+    list_item = await db.prospect_lists.find_one({"id": list_id})
+    if not list_item:
+        raise HTTPException(status_code=404, detail="List not found")
+    
+    # Add list_id to prospects
+    result = await db.prospects.update_many(
+        {"id": {"$in": prospect_ids}},
+        {"$addToSet": {"list_ids": list_id}}
+    )
+    
+    return {"message": f"Added {result.modified_count} prospects to list"}
+
+@app.delete("/api/lists/{list_id}/prospects")
+async def remove_prospect_from_list(list_id: str, prospect_ids: List[str]):
+    """Remove prospects from a list"""
+    result = await db.prospects.update_many(
+        {"id": {"$in": prospect_ids}},
+        {"$pull": {"list_ids": list_id}}
+    )
+    
+    return {"message": f"Removed {result.modified_count} prospects from list"}
 @app.get("/api/analytics/campaign/{campaign_id}")
 async def get_campaign_analytics(campaign_id: str):
     pipeline = [
