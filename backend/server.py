@@ -472,6 +472,7 @@ async def init_seed_data():
         ]
         
         # Insert seed data
+        await db.prospect_lists.insert_many(seed_lists)
         await db.prospects.insert_many(seed_prospects)
         await db.templates.insert_many(seed_templates)
         await db.intents.insert_many(seed_intents)
