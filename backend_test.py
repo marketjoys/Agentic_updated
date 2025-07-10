@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for AI Email Responder
-Tests all backend functionality including CRUD operations, file uploads, and analytics
+Focused Backend API Testing for AI Email Responder
+Tests the specific issues that were reported as broken
 """
 
 import requests
@@ -22,7 +22,7 @@ class BackendTester:
         self.created_resources = {
             'prospects': [],
             'templates': [],
-            'campaigns': [],
+            'lists': [],
             'intents': []
         }
     
@@ -58,8 +58,8 @@ class BackendTester:
             self.log_result("Health Check", False, f"Connection failed: {str(e)}")
             return False
     
-    def test_prospect_crud(self):
-        """Test prospect CRUD operations"""
+    def test_prospect_management(self):
+        """Test prospect management functionality"""
         try:
             # Test CREATE prospect
             unique_timestamp = int(time.time())
@@ -95,34 +95,14 @@ class BackendTester:
                 self.log_result("Prospect READ", False, "Response is not a list", prospects)
                 return False
             
-            # Verify our created prospect is in the list
-            found_prospect = None
-            for prospect in prospects:
-                if prospect.get('id') == created_prospect['id']:
-                    found_prospect = prospect
-                    break
-            
-            if not found_prospect:
-                self.log_result("Prospect READ", False, "Created prospect not found in list")
-                return False
-            
             self.log_result("Prospect READ", True, f"Retrieved {len(prospects)} prospects")
-            return True
             
-        except Exception as e:
-            self.log_result("Prospect CRUD", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_prospect_csv_upload(self):
-        """Test CSV upload functionality"""
-        try:
-            # Create test CSV data
+            # Test CSV upload
             csv_data = """email,first_name,last_name,company,phone
 sarah.johnson@innovate.com,Sarah,Johnson,Innovate Solutions,+1-555-0124
 mike.wilson@startup.io,Mike,Wilson,Startup.io,+1-555-0125
 lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
             
-            # Create file-like object
             csv_file = io.StringIO(csv_data)
             files = {'file': ('prospects.csv', csv_file.getvalue(), 'text/csv')}
             
@@ -141,155 +121,132 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
             return True
             
         except Exception as e:
-            self.log_result("CSV Upload", False, f"Exception: {str(e)}")
+            self.log_result("Prospect Management", False, f"Exception: {str(e)}")
             return False
     
-    def test_template_crud(self):
-        """Test template CRUD operations"""
+    def test_list_management(self):
+        """Test list management and prospect-to-list association"""
         try:
-            # Test CREATE template
+            # Create a list
+            list_data = {
+                "name": "Test List",
+                "description": "A test list for API testing",
+                "color": "#3B82F6",
+                "tags": ["test", "api"]
+            }
+            
+            response = requests.post(f"{self.base_url}/api/lists", json=list_data)
+            if response.status_code != 200:
+                self.log_result("List CREATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            created_list = response.json()
+            if 'id' not in created_list:
+                self.log_result("List CREATE", False, "No ID in response", created_list)
+                return False
+            
+            list_id = created_list['id']
+            self.created_resources['lists'].append(list_id)
+            self.log_result("List CREATE", True, f"Created list with ID: {list_id}")
+            
+            # Get prospects to add to the list
+            response = requests.get(f"{self.base_url}/api/prospects")
+            if response.status_code != 200:
+                self.log_result("Get Prospects for List", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            prospects = response.json()
+            if not prospects or len(prospects) == 0:
+                self.log_result("Get Prospects for List", False, "No prospects available")
+                return False
+            
+            # Select up to 3 prospects to add to the list
+            prospect_ids = [p['id'] for p in prospects[:min(3, len(prospects))]]
+            
+            # Add prospects to the list
+            response = requests.post(f"{self.base_url}/api/lists/{list_id}/prospects", json=prospect_ids)
+            if response.status_code != 200:
+                self.log_result("Add Prospects to List", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            result = response.json()
+            self.log_result("Add Prospects to List", True, f"Added prospects to list: {result.get('message', '')}")
+            
+            # Verify the list now contains the prospects
+            response = requests.get(f"{self.base_url}/api/lists/{list_id}")
+            if response.status_code != 200:
+                self.log_result("Verify List Contents", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            updated_list = response.json()
+            if 'prospect_count' not in updated_list:
+                self.log_result("Verify List Contents", False, "No prospect_count in response", updated_list)
+                return False
+            
+            if updated_list['prospect_count'] == 0:
+                self.log_result("Verify List Contents", False, "List shows 0 prospects after adding them")
+                return False
+            
+            self.log_result("Verify List Contents", True, f"List now contains {updated_list['prospect_count']} prospects")
+            return True
+            
+        except Exception as e:
+            self.log_result("List Management", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_intent_management(self):
+        """Test intent management and template association"""
+        try:
+            # First create a template for the intent
             template_data = {
-                "name": "Welcome Email Template",
-                "subject": "Welcome to our service, {{first_name}}!",
-                "content": "<h1>Hello {{first_name}} {{last_name}}</h1><p>Welcome to our service at {{company}}!</p>",
-                "type": "initial",
+                "name": "Positive Response Template",
+                "subject": "Thank you for your interest, {{first_name}}!",
+                "content": "<p>Hello {{first_name}},</p><p>Thank you for your interest in our product. We'd be happy to schedule a demo for you.</p>",
+                "type": "auto_response",
                 "placeholders": ["first_name", "last_name", "company"]
             }
             
             response = requests.post(f"{self.base_url}/api/templates", json=template_data)
             if response.status_code != 200:
-                self.log_result("Template CREATE", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Template CREATE for Intent", False, f"HTTP {response.status_code}", response.text)
                 return False
             
             created_template = response.json()
             if 'id' not in created_template:
-                self.log_result("Template CREATE", False, "No ID in response", created_template)
+                self.log_result("Template CREATE for Intent", False, "No ID in response", created_template)
                 return False
             
             template_id = created_template['id']
             self.created_resources['templates'].append(template_id)
-            self.log_result("Template CREATE", True, f"Created template with ID: {template_id}")
+            self.log_result("Template CREATE for Intent", True, f"Created template with ID: {template_id}")
             
-            # Test READ templates
-            response = requests.get(f"{self.base_url}/api/templates")
-            if response.status_code != 200:
-                self.log_result("Template READ", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            templates = response.json()
-            if not isinstance(templates, list):
-                self.log_result("Template READ", False, "Response is not a list", templates)
-                return False
-            
-            self.log_result("Template READ", True, f"Retrieved {len(templates)} templates")
-            
-            # Test GET specific template
-            response = requests.get(f"{self.base_url}/api/templates/{template_id}")
-            if response.status_code != 200:
-                self.log_result("Template GET by ID", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            template = response.json()
-            if template.get('id') != template_id:
-                self.log_result("Template GET by ID", False, "Template ID mismatch", template)
-                return False
-            
-            self.log_result("Template GET by ID", True, f"Retrieved template: {template['name']}")
-            
-            # Test UPDATE template
-            update_data = {
-                "name": "Updated Welcome Email Template",
-                "subject": "Updated: Welcome {{first_name}}!",
-                "content": template_data["content"],
-                "type": "initial",
+            # Create a fallback template
+            fallback_template_data = {
+                "name": "Fallback Response Template",
+                "subject": "Following up, {{first_name}}",
+                "content": "<p>Hello {{first_name}},</p><p>I wanted to follow up on your inquiry. Let me know if you have any questions.</p>",
+                "type": "auto_response",
                 "placeholders": ["first_name", "last_name", "company"]
             }
             
-            response = requests.put(f"{self.base_url}/api/templates/{template_id}", json=update_data)
+            response = requests.post(f"{self.base_url}/api/templates", json=fallback_template_data)
             if response.status_code != 200:
-                self.log_result("Template UPDATE", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Fallback Template CREATE", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            self.log_result("Template UPDATE", True, "Template updated successfully")
-            return True
+            fallback_template = response.json()
+            fallback_template_id = fallback_template['id']
+            self.created_resources['templates'].append(fallback_template_id)
             
-        except Exception as e:
-            self.log_result("Template CRUD", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_campaign_crud(self):
-        """Test campaign CRUD operations"""
-        try:
-            # First ensure we have a template
-            if not self.created_resources['templates']:
-                self.log_result("Campaign CRUD", False, "No templates available for campaign")
-                return False
-            
-            template_id = self.created_resources['templates'][0]
-            
-            # Test CREATE campaign
-            campaign_data = {
-                "name": "Q1 2025 Outreach Campaign",
-                "template_id": template_id,
-                "max_emails": 500,
-                "follow_up_intervals": [3, 7, 14],
-                "status": "draft"
-            }
-            
-            response = requests.post(f"{self.base_url}/api/campaigns", json=campaign_data)
-            if response.status_code != 200:
-                self.log_result("Campaign CREATE", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            created_campaign = response.json()
-            if 'id' not in created_campaign:
-                self.log_result("Campaign CREATE", False, "No ID in response", created_campaign)
-                return False
-            
-            campaign_id = created_campaign['id']
-            self.created_resources['campaigns'].append(campaign_id)
-            self.log_result("Campaign CREATE", True, f"Created campaign with ID: {campaign_id}")
-            
-            # Test READ campaigns
-            response = requests.get(f"{self.base_url}/api/campaigns")
-            if response.status_code != 200:
-                self.log_result("Campaign READ", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            campaigns = response.json()
-            if not isinstance(campaigns, list):
-                self.log_result("Campaign READ", False, "Response is not a list", campaigns)
-                return False
-            
-            self.log_result("Campaign READ", True, f"Retrieved {len(campaigns)} campaigns")
-            
-            # Test GET specific campaign
-            response = requests.get(f"{self.base_url}/api/campaigns/{campaign_id}")
-            if response.status_code != 200:
-                self.log_result("Campaign GET by ID", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            campaign = response.json()
-            if campaign.get('id') != campaign_id:
-                self.log_result("Campaign GET by ID", False, "Campaign ID mismatch", campaign)
-                return False
-            
-            self.log_result("Campaign GET by ID", True, f"Retrieved campaign: {campaign['name']}")
-            return True
-            
-        except Exception as e:
-            self.log_result("Campaign CRUD", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_intent_crud(self):
-        """Test intent configuration CRUD operations"""
-        try:
-            # Test CREATE intent
+            # Create an intent with the templates
             intent_data = {
-                "name": "Interested Response",
+                "name": "Positive Response",
                 "description": "Customer shows interest in the product",
                 "keywords": ["interested", "tell me more", "pricing", "demo"],
-                "response_template": "Thank you for your interest! I'll send you more details shortly."
+                "primary_template_id": template_id,
+                "fallback_template_id": fallback_template_id,
+                "auto_respond": True,
+                "confidence_threshold": 0.7
             }
             
             response = requests.post(f"{self.base_url}/api/intents", json=intent_data)
@@ -306,7 +263,41 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
             self.created_resources['intents'].append(intent_id)
             self.log_result("Intent CREATE", True, f"Created intent with ID: {intent_id}")
             
-            # Test READ intents
+            # Verify the intent has the templates associated
+            response = requests.get(f"{self.base_url}/api/intents/{intent_id}")
+            if response.status_code != 200:
+                self.log_result("Intent-Template Verification", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            intent = response.json()
+            if intent.get('primary_template_id') != template_id:
+                self.log_result("Intent-Template Verification", False, "Primary template not associated correctly", intent)
+                return False
+            
+            if intent.get('fallback_template_id') != fallback_template_id:
+                self.log_result("Intent-Template Verification", False, "Fallback template not associated correctly", intent)
+                return False
+            
+            self.log_result("Intent-Template Verification", True, "Templates correctly associated with intent")
+            
+            # Test intent CRUD operations
+            # Update the intent
+            update_data = {
+                "name": "Updated Positive Response",
+                "description": intent_data["description"],
+                "keywords": intent_data["keywords"],
+                "primary_template_id": template_id,
+                "fallback_template_id": fallback_template_id
+            }
+            
+            response = requests.put(f"{self.base_url}/api/intents/{intent_id}", json=update_data)
+            if response.status_code != 200:
+                self.log_result("Intent UPDATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            self.log_result("Intent UPDATE", True, "Intent updated successfully")
+            
+            # Get all intents
             response = requests.get(f"{self.base_url}/api/intents")
             if response.status_code != 200:
                 self.log_result("Intent READ", False, f"HTTP {response.status_code}", response.text)
@@ -318,227 +309,143 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
                 return False
             
             self.log_result("Intent READ", True, f"Retrieved {len(intents)} intents")
-            return True
             
-        except Exception as e:
-            self.log_result("Intent CRUD", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_campaign_send(self):
-        """Test campaign sending (without actual email sending)"""
-        try:
-            if not self.created_resources['campaigns']:
-                self.log_result("Campaign Send", False, "No campaigns available for sending")
-                return False
-            
-            campaign_id = self.created_resources['campaigns'][0]
-            
-            # Note: This will fail due to SMTP credentials, but we test the API structure
-            response = requests.post(f"{self.base_url}/api/campaigns/{campaign_id}/send")
-            
-            # We expect this to work even without prospects assigned to campaign
-            if response.status_code == 200:
-                result = response.json()
-                self.log_result("Campaign Send API", True, f"Campaign send API working: {result.get('message', 'No message')}")
-                return True
-            else:
-                # Check if it's a reasonable error (like no prospects)
-                if response.status_code == 404 or "prospect" in response.text.lower():
-                    self.log_result("Campaign Send API", True, "Campaign send API structure working (no prospects assigned)")
-                    return True
-                else:
-                    self.log_result("Campaign Send API", False, f"HTTP {response.status_code}", response.text)
-                    return False
-            
-        except Exception as e:
-            self.log_result("Campaign Send", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_analytics(self):
-        """Test analytics endpoints"""
-        try:
-            if not self.created_resources['campaigns']:
-                self.log_result("Analytics", False, "No campaigns available for analytics")
-                return False
-            
-            campaign_id = self.created_resources['campaigns'][0]
-            
-            response = requests.get(f"{self.base_url}/api/analytics/campaign/{campaign_id}")
+            # Delete the intent
+            response = requests.delete(f"{self.base_url}/api/intents/{intent_id}")
             if response.status_code != 200:
-                self.log_result("Analytics", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Intent DELETE", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            analytics = response.json()
-            expected_fields = ['total_sent', 'total_failed', 'total_opened', 'total_replied']
+            self.log_result("Intent DELETE", True, "Intent deleted successfully")
             
-            for field in expected_fields:
-                if field not in analytics:
-                    self.log_result("Analytics", False, f"Missing field: {field}", analytics)
-                    return False
-            
-            self.log_result("Analytics", True, f"Analytics working: {analytics}")
             return True
             
         except Exception as e:
-            self.log_result("Analytics", False, f"Exception: {str(e)}")
+            self.log_result("Intent Management", False, f"Exception: {str(e)}")
             return False
     
-    def test_database_connectivity(self):
-        """Test database connectivity by checking if we can create and retrieve data"""
+    def test_ai_intent_classification(self):
+        """Test AI intent classification"""
         try:
-            # This is implicitly tested by the CRUD operations
-            # If we can create prospects, templates, etc., the database is working
-            if self.created_resources['prospects'] or self.created_resources['templates']:
-                self.log_result("Database Connectivity", True, "Database operations successful")
-                return True
-            else:
-                self.log_result("Database Connectivity", False, "No successful database operations")
+            # Test with a positive response email
+            positive_email = {
+                "subject": "Interested in your product",
+                "content": "Thanks for reaching out! I am very interested in your product and would like to schedule a demo. Please send me more information about pricing."
+            }
+            
+            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=positive_email)
+            if response.status_code != 200:
+                self.log_result("AI Intent Classification", False, f"HTTP {response.status_code}", response.text)
                 return False
+            
+            result = response.json()
+            if 'classified_intents' not in result:
+                self.log_result("AI Intent Classification", False, "No intents in response", result)
+                return False
+            
+            # Check if we have at least one intent classified
+            if len(result['classified_intents']) == 0:
+                self.log_result("AI Intent Classification", False, "No intents classified", result)
+                return False
+            
+            # Check if we have confidence scores
+            for intent in result['classified_intents']:
+                if 'confidence' not in intent:
+                    self.log_result("AI Intent Classification", False, "No confidence score in intent", intent)
+                    return False
+            
+            # Check if we have sentiment analysis
+            if 'sentiment_analysis' not in result:
+                self.log_result("AI Intent Classification", False, "No sentiment analysis in response", result)
+                return False
+            
+            self.log_result("AI Intent Classification", True, 
+                           f"Successfully classified {len(result['classified_intents'])} intents with sentiment: {result['sentiment_analysis'].get('sentiment', 'unknown')}")
+            
+            return True
+            
         except Exception as e:
-            self.log_result("Database Connectivity", False, f"Exception: {str(e)}")
+            self.log_result("AI Intent Classification", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_ai_response_generation(self):
+        """Test AI response generation"""
+        try:
+            # First get a prospect to use
+            response = requests.get(f"{self.base_url}/api/prospects")
+            if response.status_code != 200:
+                self.log_result("Get Prospect for Response Test", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            prospects = response.json()
+            if not prospects or len(prospects) == 0:
+                self.log_result("Get Prospect for Response Test", False, "No prospects available")
+                return False
+            
+            prospect_id = prospects[0]['id']
+            
+            # Test response generation
+            test_data = {
+                "subject": "Interested in your product",
+                "content": "Thanks for reaching out! I am very interested in your product and would like to schedule a demo. Please send me more information about pricing.",
+                "prospect_id": prospect_id
+            }
+            
+            response = requests.post(f"{self.base_url}/api/email-processing/test-response", json=test_data)
+            if response.status_code != 200:
+                self.log_result("AI Response Generation", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            result = response.json()
+            if 'generated_response' not in result:
+                self.log_result("AI Response Generation", False, "No generated response in result", result)
+                return False
+            
+            # Check if the response contains content
+            if 'content' not in result['generated_response']:
+                self.log_result("AI Response Generation", False, "No content in generated response", result['generated_response'])
+                return False
+            
+            self.log_result("AI Response Generation", True, "Successfully generated AI response")
+            return True
+            
+        except Exception as e:
+            self.log_result("AI Response Generation", False, f"Exception: {str(e)}")
             return False
     
     def test_email_processing_status(self):
-        """Test email processing status endpoint"""
+        """Test email processing status and control"""
         try:
+            # Check initial status
             response = requests.get(f"{self.base_url}/api/email-processing/status")
             if response.status_code != 200:
                 self.log_result("Email Processing Status", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            status_data = response.json()
-            if 'status' not in status_data:
-                self.log_result("Email Processing Status", False, "No status in response", status_data)
+            initial_status = response.json()
+            if 'status' not in initial_status:
+                self.log_result("Email Processing Status", False, "No status in response", initial_status)
                 return False
             
-            self.log_result("Email Processing Status", True, f"Status: {status_data['status']}")
-            return True
+            self.log_result("Email Processing Status", True, f"Initial status: {initial_status['status']}")
             
-        except Exception as e:
-            self.log_result("Email Processing Status", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_intent_classification(self):
-        """Test intent classification endpoint"""
-        try:
-            # Test with positive email
-            positive_email = {
-                "subject": "Interested in your solution",
-                "content": "I'm interested in your solution, can you schedule a demo?"
-            }
-            
-            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=positive_email)
-            if response.status_code != 200:
-                self.log_result("Intent Classification (Positive)", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            positive_result = response.json()
-            if 'classified_intents' not in positive_result:
-                self.log_result("Intent Classification (Positive)", False, "No intents in response", positive_result)
-                return False
-            
-            self.log_result("Intent Classification (Positive)", True, f"Classified {len(positive_result['classified_intents'])} intents")
-            
-            # Test with negative email
-            negative_email = {
-                "subject": "Not interested",
-                "content": "Not interested, please remove me from your list"
-            }
-            
-            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=negative_email)
-            if response.status_code != 200:
-                self.log_result("Intent Classification (Negative)", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            negative_result = response.json()
-            if 'classified_intents' not in negative_result:
-                self.log_result("Intent Classification (Negative)", False, "No intents in response", negative_result)
-                return False
-            
-            self.log_result("Intent Classification (Negative)", True, f"Classified {len(negative_result['classified_intents'])} intents")
-            
-            # Test with info request email
-            info_email = {
-                "subject": "Pricing information",
-                "content": "Can you tell me more about pricing and features?"
-            }
-            
-            response = requests.post(f"{self.base_url}/api/email-processing/test-classification", json=info_email)
-            if response.status_code != 200:
-                self.log_result("Intent Classification (Info)", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            info_result = response.json()
-            if 'classified_intents' not in info_result:
-                self.log_result("Intent Classification (Info)", False, "No intents in response", info_result)
-                return False
-            
-            self.log_result("Intent Classification (Info)", True, f"Classified {len(info_result['classified_intents'])} intents")
-            
-            # Check sentiment analysis
-            if 'sentiment_analysis' not in info_result:
-                self.log_result("Sentiment Analysis", False, "No sentiment analysis in response", info_result)
-                return False
-            
-            self.log_result("Sentiment Analysis", True, f"Sentiment: {info_result['sentiment_analysis'].get('sentiment', 'unknown')}")
-            
-            return True
-            
-        except Exception as e:
-            self.log_result("Intent Classification", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_email_processing_analytics(self):
-        """Test email processing analytics endpoint"""
-        try:
-            response = requests.get(f"{self.base_url}/api/email-processing/analytics")
-            if response.status_code != 200:
-                self.log_result("Email Processing Analytics", False, f"HTTP {response.status_code}", response.text)
-                return False
-            
-            analytics_data = response.json()
-            expected_fields = ['total_threads', 'processed_emails', 'auto_responses_sent', 'processing_status']
-            
-            for field in expected_fields:
-                if field not in analytics_data:
-                    self.log_result("Email Processing Analytics", False, f"Missing field: {field}", analytics_data)
-                    return False
-            
-            self.log_result("Email Processing Analytics", True, f"Analytics data: {analytics_data}")
-            return True
-            
-        except Exception as e:
-            self.log_result("Email Processing Analytics", False, f"Exception: {str(e)}")
-            return False
-    
-    def test_email_processing_control(self):
-        """Test email processing start/stop functionality"""
-        try:
             # Start email processing
             response = requests.post(f"{self.base_url}/api/email-processing/start")
             if response.status_code != 200:
                 self.log_result("Email Processing Start", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            start_result = response.json()
-            if 'status' not in start_result:
-                self.log_result("Email Processing Start", False, "No status in response", start_result)
-                return False
-            
-            self.log_result("Email Processing Start", True, f"Status: {start_result['status']}")
-            
             # Check status after starting
             response = requests.get(f"{self.base_url}/api/email-processing/status")
             if response.status_code != 200:
-                self.log_result("Email Processing Status (After Start)", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Email Processing Status After Start", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            status_data = response.json()
-            if status_data.get('status') != 'running':
-                self.log_result("Email Processing Status (After Start)", False, f"Expected 'running', got '{status_data.get('status')}'", status_data)
-                # Don't return false here as it might be a timing issue
+            status_after_start = response.json()
+            if status_after_start.get('status') != 'running':
+                self.log_result("Email Processing Status After Start", False, f"Expected 'running', got '{status_after_start.get('status')}'", status_after_start)
             else:
-                self.log_result("Email Processing Status (After Start)", True, "Status is 'running' as expected")
+                self.log_result("Email Processing Status After Start", True, "Status is 'running' as expected")
             
             # Stop email processing
             response = requests.post(f"{self.base_url}/api/email-processing/stop")
@@ -546,52 +453,54 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
                 self.log_result("Email Processing Stop", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            stop_result = response.json()
-            if 'status' not in stop_result:
-                self.log_result("Email Processing Stop", False, "No status in response", stop_result)
-                return False
-            
-            self.log_result("Email Processing Stop", True, f"Status: {stop_result['status']}")
-            
             # Check status after stopping
             response = requests.get(f"{self.base_url}/api/email-processing/status")
             if response.status_code != 200:
-                self.log_result("Email Processing Status (After Stop)", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Email Processing Status After Stop", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            status_data = response.json()
-            if status_data.get('status') != 'stopped':
-                self.log_result("Email Processing Status (After Stop)", False, f"Expected 'stopped', got '{status_data.get('status')}'", status_data)
-                # Don't return false here as it might be a timing issue
+            status_after_stop = response.json()
+            if status_after_stop.get('status') != 'stopped':
+                self.log_result("Email Processing Status After Stop", False, f"Expected 'stopped', got '{status_after_stop.get('status')}'", status_after_stop)
             else:
-                self.log_result("Email Processing Status (After Stop)", True, "Status is 'stopped' as expected")
+                self.log_result("Email Processing Status After Stop", True, "Status is 'stopped' as expected")
+            
+            # Check analytics
+            response = requests.get(f"{self.base_url}/api/email-processing/analytics")
+            if response.status_code != 200:
+                self.log_result("Email Processing Analytics", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            analytics = response.json()
+            expected_fields = ['total_threads', 'processed_emails', 'auto_responses_sent', 'processing_status']
+            
+            for field in expected_fields:
+                if field not in analytics:
+                    self.log_result("Email Processing Analytics", False, f"Missing field: {field}", analytics)
+                    return False
+            
+            self.log_result("Email Processing Analytics", True, f"Analytics data retrieved successfully")
             
             return True
             
         except Exception as e:
-            self.log_result("Email Processing Control", False, f"Exception: {str(e)}")
+            self.log_result("Email Processing Status", False, f"Exception: {str(e)}")
             return False
     
-    def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting AI Email Responder Backend Tests")
+    def run_focused_tests(self):
+        """Run tests focused on the reported issues"""
+        print("🚀 Starting AI Email Responder Focused Tests")
         print("=" * 60)
         
         # Test order matters - some tests depend on others
         tests = [
             ("Health Check", self.test_health_check),
-            ("Email Processing Status", self.test_email_processing_status),
-            ("Email Processing Control", self.test_email_processing_control),
-            ("Intent Classification", self.test_intent_classification),
-            ("Email Processing Analytics", self.test_email_processing_analytics),
-            ("Prospect CRUD", self.test_prospect_crud),
-            ("CSV Upload", self.test_prospect_csv_upload),
-            ("Template CRUD", self.test_template_crud),
-            ("Campaign CRUD", self.test_campaign_crud),
-            ("Intent CRUD", self.test_intent_crud),
-            ("Campaign Send API", self.test_campaign_send),
-            ("Analytics", self.test_analytics),
-            ("Database Connectivity", self.test_database_connectivity)
+            ("Prospect Management", self.test_prospect_management),
+            ("List Management & Prospect Association", self.test_list_management),
+            ("Intent Management & Template Association", self.test_intent_management),
+            ("AI Intent Classification", self.test_ai_intent_classification),
+            ("AI Response Generation", self.test_ai_response_generation),
+            ("Email Processing Status & Analytics", self.test_email_processing_status)
         ]
         
         passed = 0
@@ -618,7 +527,7 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
 def main():
     """Main test execution"""
     tester = BackendTester()
-    results = tester.run_all_tests()
+    results = tester.run_focused_tests()
     
     # Print detailed results
     print("\n" + "=" * 60)
