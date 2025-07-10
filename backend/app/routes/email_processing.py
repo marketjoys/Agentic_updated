@@ -56,7 +56,7 @@ async def test_intent_classification(request: Dict):
             "subject": subject,
             "classified_intents": classified_intents,
             "sentiment_analysis": sentiment_analysis,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
