@@ -66,6 +66,23 @@ const Lists = () => {
     }
   };
 
+  const handleAddProspectsToList = async (listId, prospectIds) => {
+    try {
+      await apiService.addProspectsToList(listId, prospectIds);
+      toast.success('Prospects added to list successfully');
+      loadData();
+      setShowAddProspectsModal(false);
+      setSelectedList(null);
+    } catch (error) {
+      toast.error('Failed to add prospects to list');
+    }
+  };
+
+  const handleShowAddProspects = (list) => {
+    setSelectedList(list);
+    setShowAddProspectsModal(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
