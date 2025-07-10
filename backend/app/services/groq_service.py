@@ -166,7 +166,11 @@ class GroqService:
             if conversation_context:
                 context_text = "\n\nConversation History:\n"
                 for msg in conversation_context[-5:]:  # Last 5 messages
-                    context_text += f"- {msg.get('timestamp', '')}: {msg.get('content', '')[:200]}...\n"
+                    timestamp = msg.get('timestamp', '')
+                    if hasattr(timestamp, 'strftime'):
+                        timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    content = msg.get('content', '')[:200]
+                    context_text += f"- {timestamp}: {content}...\n"
             
             # Build prospect context
             prospect_context = ""
