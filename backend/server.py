@@ -183,7 +183,7 @@ async def upload_prospects(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be CSV format")
     
     content = await file.read()
-    df = pd.read_csv(content)
+    df = pd.read_csv(io.BytesIO(content))
     
     required_columns = ['email', 'first_name', 'last_name']
     if not all(col in df.columns for col in required_columns):
