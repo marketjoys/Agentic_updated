@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Campaigns from './pages/Campaigns';
 import Prospects from './pages/Prospects';
+import Lists from './pages/Lists';
 import Templates from './pages/Templates';
 import Intents from './pages/Intents';
 import Analytics from './pages/Analytics';
