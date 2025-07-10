@@ -559,4 +559,127 @@ const EditListModal = ({ list, onClose, onSubmit }) => {
   );
 };
 
+const AddProspectsToListModal = ({ list, prospects, onClose, onSubmit }) => {
+  const [selectedProspects, setSelectedProspects] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (selectedProspects.length === 0) {
+      toast.error('Please select at least one prospect');
+      return;
+    }
+    onSubmit(selectedProspects);
+  };
+
+  const handleProspectToggle = (prospectId) => {
+    setSelectedProspects(prev => 
+      prev.includes(prospectId) 
+        ? prev.filter(id => id !== prospectId)
+        : [...prev, prospectId]
+    );
+  };
+
+  const filteredProspects = prospects.filter(prospect => 
+    !prospect.list_ids?.includes(list.id) && // Don't show prospects already in this list
+    (prospect.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     prospect.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     prospect.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     prospect.company.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content max-w-4xl">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-xl font-bold text-gray-900">Add Prospects to {list.name}</h3>
+          <p className="text-gray-600 mt-1">Select prospects to add to this list</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6">
+          {/* Search */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search prospects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Prospects List */}
+          <div className="max-h-96 overflow-y-auto mb-6">
+            {filteredProspects.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No prospects available to add to this list
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredProspects.map((prospect) => (
+                  <div
+                    key={prospect.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedProspects.includes(prospect.id) 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => handleProspectToggle(prospect.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedProspects.includes(prospect.id)}
+                          onChange={() => handleProspectToggle(prospect.id)}
+                          className="h-4 w-4 text-blue-600 rounded"
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {prospect.first_name} {prospect.last_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {prospect.email} • {prospect.company || 'No company'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Selected Count */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-800">
+              {selectedProspects.length} prospect(s) selected
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={selectedProspects.length === 0}
+            >
+              Add {selectedProspects.length} Prospect(s)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export default Lists;
