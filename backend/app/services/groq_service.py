@@ -221,8 +221,24 @@ class GroqService:
                 max_tokens=1500
             )
             
-            result = json.loads(response.choices[0].message.content)
-            return result
+            try:
+                response_content = response.choices[0].message.content.strip()
+                
+                # Try to extract JSON from the response
+                if '{' in response_content and '}' in response_content:
+                    # Find the JSON part
+                    start_idx = response_content.find('{')
+                    end_idx = response_content.rfind('}') + 1
+                    json_str = response_content[start_idx:end_idx]
+                    result = json.loads(json_str)
+                else:
+                    result = json.loads(response_content)
+                    
+                return result
+                    
+            except json.JSONDecodeError:
+                print(f"Failed to parse JSON from response: {response_content}")
+                return {"error": "Failed to parse AI response"}
             
         except Exception as e:
             print(f"Error generating response: {str(e)}")
