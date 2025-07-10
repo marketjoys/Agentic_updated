@@ -246,7 +246,8 @@ async def update_template(template_id: str, template: Template):
 async def create_campaign(campaign: Campaign):
     campaign.id = generate_id()
     campaign_dict = campaign.dict()
-    await db.campaigns.insert_one(campaign_dict)
+    result = await db.campaigns.insert_one(campaign_dict)
+    campaign_dict.pop('_id', None)
     return campaign_dict
 
 @app.get("/api/campaigns")
