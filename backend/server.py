@@ -1,5 +1,8 @@
 # AI Email Responder - Modular Backend
 # This is the main entry point that imports from the modular structure
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.main import app
 
