@@ -169,8 +169,13 @@ class GroqService:
                     timestamp = msg.get('timestamp', '')
                     if hasattr(timestamp, 'strftime'):
                         timestamp = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    elif isinstance(timestamp, str):
+                        timestamp = timestamp
+                    else:
+                        timestamp = str(timestamp)
                     content = msg.get('content', '')[:200]
-                    context_text += f"- {timestamp}: {content}...\n"
+                    msg_type = msg.get('type', 'unknown')
+                    context_text += f"- {timestamp} ({msg_type}): {content}...\n"
             
             # Build prospect context
             prospect_context = ""
