@@ -77,6 +77,20 @@ export const apiService = {
   deleteList: (id) => api.delete(`/api/lists/${id}`),
   addProspectsToList: (listId, prospectIds) => api.post(`/api/lists/${listId}/prospects`, prospectIds),
   removeProspectsFromList: (listId, prospectIds) => api.delete(`/api/lists/${listId}/prospects`, { data: prospectIds }),
+
+  // Email Processing
+  startEmailProcessing: () => api.post('/api/email-processing/start'),
+  stopEmailProcessing: () => api.post('/api/email-processing/stop'),
+  getProcessingStatus: () => api.get('/api/email-processing/status'),
+  getProcessingAnalytics: () => api.get('/api/email-processing/analytics'),
+  testIntentClassification: (data) => api.post('/api/email-processing/test-classification', data),
+  testResponseGeneration: (data) => api.post('/api/email-processing/test-response', data),
+
+  // Threads
+  getThreads: () => api.get('/api/threads'),
+  getThread: (id) => api.get(`/api/threads/${id}`),
+  getThreadByProspect: (prospectId) => api.get(`/api/threads/prospect/${prospectId}`),
+  addMessageToThread: (threadId, messageData) => api.post(`/api/threads/${threadId}/messages`, messageData),
 };
 
 export default api;
