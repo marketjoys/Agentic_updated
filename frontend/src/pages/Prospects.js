@@ -241,8 +241,25 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
               <p className="text-gray-600 mb-3">
                 Upload a CSV file with the following required columns: <strong>email</strong>, <strong>first_name</strong>, <strong>last_name</strong>
               </p>
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Optional columns:</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm text-gray-600">
+                  <span>• company</span>
+                  <span>• phone</span>
+                  <span>• linkedin_url</span>
+                  <span>• company_domain</span>
+                  <span>• industry</span>
+                  <span>• company_linkedin_url</span>
+                  <span>• job_title</span>
+                  <span>• location</span>
+                  <span>• company_size</span>
+                  <span>• annual_revenue</span>
+                  <span>• lead_source</span>
+                  <span>• + custom fields</span>
+                </div>
+              </div>
               <p className="text-sm text-gray-500 mb-4">
-                Optional columns: <strong>company</strong>, <strong>phone</strong>
+                <strong>Note:</strong> You can include any additional custom fields in your CSV - they will be stored as additional fields for each prospect.
               </p>
               <div className="flex items-center space-x-4">
                 <button
