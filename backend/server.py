@@ -34,8 +34,12 @@ app.add_middleware(
 client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
 db = client.email_responder
 
-# Groq client
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Groq client (optional)
+try:
+    groq_client = Groq(api_key=os.getenv("GROQ_API_KEY")) if os.getenv("GROQ_API_KEY") else None
+except Exception as e:
+    print(f"Warning: Could not initialize Groq client: {e}")
+    groq_client = None
 
 # Security
 security = HTTPBearer()
