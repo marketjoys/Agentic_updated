@@ -416,14 +416,24 @@ async def init_seed_data():
             }
         ]
         
-        # Seed intents
+        # Seed intents with enhanced template system
         seed_intents = [
             {
                 "id": generate_id(),
                 "name": "Positive Response",
                 "description": "When someone shows interest, says yes, or wants to learn more",
                 "keywords": ["interested", "yes", "tell me more", "schedule", "demo", "call"],
-                "response_template": "Thank you for your interest! I'll reach out to schedule a demo.",
+                "primary_template_id": "template_positive_1",
+                "fallback_template_id": "template_positive_fallback",
+                "combination_templates": [
+                    {"intent_combination": "positive+pricing", "template_id": "template_positive_pricing"},
+                    {"intent_combination": "positive+demo", "template_id": "template_positive_demo"}
+                ],
+                "auto_respond": True,
+                "response_delay_min": 5,
+                "response_delay_max": 30,
+                "confidence_threshold": 0.8,
+                "escalate_to_human": False,
                 "created_at": datetime.utcnow()
             },
             {
@@ -431,7 +441,14 @@ async def init_seed_data():
                 "name": "Not Interested",
                 "description": "When someone explicitly says they're not interested",
                 "keywords": ["not interested", "no thanks", "remove", "unsubscribe"],
-                "response_template": "I understand. I'll remove you from our outreach list.",
+                "primary_template_id": "template_not_interested",
+                "fallback_template_id": "template_polite_goodbye",
+                "combination_templates": [],
+                "auto_respond": True,
+                "response_delay_min": 10,
+                "response_delay_max": 60,
+                "confidence_threshold": 0.9,
+                "escalate_to_human": False,
                 "created_at": datetime.utcnow()
             },
             {
@@ -439,7 +456,17 @@ async def init_seed_data():
                 "name": "Request More Info",
                 "description": "When someone asks for more information or has questions",
                 "keywords": ["more info", "questions", "details", "pricing", "features"],
-                "response_template": "I'd be happy to provide more details. Let me send you our information packet.",
+                "primary_template_id": "template_more_info",
+                "fallback_template_id": "template_general_info",
+                "combination_templates": [
+                    {"intent_combination": "info+pricing", "template_id": "template_pricing_details"},
+                    {"intent_combination": "info+technical", "template_id": "template_technical_specs"}
+                ],
+                "auto_respond": True,
+                "response_delay_min": 15,
+                "response_delay_max": 45,
+                "confidence_threshold": 0.7,
+                "escalate_to_human": True,
                 "created_at": datetime.utcnow()
             }
         ]
