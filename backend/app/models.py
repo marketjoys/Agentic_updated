@@ -1,6 +1,19 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
+from enum import Enum
+
+class EmailProviderType(str, Enum):
+    GMAIL = "gmail"
+    OUTLOOK = "outlook"
+    YAHOO = "yahoo"
+    CUSTOM_SMTP = "custom_smtp"
+    
+class FollowUpStatus(str, Enum):
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+    STOPPED = "stopped"
 
 class ProspectList(BaseModel):
     id: str = None
