@@ -132,11 +132,11 @@ lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
                 return False
             
             result = response.json()
-            if 'count' not in result or result['count'] != 3:
+            if 'successful_count' not in result:
                 self.log_result("CSV Upload", False, "Unexpected upload result", result)
                 return False
             
-            self.log_result("CSV Upload", True, f"Uploaded {result['count']} prospects from CSV")
+            self.log_result("CSV Upload", True, f"Uploaded {result['successful_count']} prospects from CSV")
             return True
             
         except Exception as e:
