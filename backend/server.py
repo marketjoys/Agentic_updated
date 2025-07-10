@@ -253,6 +253,8 @@ async def create_campaign(campaign: Campaign):
 @app.get("/api/campaigns")
 async def get_campaigns():
     campaigns = await db.campaigns.find().to_list(length=100)
+    for campaign in campaigns:
+        campaign.pop('_id', None)
     return campaigns
 
 @app.get("/api/campaigns/{campaign_id}")
