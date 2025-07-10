@@ -159,6 +159,12 @@ class GroqService:
         Generate contextual response using Groq AI
         """
         try:
+            # Convert datetime objects to strings in prospect_data
+            if prospect_data:
+                for key, value in prospect_data.items():
+                    if hasattr(value, 'isoformat'):  # datetime object
+                        prospect_data[key] = value.isoformat()
+            
             # Get templates for the classified intents
             templates = await self._get_templates_for_intents(classified_intents)
             
