@@ -422,16 +422,39 @@ async def upload_prospects(file: UploadFile = File(...)):
         if not all(col in df.columns for col in required_columns):
             raise HTTPException(status_code=400, detail=f"CSV must contain columns: {required_columns}")
         
+        # Define optional columns
+        optional_columns = [
+            'company', 'phone', 'linkedin_url', 'company_domain', 'industry',
+            'company_linkedin_url', 'job_title', 'location', 'company_size',
+            'annual_revenue', 'lead_source'
+        ]
+        
         prospects = []
         for _, row in df.iterrows():
-            prospect = Prospect(
-                id=generate_id(),
-                email=row['email'],
-                first_name=row['first_name'],
-                last_name=row['last_name'],
-                company=row.get('company', ''),
-                phone=row.get('phone', '')
-            )
+            # Build prospect data
+            prospect_data = {
+                "id": generate_id(),
+                "email": row['email'],
+                "first_name": row['first_name'],
+                "last_name": row['last_name']
+            }
+            
+            # Add optional fields
+            for col in optional_columns:
+                if col in df.columns:
+                    prospect_data[col] = row.get(col, '')
+            
+            # Handle additional fields (any column not in standard fields)
+            standard_fields = set(required_columns + optional_columns + ['id'])
+            additional_fields = {}
+            for col in df.columns:
+                if col not in standard_fields:
+                    additional_fields[col] = str(row.get(col, ''))
+            
+            if additional_fields:
+                prospect_data['additional_fields'] = additional_fields
+            
+            prospect = Prospect(**prospect_data)
             prospects.append(prospect.dict())
         
         if prospects:
