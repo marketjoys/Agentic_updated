@@ -49,7 +49,11 @@ def personalize_template(template_content: str, prospect: dict) -> str:
             first_name=prospect.get("first_name", ""),
             last_name=prospect.get("last_name", ""),
             company=prospect.get("company", ""),
-            email=prospect.get("email", "")
+            email=prospect.get("email", ""),
+            industry=prospect.get("industry", "Technology"),
+            job_title=prospect.get("job_title", ""),
+            phone=prospect.get("phone", ""),
+            location=prospect.get("location", "")
         )
     except Exception as e:
         print(f"Template personalization failed: {str(e)}")
