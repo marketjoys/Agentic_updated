@@ -5,10 +5,17 @@ import json
 import asyncio
 from datetime import datetime
 from app.services.database import db_service
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class GroqService:
     def __init__(self):
-        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+        self.client = Groq(api_key=api_key)
         self.model = "llama3-8b-8192"
         
     async def classify_intents(self, email_content: str, subject: str = "") -> List[Dict]:
