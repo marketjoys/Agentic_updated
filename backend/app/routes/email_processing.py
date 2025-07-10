@@ -96,7 +96,7 @@ async def test_response_generation(request: Dict):
             "prospect": prospect,
             "classified_intents": classified_intents,
             "generated_response": response_data,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
