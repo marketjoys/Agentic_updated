@@ -343,6 +343,8 @@ async def create_intent(intent: IntentConfig):
 @app.get("/api/intents")
 async def get_intents():
     intents = await db.intents.find().to_list(length=100)
+    for intent in intents:
+        intent.pop('_id', None)
     return intents
 
 # Email Analytics
