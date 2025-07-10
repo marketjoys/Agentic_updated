@@ -248,6 +248,78 @@ class DatabaseService:
         analytics["total_replied"] = replied_count
         
         return analytics
+    
+    # Enhanced Intent operations
+    async def get_intent_by_id(self, intent_id: str):
+        """Get specific intent by ID"""
+        intent = await self.db.intents.find_one({"id": intent_id})
+        if intent:
+            intent.pop('_id', None)
+        return intent
+    
+    async def update_intent(self, intent_id: str, intent_data: dict):
+        """Update an intent"""
+        result = await self.db.intents.update_one(
+            {"id": intent_id},
+            {"$set": intent_data}
+        )
+        return result
+    
+    # Enhanced Prospect operations
+    async def get_prospect_by_id(self, prospect_id: str):
+        """Get prospect by ID"""
+        prospect = await self.db.prospects.find_one({"id": prospect_id})
+        if prospect:
+            prospect.pop('_id', None)
+        return prospect
+    
+    # Thread Context operations
+    async def create_thread_context(self, thread_data: dict):
+        """Create a new thread context"""
+        result = await self.db.threads.insert_one(thread_data)
+        return result
+    
+    async def get_threads(self):
+        """Get all thread contexts"""
+        threads = await self.db.threads.find().to_list(length=1000)
+        for thread in threads:
+            thread.pop('_id', None)
+        return threads
+    
+    async def get_thread_by_id(self, thread_id: str):
+        """Get specific thread by ID"""
+        thread = await self.db.threads.find_one({"id": thread_id})
+        if thread:
+            thread.pop('_id', None)
+        return thread
+    
+    async def get_thread_by_prospect_id(self, prospect_id: str):
+        """Get thread by prospect ID"""
+        thread = await self.db.threads.find_one({"prospect_id": prospect_id})
+        if thread:
+            thread.pop('_id', None)
+        return thread
+    
+    async def add_message_to_thread(self, thread_id: str, message_data: dict):
+        """Add message to thread"""
+        result = await self.db.threads.update_one(
+            {"id": thread_id},
+            {"$push": {"messages": message_data}}
+        )
+        return result
+    
+    async def update_thread_last_activity(self, thread_id: str, last_activity):
+        """Update thread last activity"""
+        result = await self.db.threads.update_one(
+            {"id": thread_id},
+            {"$set": {"last_activity": last_activity}}
+        )
+        return result
+    
+    async def delete_thread(self, thread_id: str):
+        """Delete thread"""
+        result = await self.db.threads.delete_one({"id": thread_id})
+        return result
 
 # Create global database service instance
 db_service = DatabaseService()
