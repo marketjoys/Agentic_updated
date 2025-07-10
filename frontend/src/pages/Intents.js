@@ -26,13 +26,30 @@ const Intents = () => {
 
   const handleSaveIntent = async (intentData) => {
     try {
-      await apiService.createIntent(intentData);
-      toast.success('Intent created successfully');
+      if (editingIntent) {
+        await apiService.updateIntent(editingIntent.id, intentData);
+        toast.success('Intent updated successfully');
+      } else {
+        await apiService.createIntent(intentData);
+        toast.success('Intent created successfully');
+      }
       setShowModal(false);
       setEditingIntent(null);
       loadIntents();
     } catch (error) {
       toast.error('Failed to save intent');
+    }
+  };
+
+  const handleDeleteIntent = async (intentId) => {
+    if (!window.confirm('Are you sure you want to delete this intent?')) return;
+    
+    try {
+      await apiService.deleteIntent(intentId);
+      toast.success('Intent deleted successfully');
+      loadIntents();
+    } catch (error) {
+      toast.error('Failed to delete intent');
     }
   };
 
