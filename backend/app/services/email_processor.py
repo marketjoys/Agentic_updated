@@ -129,6 +129,12 @@ class EmailProcessor:
                 "raw_email": str(email_message)
             })
             
+            # Update prospect last contact time
+            await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
+            
+            # Stop any ongoing follow-ups for this prospect
+            await self._stop_follow_ups_for_prospect(prospect["id"])
+            
             # Classify intents using Groq AI
             classified_intents = await groq_service.classify_intents(content, subject)
             
