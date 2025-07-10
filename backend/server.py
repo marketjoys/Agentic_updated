@@ -261,7 +261,8 @@ async def init_seed_data():
                 "company_size": "500-1000",
                 "annual_revenue": "$50M-$100M",
                 "lead_source": "Website",
-                "additional_fields": {"timezone": "PST", "preferred_contact": "email"},
+                "list_ids": ["list_1", "list_3"],  # Technology + Warm
+                "tags": ["ceo", "tech", "decision-maker"],
                 "status": "active",
                 "created_at": datetime.utcnow()
             },
