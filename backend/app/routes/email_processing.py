@@ -163,7 +163,7 @@ async def get_processing_analytics():
             "processed_emails": processed_emails,
             "auto_responses_sent": auto_responses_sent,
             "processing_status": "running" if email_processor.processing else "stopped",
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
