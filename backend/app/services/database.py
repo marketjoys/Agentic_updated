@@ -345,6 +345,263 @@ class DatabaseService:
         """Delete thread"""
         result = await self.db.threads.delete_one({"id": thread_id})
         return result
+    
+    # Email Provider operations
+    async def create_email_provider(self, provider_data: dict):
+        """Create a new email provider"""
+        result = await self.db.email_providers.insert_one(provider_data)
+        return result
+    
+    async def get_email_providers(self):
+        """Get all email providers"""
+        providers = await self.db.email_providers.find().to_list(length=100)
+        for provider in providers:
+            provider.pop('_id', None)
+        return providers
+    
+    async def get_email_provider_by_id(self, provider_id: str):
+        """Get email provider by ID"""
+        provider = await self.db.email_providers.find_one({"id": provider_id})
+        if provider:
+            provider.pop('_id', None)
+        return provider
+    
+    async def update_email_provider(self, provider_id: str, provider_data: dict):
+        """Update an email provider"""
+        result = await self.db.email_providers.update_one(
+            {"id": provider_id},
+            {"$set": provider_data}
+        )
+        return result
+    
+    async def delete_email_provider(self, provider_id: str):
+        """Delete an email provider"""
+        result = await self.db.email_providers.delete_one({"id": provider_id})
+        return result
+    
+    async def get_default_email_provider(self):
+        """Get default email provider"""
+        provider = await self.db.email_providers.find_one({"is_default": True})
+        if provider:
+            provider.pop('_id', None)
+        return provider
+    
+    async def update_all_email_providers(self, update_data: dict):
+        """Update all email providers"""
+        result = await self.db.email_providers.update_many({}, {"$set": update_data})
+        return result
+    
+    async def get_campaigns_by_provider_id(self, provider_id: str):
+        """Get campaigns using specific provider"""
+        campaigns = await self.db.campaigns.find({"email_provider_id": provider_id}).to_list(length=100)
+        return campaigns
+    
+    async def increment_provider_send_counts(self, provider_id: str):
+        """Increment send counts for rate limiting"""
+        result = await self.db.email_providers.update_one(
+            {"id": provider_id},
+            {
+                "$inc": {
+                    "current_daily_count": 1,
+                    "current_hourly_count": 1
+                }
+            }
+        )
+        return result
+    
+    # Knowledge Base operations
+    async def create_knowledge_article(self, article_data: dict):
+        """Create a new knowledge article"""
+        result = await self.db.knowledge_base.insert_one(article_data)
+        return result
+    
+    async def get_knowledge_articles(self, category: str = None, active_only: bool = True):
+        """Get knowledge articles"""
+        query = {}
+        if category:
+            query["category"] = category
+        if active_only:
+            query["is_active"] = True
+        
+        articles = await self.db.knowledge_base.find(query).to_list(length=100)
+        for article in articles:
+            article.pop('_id', None)
+        return articles
+    
+    async def get_knowledge_article_by_id(self, article_id: str):
+        """Get knowledge article by ID"""
+        article = await self.db.knowledge_base.find_one({"id": article_id})
+        if article:
+            article.pop('_id', None)
+        return article
+    
+    async def update_knowledge_article(self, article_id: str, article_data: dict):
+        """Update a knowledge article"""
+        result = await self.db.knowledge_base.update_one(
+            {"id": article_id},
+            {"$set": article_data}
+        )
+        return result
+    
+    async def delete_knowledge_article(self, article_id: str):
+        """Delete a knowledge article"""
+        result = await self.db.knowledge_base.delete_one({"id": article_id})
+        return result
+    
+    async def search_knowledge_articles(self, query: str, category: str = None, limit: int = 10):
+        """Search knowledge articles"""
+        search_query = {"$text": {"$search": query}} if query else {}
+        if category:
+            search_query["category"] = category
+        
+        articles = await self.db.knowledge_base.find(search_query).limit(limit).to_list(length=limit)
+        for article in articles:
+            article.pop('_id', None)
+        return articles
+    
+    async def get_knowledge_statistics(self):
+        """Get knowledge base statistics"""
+        total_articles = await self.db.knowledge_base.count_documents({})
+        active_articles = await self.db.knowledge_base.count_documents({"is_active": True})
+        categories = await self.db.knowledge_base.distinct("category")
+        
+        return {
+            "total_articles": total_articles,
+            "active_articles": active_articles,
+            "categories": categories
+        }
+    
+    async def increment_knowledge_article_usage(self, article_id: str):
+        """Increment knowledge article usage count"""
+        result = await self.db.knowledge_base.update_one(
+            {"id": article_id},
+            {
+                "$inc": {"usage_count": 1},
+                "$set": {"last_used": datetime.utcnow()}
+            }
+        )
+        return result
+    
+    # System Prompt operations
+    async def create_system_prompt(self, prompt_data: dict):
+        """Create a new system prompt"""
+        result = await self.db.system_prompts.insert_one(prompt_data)
+        return result
+    
+    async def get_system_prompts(self):
+        """Get all system prompts"""
+        prompts = await self.db.system_prompts.find().to_list(length=100)
+        for prompt in prompts:
+            prompt.pop('_id', None)
+        return prompts
+    
+    async def get_system_prompt_by_id(self, prompt_id: str):
+        """Get system prompt by ID"""
+        prompt = await self.db.system_prompts.find_one({"id": prompt_id})
+        if prompt:
+            prompt.pop('_id', None)
+        return prompt
+    
+    async def update_system_prompt(self, prompt_id: str, prompt_data: dict):
+        """Update a system prompt"""
+        result = await self.db.system_prompts.update_one(
+            {"id": prompt_id},
+            {"$set": prompt_data}
+        )
+        return result
+    
+    async def delete_system_prompt(self, prompt_id: str):
+        """Delete a system prompt"""
+        result = await self.db.system_prompts.delete_one({"id": prompt_id})
+        return result
+    
+    async def get_default_system_prompt(self, prompt_type: str = "general"):
+        """Get default system prompt by type"""
+        prompt = await self.db.system_prompts.find_one({
+            "prompt_type": prompt_type,
+            "is_default": True,
+            "is_active": True
+        })
+        if prompt:
+            prompt.pop('_id', None)
+        return prompt
+    
+    # Follow-up Rule operations
+    async def create_follow_up_rule(self, rule_data: dict):
+        """Create a new follow-up rule"""
+        result = await self.db.follow_up_rules.insert_one(rule_data)
+        return result
+    
+    async def get_follow_up_rules(self):
+        """Get all follow-up rules"""
+        rules = await self.db.follow_up_rules.find().to_list(length=100)
+        for rule in rules:
+            rule.pop('_id', None)
+        return rules
+    
+    async def get_follow_up_rule_by_id(self, rule_id: str):
+        """Get follow-up rule by ID"""
+        rule = await self.db.follow_up_rules.find_one({"id": rule_id})
+        if rule:
+            rule.pop('_id', None)
+        return rule
+    
+    async def update_follow_up_rule(self, rule_id: str, rule_data: dict):
+        """Update a follow-up rule"""
+        result = await self.db.follow_up_rules.update_one(
+            {"id": rule_id},
+            {"$set": rule_data}
+        )
+        return result
+    
+    async def delete_follow_up_rule(self, rule_id: str):
+        """Delete a follow-up rule"""
+        result = await self.db.follow_up_rules.delete_one({"id": rule_id})
+        return result
+    
+    # Response Verification operations
+    async def create_response_verification(self, verification_data: dict):
+        """Create a response verification record"""
+        result = await self.db.response_verifications.insert_one(verification_data)
+        return result
+    
+    async def get_pending_verifications(self):
+        """Get pending verifications"""
+        verifications = await self.db.response_verifications.find({
+            "status": {"$in": ["pending", "needs_review"]}
+        }).to_list(length=100)
+        for verification in verifications:
+            verification.pop('_id', None)
+        return verifications
+    
+    async def get_response_verification_by_id(self, verification_id: str):
+        """Get response verification by ID"""
+        verification = await self.db.response_verifications.find_one({"id": verification_id})
+        if verification:
+            verification.pop('_id', None)
+        return verification
+    
+    async def update_response_verification(self, verification_id: str, verification_data: dict):
+        """Update a response verification"""
+        result = await self.db.response_verifications.update_one(
+            {"id": verification_id},
+            {"$set": verification_data}
+        )
+        return result
+    
+    async def get_verification_statistics(self):
+        """Get verification statistics"""
+        total_verifications = await self.db.response_verifications.count_documents({})
+        pending_verifications = await self.db.response_verifications.count_documents({"status": "pending"})
+        approved_verifications = await self.db.response_verifications.count_documents({"status": "approved"})
+        rejected_verifications = await self.db.response_verifications.count_documents({"status": "rejected"})
+        
+        return {
+            "total_verifications": total_verifications,
+            "pending_verifications": pending_verifications,
+            "approved_verifications": approved_verifications,
+            "rejected_verifications": rejected_verifications
+        }
 
 # Create global database service instance
 db_service = DatabaseService()
