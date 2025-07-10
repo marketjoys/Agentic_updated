@@ -10,6 +10,7 @@ const Lists = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedList, setSelectedList] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddProspectsModal, setShowAddProspectsModal] = useState(false);
 
   useEffect(() => {
     loadData();
