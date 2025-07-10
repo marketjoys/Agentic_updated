@@ -209,8 +209,29 @@ const IntentModal = ({ intent, onClose, onSave }) => {
     name: intent?.name || '',
     description: intent?.description || '',
     keywords: intent?.keywords?.join(', ') || '',
-    response_template: intent?.response_template || ''
+    primary_template_id: intent?.primary_template_id || '',
+    fallback_template_id: intent?.fallback_template_id || '',
+    auto_respond: intent?.auto_respond || true,
+    response_delay_min: intent?.response_delay_min || 5,
+    response_delay_max: intent?.response_delay_max || 60,
+    confidence_threshold: intent?.confidence_threshold || 0.7,
+    escalate_to_human: intent?.escalate_to_human || false
   });
+
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      const response = await apiService.getTemplates();
+      setTemplates(response.data);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -222,34 +243,57 @@ const IntentModal = ({ intent, onClose, onSave }) => {
   };
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     });
   };
+
+  const autoResponseTemplates = templates.filter(t => t.type === 'auto_response');
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="fixed inset-0 bg-black opacity-30"></div>
-        <div className="relative bg-white rounded-lg max-w-2xl w-full p-6">
+        <div className="relative bg-white rounded-lg max-w-3xl w-full p-6">
           <h3 className="text-lg font-semibold text-secondary-900 mb-4">
             {intent ? 'Edit Intent' : 'Create New Intent'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Intent Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="e.g., Positive Response, Not Interested, Request Info"
-                className="input"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Intent Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Positive Response, Not Interested, Request Info"
+                  className="input"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Confidence Threshold
+                </label>
+                <select
+                  name="confidence_threshold"
+                  value={formData.confidence_threshold}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value={0.5}>50% (Low)</option>
+                  <option value={0.6}>60% (Medium-Low)</option>
+                  <option value={0.7}>70% (Medium)</option>
+                  <option value={0.8}>80% (High)</option>
+                  <option value={0.9}>90% (Very High)</option>
+                </select>
+              </div>
             </div>
             
             <div>
@@ -284,18 +328,102 @@ const IntentModal = ({ intent, onClose, onSave }) => {
               </p>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Response Template (Optional)
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Primary Template
+                </label>
+                <select
+                  name="primary_template_id"
+                  value={formData.primary_template_id}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">Select primary template</option>
+                  {autoResponseTemplates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Fallback Template
+                </label>
+                <select
+                  name="fallback_template_id"
+                  value={formData.fallback_template_id}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="">Select fallback template</option>
+                  {autoResponseTemplates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Response Delay (Min)
+                </label>
+                <input
+                  type="number"
+                  name="response_delay_min"
+                  value={formData.response_delay_min}
+                  onChange={handleChange}
+                  min="1"
+                  max="60"
+                  className="input"
+                />
+                <p className="text-xs text-secondary-500 mt-1">Minutes</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-1">
+                  Response Delay (Max)
+                </label>
+                <input
+                  type="number"
+                  name="response_delay_max"
+                  value={formData.response_delay_max}
+                  onChange={handleChange}
+                  min="1"
+                  max="120"
+                  className="input"
+                />
+                <p className="text-xs text-secondary-500 mt-1">Minutes</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="auto_respond"
+                  checked={formData.auto_respond}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-secondary-700">Auto-respond to this intent</span>
               </label>
-              <textarea
-                name="response_template"
-                value={formData.response_template}
-                onChange={handleChange}
-                placeholder="Template for automatic responses when this intent is detected..."
-                rows="4"
-                className="input"
-              />
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="escalate_to_human"
+                  checked={formData.escalate_to_human}
+                  onChange={handleChange}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-secondary-700">Escalate to human</span>
+              </label>
             </div>
             
             <div className="flex justify-end space-x-3 mt-6">
