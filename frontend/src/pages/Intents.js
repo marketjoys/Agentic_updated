@@ -164,7 +164,7 @@ const Intents = () => {
   );
 };
 
-const IntentCard = ({ intent, onEdit }) => {
+const IntentCard = ({ intent, onEdit, onDelete }) => {
   return (
     <div className="card">
       <div className="card-body">
