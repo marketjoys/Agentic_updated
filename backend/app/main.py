@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import prospects, lists, templates, campaigns, intents, analytics, email_processing
+from app.routes import (prospects, lists, templates, campaigns, intents, analytics, 
+                       email_processing, email_providers, knowledge_base, 
+                       system_prompts, response_verification)
 from app.services.database import db_service
 from app.utils.seed_data import init_seed_data
 from datetime import datetime
@@ -29,6 +31,12 @@ app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
 app.include_router(intents.router, prefix="/api", tags=["intents"])
 app.include_router(analytics.router, prefix="/api", tags=["analytics"])
 app.include_router(email_processing.router, prefix="/api", tags=["email-processing"])
+
+# New enhanced routers
+app.include_router(email_providers.router, prefix="/api", tags=["email-providers"])
+app.include_router(knowledge_base.router, prefix="/api", tags=["knowledge-base"])
+app.include_router(system_prompts.router, prefix="/api", tags=["system-prompts"])
+app.include_router(response_verification.router, prefix="/api", tags=["response-verification"])
 
 # Health check endpoint
 @app.get("/api/health")
