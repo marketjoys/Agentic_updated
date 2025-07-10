@@ -162,7 +162,9 @@ async def health_check():
 async def create_prospect(prospect: Prospect):
     prospect.id = generate_id()
     prospect_dict = prospect.dict()
-    await db.prospects.insert_one(prospect_dict)
+    result = await db.prospects.insert_one(prospect_dict)
+    # Remove MongoDB's _id field and return our custom id
+    prospect_dict.pop('_id', None)
     return prospect_dict
 
 @app.get("/api/prospects")
