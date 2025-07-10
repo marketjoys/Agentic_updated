@@ -21,6 +21,7 @@ const Layout = ({ children }) => {
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
     { name: 'Campaigns', href: '/campaigns', icon: Send, color: 'from-purple-500 to-purple-600' },
     { name: 'Prospects', href: '/prospects', icon: Users, color: 'from-green-500 to-green-600' },
+    { name: 'Lists', href: '/lists', icon: FolderOpen, color: 'from-indigo-500 to-indigo-600' },
     { name: 'Templates', href: '/templates', icon: FileText, color: 'from-orange-500 to-orange-600' },
     { name: 'Intents', href: '/intents', icon: Brain, color: 'from-pink-500 to-pink-600' },
     { name: 'Analytics', href: '/analytics', icon: BarChart3, color: 'from-indigo-500 to-indigo-600' },
