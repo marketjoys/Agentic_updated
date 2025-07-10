@@ -190,14 +190,14 @@ class GroqService:
                 prospect_context += f"- Job Title: {prospect_data.get('job_title', '')}\n"
                 prospect_context += f"- Industry: {prospect_data.get('industry', '')}\n"
             
-            # Create response generation prompt
+            # Create response generation prompt with enhanced context handling
             prompt = f"""
-            Generate a personalized email response based on the following information:
+            Generate a personalized email response that addresses ALL identified intents and uses conversation context effectively.
 
             Original Email Subject: {subject}
             Original Email Content: {email_content}
 
-            Classified Intents:
+            Classified Intents (prioritized by confidence):
             {json.dumps(classified_intents, indent=2)}
 
             Available Templates:
@@ -207,20 +207,29 @@ class GroqService:
             {prospect_context}
 
             Instructions:
-            1. Create a professional, contextual email response
-            2. Use the most appropriate template as a base
-            3. Personalize the response based on prospect data
-            4. Address the specific intents identified
-            5. Keep the tone professional but warm
-            6. Include relevant call-to-action if appropriate
+            1. Create a comprehensive response that addresses ALL identified intents
+            2. Use conversation history to maintain context and avoid repetition
+            3. If multiple intents are present, structure response to address each one
+            4. Personalize using prospect data (name, company, industry, etc.)
+            5. Use appropriate templates as guidance but adapt for multiple intents
+            6. Maintain professional yet warm tone throughout
+            7. Include relevant call-to-action for the highest confidence intent
+            8. Reference previous conversations if context is available
+
+            Multi-Intent Handling:
+            - If "Positive Response" + "Request More Info": Express appreciation for interest, then provide requested information
+            - If "Questions" + "Demo Request": Answer questions briefly, then focus on scheduling demo
+            - If multiple intents conflict, prioritize by confidence score
 
             Response Format:
             {{
-                "subject": "Response subject line",
-                "content": "Full HTML email content",
-                "template_used": "template_id_used",
+                "subject": "Contextual response subject line that reflects main intent",
+                "content": "Full HTML email content addressing all intents",
+                "intents_addressed": ["intent1", "intent2"],
+                "template_used": "primary_template_id",
                 "confidence": 0.85,
-                "reasoning": "Brief explanation of approach"
+                "reasoning": "Explanation of how multiple intents were handled",
+                "conversation_context_used": true/false
             }}
             """
             
