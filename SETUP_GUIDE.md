@@ -33,7 +33,29 @@ After setup completes, you can access:
 - **Password**: `testpass123`
 - **Email**: `test@example.com`
 
-## Service Management
+## MongoDB Installation
+
+The setup script automatically handles MongoDB installation:
+
+- **Checks if MongoDB is installed** - skips installation if already present
+- **Installs MongoDB Community Edition** - tries official repository first
+- **Fallback installation** - uses Ubuntu repository if official fails
+- **Configures MongoDB** - sets up proper data directories and configuration
+- **Starts MongoDB service** - handles multiple startup methods
+
+### MongoDB Installation Methods
+
+1. **Official MongoDB Repository** (preferred)
+   - Installs latest MongoDB Community Edition
+   - Includes proper systemd service configuration
+
+2. **Ubuntu Repository** (fallback)
+   - Uses system package manager
+   - Guaranteed compatibility with Ubuntu/Debian
+
+3. **Direct Process** (final fallback)
+   - Starts MongoDB directly if services fail
+   - Creates basic configuration for immediate use
 
 Use the included management script for easy service control:
 
