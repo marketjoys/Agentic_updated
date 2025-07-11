@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Home, 
   Send, 
@@ -17,7 +18,9 @@ import {
   MessageSquare,
   CheckCircle,
   Server,
-  Activity
+  Activity,
+  LogOut,
+  User
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
