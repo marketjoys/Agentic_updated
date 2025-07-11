@@ -26,9 +26,9 @@ load_dotenv()
 
 app = FastAPI(title="AI Email Responder", version="1.0.0")
 
-# Add security middleware
-app.add_middleware(SecurityMiddleware)
-app.add_middleware(RateLimitMiddleware)
+# Add security middleware (temporarily commented out due to middleware configuration issue)
+# app.add_middleware(SecurityMiddleware)
+# app.add_middleware(RateLimitMiddleware)
 
 # Add performance middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
