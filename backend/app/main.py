@@ -5,6 +5,7 @@ from app.routes import (prospects, lists, templates, campaigns, intents, analyti
                        system_prompts, response_verification, smart_follow_up,
                        context_aware_ai, enhanced_email_processing, real_time)
 from app.services.database import db_service
+from app.services.real_time_service import real_time_service
 from app.utils.seed_data import init_seed_data
 from datetime import datetime
 import os
