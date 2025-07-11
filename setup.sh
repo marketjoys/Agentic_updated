@@ -250,9 +250,22 @@ main() {
     # Step 4: MongoDB Setup
     print_status "Setting up MongoDB..."
     
-    # Start MongoDB service
-    sudo service mongod start 2>/dev/null || sudo service mongodb start 2>/dev/null || true
-    sleep 5
+    # Try to start MongoDB using different methods
+    print_status "Starting MongoDB service..."
+    
+    # Try systemd first (for newly installed MongoDB)
+    if sudo systemctl start mongod 2>/dev/null; then
+        print_success "MongoDB started using systemd"
+    elif sudo service mongod start 2>/dev/null; then
+        print_success "MongoDB started using service command"
+    elif sudo service mongodb start 2>/dev/null; then
+        print_success "MongoDB started using mongodb service"
+    else
+        # Try starting MongoDB directly
+        print_status "Starting MongoDB directly..."
+        sudo -u mongodb mongod --config /etc/mongod.conf &
+        sleep 3
+    fi
     
     # Wait for MongoDB to be ready
     local mongo_ready=false
@@ -274,7 +287,22 @@ main() {
     
     if [ "$mongo_ready" = false ]; then
         print_error "MongoDB failed to start properly"
-        exit 1
+        print_status "Trying alternative MongoDB startup..."
+        
+        # Try starting MongoDB with basic configuration
+        sudo mkdir -p /data/db
+        sudo chown -R $(whoami) /data/db
+        mongod --dbpath /data/db --fork --logpath /tmp/mongod.log --bind_ip_all
+        
+        sleep 5
+        
+        # Test again
+        if mongosh --eval "db.runCommand('ping')" --quiet 2>/dev/null || mongo --eval "db.runCommand('ping')" --quiet 2>/dev/null; then
+            print_success "MongoDB started with alternative method"
+        else
+            print_error "MongoDB failed to start with all methods"
+            exit 1
+        fi
     fi
     
     # Create database and seed data
