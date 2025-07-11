@@ -37,6 +37,7 @@ app.include_router(email_providers.router, prefix="/api", tags=["email-providers
 app.include_router(knowledge_base.router, prefix="/api", tags=["knowledge-base"])
 app.include_router(system_prompts.router, prefix="/api", tags=["system-prompts"])
 app.include_router(response_verification.router, prefix="/api", tags=["response-verification"])
+app.include_router(smart_follow_up.router, prefix="/api", tags=["smart-follow-up"])
 
 # Health check endpoint
 @app.get("/api/health")
