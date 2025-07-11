@@ -26,6 +26,7 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
+    { name: 'Real-Time', href: '/real-time', icon: Activity, color: 'from-red-500 to-red-600' },
     
     // Core Features
     { name: 'Email Processing', href: '/email-processing', icon: Mail, color: 'from-emerald-500 to-emerald-600' },
