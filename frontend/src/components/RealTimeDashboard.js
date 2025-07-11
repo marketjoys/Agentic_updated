@@ -13,7 +13,18 @@ const RealTimeDashboard = () => {
   useEffect(() => {
     const connectWebSocket = () => {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
-      const wsUrl = backendUrl.replace(/^https?:\/\//, '').replace(/^/, 'ws://');
+      
+      // Construct WebSocket URL based on backend URL
+      let wsUrl;
+      if (backendUrl.startsWith('https://')) {
+        wsUrl = backendUrl.replace('https://', 'wss://');
+      } else if (backendUrl.startsWith('http://')) {
+        wsUrl = backendUrl.replace('http://', 'ws://');
+      } else {
+        // Handle case where URL doesn't have protocol
+        wsUrl = `ws://${backendUrl}`;
+      }
+      
       const clientId = `dashboard-${Date.now()}`;
       
       try {
