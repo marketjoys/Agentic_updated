@@ -214,6 +214,14 @@ class DatabaseService:
         )
         return result
     
+    async def update_prospect(self, prospect_id: str, update_data: dict):
+        """Update prospect with any data"""
+        result = await self.db.prospects.update_one(
+            {"id": prospect_id},
+            {"$set": update_data}
+        )
+        return result
+    
     async def cancel_pending_follow_ups(self, prospect_id: str):
         """Cancel pending follow-up emails for a prospect"""
         result = await self.db.emails.update_many(
