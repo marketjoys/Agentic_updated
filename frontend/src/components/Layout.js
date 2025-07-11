@@ -16,7 +16,8 @@ import {
   BookOpen,
   MessageSquare,
   CheckCircle,
-  Server
+  Server,
+  Activity
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
