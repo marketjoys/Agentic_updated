@@ -348,8 +348,7 @@ main() {
         
         # Start backend in background
         cd /app
-        source /root/.venv/bin/activate
-        nohup uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
+        nohup /root/.venv/bin/uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
         BACKEND_PID=$!
         sleep 5
         
