@@ -5,6 +5,7 @@ import json
 import asyncio
 from datetime import datetime
 from app.services.database import db_service
+from app.services.knowledge_base_service import knowledge_base_service
 from dotenv import load_dotenv
 
 # Load environment variables
