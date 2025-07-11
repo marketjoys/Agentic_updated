@@ -33,7 +33,15 @@ const Dashboard = () => {
         intents: intents.data.length
       });
     } catch (error) {
+      console.error('Dashboard API Error:', error);
       toast.error('Failed to load dashboard data');
+      // Set default values so dashboard still loads
+      setStats({
+        prospects: 0,
+        templates: 0,
+        campaigns: 0,
+        intents: 0
+      });
     } finally {
       setLoading(false);
     }
