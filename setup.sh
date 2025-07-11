@@ -398,7 +398,20 @@ main() {
     echo -e "${GREEN}🚀 SERVICES STATUS:${NC}"
     echo -e "   Backend:  $(ps aux | grep -v grep | grep 'uvicorn.*backend.server' >/dev/null && echo 'RUNNING' || echo 'STOPPED')"
     echo -e "   Frontend: $(ps aux | grep -v grep | grep 'yarn.*start' >/dev/null && echo 'RUNNING' || echo 'STOPPED')"
-    echo -e "   MongoDB:  $(service mongod status 2>/dev/null | grep -q 'running\|active' && echo 'RUNNING' || service mongodb status 2>/dev/null | grep -q 'running\|active' && echo 'RUNNING' || echo 'STOPPED')"
+    
+    # Check MongoDB status using multiple methods
+    mongo_status="STOPPED"
+    if sudo systemctl is-active mongod >/dev/null 2>&1; then
+        mongo_status="RUNNING (systemd)"
+    elif service mongod status 2>/dev/null | grep -q 'running\|active'; then
+        mongo_status="RUNNING (service)"
+    elif service mongodb status 2>/dev/null | grep -q 'running\|active'; then
+        mongo_status="RUNNING (mongodb service)"
+    elif ps aux | grep -v grep | grep 'mongod' >/dev/null; then
+        mongo_status="RUNNING (process)"
+    fi
+    
+    echo -e "   MongoDB:  $mongo_status"
     echo ""
     echo -e "${GREEN}🎯 QUICK START:${NC}"
     echo -e "   1. Open browser to: ${BLUE}http://localhost:3000${NC}"
