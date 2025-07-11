@@ -25,8 +25,33 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     console.error('API Error:', error.response?.data || error.message);
+    
+    // If we get a 401 error, try to refresh the token
+    if (error.response?.status === 401) {
+      console.log('Received 401 error, attempting token refresh...');
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const refreshResponse = await axios.post(`${API_BASE_URL}/api/auth/refresh`);
+          const { access_token } = refreshResponse.data;
+          
+          localStorage.setItem('token', access_token);
+          
+          // Retry the original request with the new token
+          const originalRequest = error.config;
+          originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
+          
+          return axios(originalRequest);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          localStorage.removeItem('token');
+          window.location.href = '/'; // Redirect to login
+        }
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
