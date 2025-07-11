@@ -35,10 +35,14 @@ export const AuthProvider = ({ children }) => {
           const response = await axios.get(`${backendUrl}/api/auth/me`);
           setUser(response.data);
         } catch (error) {
-          // Token is invalid
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
+          // Token is invalid - try to refresh first
+          console.log('Token validation failed, attempting refresh...');
+          const refreshResult = await refreshToken();
+          if (!refreshResult.success) {
+            localStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+          }
         }
       }
       setLoading(false);
