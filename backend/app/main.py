@@ -26,10 +26,20 @@ load_dotenv()
 
 app = FastAPI(title="AI Email Responder", version="1.0.0")
 
+# Add security middleware
+app.add_middleware(SecurityMiddleware)
+app.add_middleware(RateLimitMiddleware)
+
+# Add performance middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Add trusted hosts (configure as needed)
+# app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1"])
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Configure this properly in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
