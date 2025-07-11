@@ -100,6 +100,13 @@ main() {
         exit 1
     fi
     
+    # Check if running in Codespaces
+    if [ -n "$CODESPACES" ]; then
+        print_status "Running in GitHub Codespaces environment"
+    else
+        print_status "Running in local/container environment"
+    fi
+    
     # Step 1: System Dependencies Check
     print_status "Checking system dependencies..."
     
