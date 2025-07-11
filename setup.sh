@@ -209,9 +209,26 @@ main() {
     
     # Step 6: Start Frontend Service
     print_status "Starting frontend service..."
-    sudo supervisorctl start frontend 2>/dev/null || true
-    sleep 5
-    wait_for_service "frontend"
+    
+    # Kill any existing frontend process
+    pkill -f "yarn.*start" 2>/dev/null || true
+    pkill -f "react-scripts.*start" 2>/dev/null || true
+    sleep 2
+    
+    # Start frontend in background
+    cd /app/frontend
+    nohup yarn start > /tmp/frontend.log 2>&1 &
+    FRONTEND_PID=$!
+    sleep 10
+    
+    # Check if frontend is running
+    if ps -p $FRONTEND_PID > /dev/null; then
+        print_success "Frontend service started (PID: $FRONTEND_PID)"
+    else
+        print_error "Frontend service failed to start"
+        cat /tmp/frontend.log
+        exit 1
+    fi
     
     # Step 7: Health Checks
     print_status "Performing health checks..."
