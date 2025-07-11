@@ -48,25 +48,67 @@ install_mongodb() {
     # Install required packages
     sudo apt-get install -y wget curl gnupg software-properties-common
     
+    # Try official MongoDB installation first
+    if install_mongodb_official; then
+        print_success "MongoDB installed from official repository"
+        return 0
+    fi
+    
+    # Fallback to alternative installation
+    print_warning "Official MongoDB installation failed, trying alternative method..."
+    if install_mongodb_alternative; then
+        print_success "MongoDB installed using alternative method"
+        return 0
+    fi
+    
+    print_error "MongoDB installation failed"
+    return 1
+}
+
+# Function to install MongoDB from official repository
+install_mongodb_official() {
     # Import MongoDB public GPG key
-    wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+    if ! wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -; then
+        return 1
+    fi
     
     # Add MongoDB APT repository
     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
     
     # Update package list with MongoDB repository
-    sudo apt-get update -qq
+    if ! sudo apt-get update -qq; then
+        return 1
+    fi
     
     # Install MongoDB
-    sudo apt-get install -y mongodb-org
+    if ! sudo apt-get install -y mongodb-org; then
+        return 1
+    fi
     
+    setup_mongodb_config
+    return 0
+}
+
+# Function to install MongoDB using alternative method
+install_mongodb_alternative() {
+    # Install MongoDB from Ubuntu repository
+    if ! sudo apt-get install -y mongodb; then
+        return 1
+    fi
+    
+    setup_mongodb_config
+    return 0
+}
+
+# Function to setup MongoDB configuration
+setup_mongodb_config() {
     # Create MongoDB data directory
     sudo mkdir -p /data/db
-    sudo chown -R mongodb:mongodb /data/db
+    sudo chown -R mongodb:mongodb /data/db 2>/dev/null || sudo chown -R $(whoami) /data/db
     
     # Create MongoDB log directory
     sudo mkdir -p /var/log/mongodb
-    sudo chown -R mongodb:mongodb /var/log/mongodb
+    sudo chown -R mongodb:mongodb /var/log/mongodb 2>/dev/null || sudo chown -R $(whoami) /var/log/mongodb
     
     # Create MongoDB configuration file
     sudo tee /etc/mongod.conf > /dev/null <<EOF
@@ -94,8 +136,9 @@ security:
   authorization: disabled
 EOF
     
-    # Create systemd service file
-    sudo tee /etc/systemd/system/mongod.service > /dev/null <<EOF
+    # Create systemd service file if it doesn't exist
+    if [ ! -f /etc/systemd/system/mongod.service ]; then
+        sudo tee /etc/systemd/system/mongod.service > /dev/null <<EOF
 [Unit]
 Description=MongoDB Database Server
 Documentation=https://docs.mongodb.org/manual
@@ -115,12 +158,11 @@ KillMode=mixed
 [Install]
 WantedBy=multi-user.target
 EOF
-    
-    # Reload systemd and enable MongoDB
-    sudo systemctl daemon-reload
-    sudo systemctl enable mongod
-    
-    print_success "MongoDB installation completed"
+        
+        # Reload systemd and enable MongoDB
+        sudo systemctl daemon-reload
+        sudo systemctl enable mongod 2>/dev/null || true
+    fi
 }
 
 # Function to check if a command exists
