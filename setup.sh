@@ -153,11 +153,31 @@ main() {
     print_status "Setting up MongoDB..."
     
     # Start MongoDB service
-    sudo supervisorctl start mongodb 2>/dev/null || true
-    sleep 3
+    sudo service mongod start 2>/dev/null || sudo service mongodb start 2>/dev/null || true
+    sleep 5
     
     # Wait for MongoDB to be ready
-    wait_for_service "mongodb"
+    local mongo_ready=false
+    local max_attempts=30
+    local attempt=1
+    
+    print_status "Waiting for MongoDB to be ready..."
+    while [ $attempt -le $max_attempts ]; do
+        if mongosh --eval "db.runCommand('ping')" --quiet 2>/dev/null || mongo --eval "db.runCommand('ping')" --quiet 2>/dev/null; then
+            mongo_ready=true
+            print_success "MongoDB is ready!"
+            break
+        fi
+        
+        sleep 2
+        attempt=$((attempt + 1))
+        echo -n "."
+    done
+    
+    if [ "$mongo_ready" = false ]; then
+        print_error "MongoDB failed to start properly"
+        exit 1
+    fi
     
     # Create database and seed data
     print_status "Creating database and seeding test data..."
