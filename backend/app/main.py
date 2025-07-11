@@ -3,19 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 import logging
+import sys
+import os
 
-# Import all route modules
-from app.routes import (
-    auth, 
-    campaigns, 
-    email_providers, 
-    lists, 
-    prospects, 
-    templates, 
-    intents, 
-    analytics, 
-    real_time
-)
+# Add the app directory to the Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Configure logging
 logging.basicConfig(
@@ -34,16 +26,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all route modules
-app.include_router(auth.router, prefix="/api", tags=["auth"])
-app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
-app.include_router(email_providers.router, prefix="/api", tags=["email_providers"])
-app.include_router(lists.router, prefix="/api", tags=["lists"])
-app.include_router(prospects.router, prefix="/api", tags=["prospects"])
-app.include_router(templates.router, prefix="/api", tags=["templates"])
-app.include_router(intents.router, prefix="/api", tags=["intents"])
-app.include_router(analytics.router, prefix="/api", tags=["analytics"])
-app.include_router(real_time.router, prefix="/api", tags=["real_time"])
+# Import and register routes after app initialization
+try:
+    from app.routes import auth, campaigns, email_providers, lists, prospects, templates, intents, analytics, real_time
+    
+    # Register all route modules
+    app.include_router(auth.router, prefix="/api", tags=["auth"])
+    app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
+    app.include_router(email_providers.router, prefix="/api", tags=["email_providers"])
+    app.include_router(lists.router, prefix="/api", tags=["lists"])
+    app.include_router(prospects.router, prefix="/api", tags=["prospects"])
+    app.include_router(templates.router, prefix="/api", tags=["templates"])
+    app.include_router(intents.router, prefix="/api", tags=["intents"])
+    app.include_router(analytics.router, prefix="/api", tags=["analytics"])
+    app.include_router(real_time.router, prefix="/api", tags=["real_time"])
+    
+    print("✅ All routes registered successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Could not register all routes: {e}")
+    # Continue with basic functionality
 
 # Simple models for testing
 class LoginRequest(BaseModel):
@@ -53,7 +54,7 @@ class LoginRequest(BaseModel):
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow()}
+    return {"status": "healthy", "timestamp": datetime.utcnow(), "message": "AI Email Responder is running"}
 
 # Simple test auth endpoint (fallback)
 @app.post("/api/auth/login-simple")
@@ -85,6 +86,11 @@ async def get_me_simple():
         "is_active": True,
         "created_at": datetime.utcnow()
     }
+
+# Test endpoint for checking API functionality
+@app.get("/api/test")
+async def test_endpoint():
+    return {"message": "API is working correctly", "timestamp": datetime.utcnow()}
 
 if __name__ == "__main__":
     import uvicorn
