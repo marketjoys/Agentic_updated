@@ -182,14 +182,25 @@ const EmailProviders = () => {
   const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
 
+    // Handle background click to close modal
+    const handleBackdropClick = (e) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    };
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        onClick={handleBackdropClick}
+      >
         <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">{title}</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
+              type="button"
             >
               <XCircle className="w-6 h-6" />
             </button>
@@ -203,8 +214,9 @@ const EmailProviders = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  autoFocus
                 />
               </div>
               
@@ -213,7 +225,7 @@ const EmailProviders = () => {
                 <select
                   value={formData.provider_type}
                   onChange={(e) => setFormData({...formData, provider_type: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="gmail">Gmail</option>
                   <option value="outlook">Outlook</option>
@@ -230,7 +242,7 @@ const EmailProviders = () => {
                   type="email"
                   value={formData.email_address}
                   onChange={(e) => setFormData({...formData, email_address: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -241,7 +253,7 @@ const EmailProviders = () => {
                   type="text"
                   value={formData.display_name}
                   onChange={(e) => setFormData({...formData, display_name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -255,7 +267,7 @@ const EmailProviders = () => {
                     type="text"
                     value={formData.smtp_host}
                     onChange={(e) => setFormData({...formData, smtp_host: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -266,7 +278,7 @@ const EmailProviders = () => {
                     type="number"
                     value={formData.smtp_port}
                     onChange={(e) => setFormData({...formData, smtp_port: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -279,7 +291,7 @@ const EmailProviders = () => {
                     type="text"
                     value={formData.smtp_username}
                     onChange={(e) => setFormData({...formData, smtp_username: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -290,7 +302,7 @@ const EmailProviders = () => {
                     type="password"
                     value={formData.smtp_password}
                     onChange={(e) => setFormData({...formData, smtp_password: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -318,7 +330,7 @@ const EmailProviders = () => {
                     type="number"
                     value={formData.daily_send_limit}
                     onChange={(e) => setFormData({...formData, daily_send_limit: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="1"
                     max="2000"
                   />
@@ -330,7 +342,7 @@ const EmailProviders = () => {
                     type="number"
                     value={formData.hourly_send_limit}
                     onChange={(e) => setFormData({...formData, hourly_send_limit: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="1"
                     max="200"
                   />
