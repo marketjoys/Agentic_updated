@@ -94,6 +94,14 @@ export const apiService = {
   getThread: (id) => api.get(`/api/threads/${id}`),
   getThreadByProspect: (prospectId) => api.get(`/api/threads/prospect/${prospectId}`),
   addMessageToThread: (threadId, messageData) => api.post(`/api/threads/${threadId}/messages`, messageData),
+
+  // Email Providers
+  getEmailProviders: () => api.get('/api/email-providers'),
+  createEmailProvider: (provider) => api.post('/api/email-providers', provider),
+  updateEmailProvider: (id, provider) => api.put(`/api/email-providers/${id}`, provider),
+  deleteEmailProvider: (id) => api.delete(`/api/email-providers/${id}`),
+  setDefaultEmailProvider: (id) => api.post(`/api/email-providers/${id}/set-default`),
+  testEmailProvider: (id) => api.post(`/api/email-providers/${id}/test-connection`),
 };
 
 export default api;
