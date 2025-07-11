@@ -331,7 +331,9 @@ main() {
     
     # Create database and seed data
     print_status "Creating database and seeding test data..."
-    python3 /app/db_setup.py
+    cd /app
+    source /root/.venv/bin/activate
+    python3 db_setup.py
     print_success "Database setup completed"
     
     # Step 5: Start Backend Service
