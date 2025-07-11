@@ -79,27 +79,27 @@ const Layout = ({ children }) => {
         <div className={`
           fixed inset-y-0 left-0 z-50 w-72 bg-white/80 backdrop-blur-xl shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-gray-100
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:relative lg:flex lg:flex-col
+          lg:translate-x-0 lg:relative lg:flex lg:flex-col overflow-hidden
         `}>
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
+            <div className="flex items-center space-x-3 min-w-0">
+              <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg flex-shrink-0">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold gradient-text">AI Email Responder</h1>
-                <p className="text-xs text-gray-500">Powered by AI</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl font-bold gradient-text truncate">AI Email Responder</h1>
+                <p className="text-xs text-gray-500 truncate">Powered by AI</p>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
           
-          <nav className="p-4 space-y-2 flex-1">
+          <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -108,7 +108,7 @@ const Layout = ({ children }) => {
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={`
-                    flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 rounded-xl group
+                    flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 rounded-xl group min-w-0
                     ${isActive(item.href)
                       ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 shadow-sm border border-blue-100'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -116,7 +116,7 @@ const Layout = ({ children }) => {
                   `}
                 >
                   <div className={`
-                    p-2 rounded-lg mr-3 transition-all duration-200
+                    p-2 rounded-lg mr-3 transition-all duration-200 flex-shrink-0
                     ${isActive(item.href) 
                       ? `bg-gradient-to-r ${item.color} text-white shadow-md` 
                       : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
@@ -124,9 +124,9 @@ const Layout = ({ children }) => {
                   `}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium truncate flex-1">{item.name}</span>
                   {isActive(item.href) && (
-                    <div className="ml-auto w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                    <div className="ml-auto w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex-shrink-0"></div>
                   )}
                 </Link>
               );
