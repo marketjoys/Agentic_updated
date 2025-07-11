@@ -154,7 +154,8 @@ const EmailProviders = () => {
       imap_password: provider.imap_password,
       daily_send_limit: provider.daily_send_limit,
       hourly_send_limit: provider.hourly_send_limit,
-      is_default: provider.is_default
+      is_default: provider.is_default,
+      skip_connection_test: provider.skip_connection_test || false
     });
     setShowEditModal(true);
   };
