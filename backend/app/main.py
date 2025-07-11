@@ -78,12 +78,12 @@ async def get_sample_csv():
         "content": "email,first_name,last_name,company,phone,linkedin_url,company_domain,industry,company_linkedin_url,job_title,location,company_size,annual_revenue,lead_source\njohn.doe@example.com,John,Doe,Example Corp,+1-555-0123,https://linkedin.com/in/john-doe,example.com,Technology,https://linkedin.com/company/example-corp,CEO,San Francisco CA,100-500,$10M-$50M,Website\njane.smith@test.com,Jane,Smith,Test Inc,+1-555-0456,https://linkedin.com/in/jane-smith,test.com,Software,https://linkedin.com/company/test-inc,CTO,New York NY,50-100,$5M-$10M,LinkedIn\nmark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com/in/mark-wilson,demo.org,Consulting,https://linkedin.com/company/demo-solutions,VP Sales,Austin TX,200-500,$25M-$50M,Referral"
     }
 
-# Initialize seed data on startup
-@app.on_event("startup")
-async def startup_event():
-    await init_seed_data()
-    # Start real-time monitoring
-    await real_time_service.start_real_time_monitoring()
+# Initialize seed data on startup (temporarily commented out)
+# @app.on_event("startup")
+# async def startup_event():
+#     await init_seed_data()
+#     # Start real-time monitoring
+#     await real_time_service.start_real_time_monitoring()
 
 if __name__ == "__main__":
     import uvicorn
