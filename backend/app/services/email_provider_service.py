@@ -224,6 +224,10 @@ class EmailProviderService:
         if provider_data["provider_type"] not in [e.value for e in EmailProviderType]:
             return "Invalid provider type"
         
+        # For test providers, don't require SMTP configuration
+        if provider_data.get("skip_connection_test", False):
+            return None
+            
         # Validate SMTP configuration for custom providers
         if provider_data["provider_type"] == EmailProviderType.CUSTOM_SMTP:
             if not provider_data.get("smtp_host") or not provider_data.get("smtp_port"):
