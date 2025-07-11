@@ -209,131 +209,337 @@ const CampaignCard = ({ campaign, onSend }) => {
 };
 
 const CreateCampaignModal = ({ templates, onClose, onSave }) => {
+  const [lists, setLists] = useState([]);
+  const [emailProviders, setEmailProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     template_id: '',
+    list_ids: [],
+    email_provider_id: '',
     max_emails: 1000,
-    schedule: '',
+    schedule_type: 'immediate',
+    start_time: '',
+    follow_up_enabled: true,
     follow_up_intervals: [3, 7, 14],
     follow_up_templates: []
   });
 
+  useEffect(() => {
+    loadModalData();
+  }, []);
+
+  const loadModalData = async () => {
+    try {
+      const [listsResponse, providersResponse] = await Promise.all([
+        apiService.getLists(),
+        apiService.getEmailProviders()
+      ]);
+      setLists(listsResponse.data);
+      setEmailProviders(providersResponse.data);
+    } catch (error) {
+      toast.error('Failed to load campaign data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (formData.list_ids.length === 0) {
+      toast.error('Please select at least one prospect list');
+      return;
+    }
+    if (!formData.email_provider_id) {
+      toast.error('Please select an email provider');
+      return;
+    }
+    
     const campaignData = {
       ...formData,
-      schedule: formData.schedule ? new Date(formData.schedule).toISOString() : null
+      start_time: formData.start_time ? new Date(formData.start_time).toISOString() : null,
+      follow_up_intervals: formData.follow_up_intervals.filter(interval => interval > 0)
     };
     onSave(campaignData);
   };
 
   const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     });
+  };
+
+  const handleListSelection = (listId) => {
+    setFormData(prev => ({
+      ...prev,
+      list_ids: prev.list_ids.includes(listId)
+        ? prev.list_ids.filter(id => id !== listId)
+        : [...prev.list_ids, listId]
+    }));
+  };
+
+  const handleFollowUpTemplateSelection = (templateId) => {
+    setFormData(prev => ({
+      ...prev,
+      follow_up_templates: prev.follow_up_templates.includes(templateId)
+        ? prev.follow_up_templates.filter(id => id !== templateId)
+        : [...prev.follow_up_templates, templateId]
+    }));
+  };
+
+  const handleIntervalChange = (index, value) => {
+    const newIntervals = [...formData.follow_up_intervals];
+    newIntervals[index] = parseInt(value) || 0;
+    setFormData(prev => ({
+      ...prev,
+      follow_up_intervals: newIntervals
+    }));
   };
 
   const initialTemplates = templates.filter(t => t.type === 'initial');
   const followUpTemplates = templates.filter(t => t.type === 'follow_up');
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="fixed inset-0 bg-black opacity-30"></div>
+          <div className="relative bg-white rounded-lg max-w-2xl w-full p-6">
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="fixed inset-0 bg-black opacity-30"></div>
-        <div className="relative bg-white rounded-lg max-w-2xl w-full p-6">
+        <div className="relative bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
           <h3 className="text-lg font-semibold text-secondary-900 mb-4">Create New Campaign</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Campaign Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="input"
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
-                  Initial Template *
-                </label>
-                <select
-                  name="template_id"
-                  value={formData.template_id}
-                  onChange={handleChange}
-                  className="input"
-                  required
-                >
-                  <option value="">Select template</option>
-                  {initialTemplates.map(template => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-secondary-700 mb-1">
-                  Max Emails
-                </label>
-                <input
-                  type="number"
-                  name="max_emails"
-                  value={formData.max_emails}
-                  onChange={handleChange}
-                  className="input"
-                  min="1"
-                />
+            {/* Basic Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Basic Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Campaign Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="input"
+                    required
+                    placeholder="Enter campaign name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Max Emails
+                  </label>
+                  <input
+                    type="number"
+                    name="max_emails"
+                    value={formData.max_emails}
+                    onChange={handleChange}
+                    className="input"
+                    min="1"
+                    max="10000"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-1">
-                Schedule (Optional)
-              </label>
-              <input
-                type="datetime-local"
-                name="schedule"
-                value={formData.schedule}
+            {/* Email Provider Selection */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Email Provider *</h4>
+              <select
+                name="email_provider_id"
+                value={formData.email_provider_id}
                 onChange={handleChange}
-                className="input"
-              />
+                className="input w-full"
+                required
+              >
+                <option value="">Select email provider</option>
+                {emailProviders.map(provider => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.name} ({provider.email_address})
+                  </option>
+                ))}
+              </select>
+              {emailProviders.length === 0 && (
+                <p className="text-sm text-orange-600 mt-2">
+                  No email providers configured. Please add an email provider first.
+                </p>
+              )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Follow-up Intervals (days)
-              </label>
-              <div className="flex space-x-2">
-                <input
-                  type="number"
-                  placeholder="3"
-                  className="input w-20"
-                  defaultValue="3"
-                />
-                <input
-                  type="number"
-                  placeholder="7"
-                  className="input w-20"
-                  defaultValue="7"
-                />
-                <input
-                  type="number"
-                  placeholder="14"
-                  className="input w-20"
-                  defaultValue="14"
-                />
+            {/* Template Selection */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Initial Template *</h4>
+              <select
+                name="template_id"
+                value={formData.template_id}
+                onChange={handleChange}
+                className="input w-full"
+                required
+              >
+                <option value="">Select initial template</option>
+                {initialTemplates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Prospect Lists Selection */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Target Prospect Lists *</h4>
+              <div className="max-h-32 overflow-y-auto space-y-2">
+                {lists.map(list => (
+                  <label key={list.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.list_ids.includes(list.id)}
+                      onChange={() => handleListSelection(list.id)}
+                      className="h-4 w-4 text-primary-600 rounded"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: list.color }}
+                      ></div>
+                      <span className="text-sm text-secondary-700">
+                        {list.name} ({list.prospect_count} prospects)
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {lists.length === 0 && (
+                <p className="text-sm text-orange-600">
+                  No prospect lists available. Please create prospect lists first.
+                </p>
+              )}
+              {formData.list_ids.length > 0 && (
+                <p className="text-sm text-green-600 mt-2">
+                  {formData.list_ids.length} list(s) selected
+                </p>
+              )}
+            </div>
+
+            {/* Scheduling */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Scheduling</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-1">
+                    Schedule Type
+                  </label>
+                  <select
+                    name="schedule_type"
+                    value={formData.schedule_type}
+                    onChange={handleChange}
+                    className="input"
+                  >
+                    <option value="immediate">Send Immediately</option>
+                    <option value="scheduled">Schedule for Later</option>
+                  </select>
+                </div>
+                
+                {formData.schedule_type === 'scheduled' && (
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-1">
+                      Start Time *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="start_time"
+                      value={formData.start_time}
+                      onChange={handleChange}
+                      className="input"
+                      required={formData.schedule_type === 'scheduled'}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
+            {/* Follow-up Configuration */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-secondary-900 mb-3">Follow-up Configuration</h4>
+              <div className="space-y-4">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="follow_up_enabled"
+                    checked={formData.follow_up_enabled}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-600 rounded"
+                  />
+                  <span className="text-sm text-secondary-700">Enable Follow-up Emails</span>
+                </label>
+
+                {formData.follow_up_enabled && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Follow-up Intervals (days)
+                      </label>
+                      <div className="flex space-x-2">
+                        {formData.follow_up_intervals.map((interval, index) => (
+                          <input
+                            key={index}
+                            type="number"
+                            value={interval}
+                            onChange={(e) => handleIntervalChange(index, e.target.value)}
+                            className="input w-20"
+                            min="1"
+                            max="30"
+                            placeholder={`Day ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Follow-up Templates (Optional)
+                      </label>
+                      <div className="max-h-24 overflow-y-auto space-y-2">
+                        {followUpTemplates.map(template => (
+                          <label key={template.id} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.follow_up_templates.includes(template.id)}
+                              onChange={() => handleFollowUpTemplateSelection(template.id)}
+                              className="h-4 w-4 text-primary-600 rounded"
+                            />
+                            <span className="text-sm text-secondary-700">{template.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {followUpTemplates.length === 0 && (
+                        <p className="text-sm text-gray-500">No follow-up templates available</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <button
                 type="button"
                 onClick={onClose}
