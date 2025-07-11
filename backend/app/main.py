@@ -1,15 +1,25 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.middleware.security import SecurityMiddleware, RateLimitMiddleware
 from app.routes import (prospects, lists, templates, campaigns, intents, analytics, 
                        email_processing, email_providers, knowledge_base, 
                        system_prompts, response_verification, smart_follow_up,
-                       context_aware_ai, enhanced_email_processing, real_time)
+                       context_aware_ai, enhanced_email_processing, real_time, auth)
 from app.services.database import db_service
 from app.services.real_time_service import real_time_service
 from app.utils.seed_data import init_seed_data
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Load environment variables
 load_dotenv()
