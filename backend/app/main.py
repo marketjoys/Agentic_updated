@@ -3,11 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 import logging
-import sys
-import os
-
-# Add the app directory to the Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Configure logging
 logging.basicConfig(
@@ -72,30 +67,81 @@ async def get_me_simple():
 async def test_endpoint():
     return {"message": "API is working correctly", "timestamp": datetime.utcnow()}
 
-# Try to import and register routes
-try:
-    # Import route modules
-    from app.routes.campaigns import router as campaigns_router
-    from app.routes.email_providers import router as email_providers_router
-    from app.routes.lists import router as lists_router
-    from app.routes.prospects import router as prospects_router
-    from app.routes.templates import router as templates_router
-    from app.routes.intents import router as intents_router
-    from app.routes.analytics import router as analytics_router
-    
-    # Register route modules
-    app.include_router(campaigns_router, prefix="/api", tags=["campaigns"])
-    app.include_router(email_providers_router, prefix="/api", tags=["email_providers"])
-    app.include_router(lists_router, prefix="/api", tags=["lists"])
-    app.include_router(prospects_router, prefix="/api", tags=["prospects"])
-    app.include_router(templates_router, prefix="/api", tags=["templates"])
-    app.include_router(intents_router, prefix="/api", tags=["intents"])
-    app.include_router(analytics_router, prefix="/api", tags=["analytics"])
-    
-    print("✅ All routes registered successfully")
-except Exception as e:
-    print(f"⚠️  Warning: Could not register all routes: {e}")
-    # Continue with basic functionality
+# Mock data endpoints for testing
+@app.get("/api/campaigns")
+async def get_campaigns():
+    return [
+        {
+            "id": "1",
+            "name": "Test Campaign",
+            "status": "draft",
+            "prospect_count": 10,
+            "max_emails": 1000,
+            "created_at": datetime.utcnow(),
+            "schedule": None
+        }
+    ]
+
+@app.get("/api/email-providers")
+async def get_email_providers():
+    return [
+        {
+            "id": "1",
+            "name": "Test Gmail Provider",
+            "provider_type": "gmail",
+            "email_address": "test@gmail.com",
+            "is_active": True,
+            "is_default": True,
+            "daily_send_limit": 500,
+            "hourly_send_limit": 50,
+            "current_daily_count": 0,
+            "current_hourly_count": 0,
+            "last_sync": datetime.utcnow()
+        }
+    ]
+
+@app.get("/api/lists")
+async def get_lists():
+    return [
+        {
+            "id": "1",
+            "name": "Tech Startups",
+            "description": "Technology startup companies",
+            "color": "#3B82F6",
+            "prospect_count": 5,
+            "tags": ["tech", "startup", "b2b"],
+            "created_at": datetime.utcnow()
+        }
+    ]
+
+@app.get("/api/templates")
+async def get_templates():
+    return [
+        {
+            "id": "1",
+            "name": "Welcome Email",
+            "subject": "Welcome to Our Service, {{first_name}}!",
+            "content": "Hello {{first_name}}, welcome to our service!",
+            "type": "initial",
+            "created_at": datetime.utcnow()
+        }
+    ]
+
+@app.get("/api/prospects")
+async def get_prospects(skip: int = 0, limit: int = 100):
+    return [
+        {
+            "id": "1",
+            "email": "john.doe@techstartup.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "company": "TechStartup Inc",
+            "job_title": "CEO",
+            "industry": "Technology",
+            "status": "active",
+            "created_at": datetime.utcnow()
+        }
+    ]
 
 if __name__ == "__main__":
     import uvicorn
