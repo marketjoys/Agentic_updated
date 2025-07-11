@@ -27,8 +27,19 @@ start_services() {
     
     # Start MongoDB
     print_status "Starting MongoDB..."
-    sudo service mongod start 2>/dev/null || sudo service mongodb start 2>/dev/null
-    sleep 2
+    if sudo systemctl start mongod 2>/dev/null; then
+        print_success "MongoDB started using systemd"
+    elif sudo service mongod start 2>/dev/null; then
+        print_success "MongoDB started using service command"
+    elif sudo service mongodb start 2>/dev/null; then
+        print_success "MongoDB started using mongodb service"
+    else
+        print_status "Starting MongoDB directly..."
+        sudo mkdir -p /data/db
+        sudo chown -R $(whoami) /data/db
+        mongod --dbpath /data/db --fork --logpath /tmp/mongod.log --bind_ip_all 2>/dev/null || true
+    fi
+    sleep 3
     
     # Start Backend
     print_status "Starting Backend..."
