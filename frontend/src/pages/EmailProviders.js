@@ -189,12 +189,20 @@ const EmailProviders = () => {
       }
     };
 
+    // Prevent backdrop click from interfering with form interactions
+    const handleModalClick = (e) => {
+      e.stopPropagation();
+    };
+
     return (
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
         onClick={handleBackdropClick}
       >
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div 
+          className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          onClick={handleModalClick}
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">{title}</h2>
             <button
@@ -214,9 +222,10 @@ const EmailProviders = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                   autoFocus
+                  tabIndex={0}
                 />
               </div>
               
@@ -225,7 +234,7 @@ const EmailProviders = () => {
                 <select
                   value={formData.provider_type}
                   onChange={(e) => setFormData({...formData, provider_type: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="gmail">Gmail</option>
                   <option value="outlook">Outlook</option>
@@ -242,7 +251,7 @@ const EmailProviders = () => {
                   type="email"
                   value={formData.email_address}
                   onChange={(e) => setFormData({...formData, email_address: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
