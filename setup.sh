@@ -38,6 +38,91 @@ print_header() {
 ╚══════════════════════════════════════════════════════════════╝${NC}"
 }
 
+# Function to install MongoDB
+install_mongodb() {
+    print_status "Installing MongoDB Community Edition..."
+    
+    # Update package list
+    sudo apt-get update -qq
+    
+    # Install required packages
+    sudo apt-get install -y wget curl gnupg software-properties-common
+    
+    # Import MongoDB public GPG key
+    wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+    
+    # Add MongoDB APT repository
+    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+    
+    # Update package list with MongoDB repository
+    sudo apt-get update -qq
+    
+    # Install MongoDB
+    sudo apt-get install -y mongodb-org
+    
+    # Create MongoDB data directory
+    sudo mkdir -p /data/db
+    sudo chown -R mongodb:mongodb /data/db
+    
+    # Create MongoDB log directory
+    sudo mkdir -p /var/log/mongodb
+    sudo chown -R mongodb:mongodb /var/log/mongodb
+    
+    # Create MongoDB configuration file
+    sudo tee /etc/mongod.conf > /dev/null <<EOF
+# MongoDB configuration file
+storage:
+  dbPath: /data/db
+  journal:
+    enabled: true
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+
+net:
+  port: 27017
+  bindIp: 127.0.0.1,0.0.0.0
+
+processManagement:
+  fork: true
+  pidFilePath: /var/run/mongodb/mongod.pid
+  timeZoneInfo: /usr/share/zoneinfo
+
+security:
+  authorization: disabled
+EOF
+    
+    # Create systemd service file
+    sudo tee /etc/systemd/system/mongod.service > /dev/null <<EOF
+[Unit]
+Description=MongoDB Database Server
+Documentation=https://docs.mongodb.org/manual
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=mongodb
+Group=mongodb
+Type=forking
+ExecStart=/usr/bin/mongod --config /etc/mongod.conf
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    # Reload systemd and enable MongoDB
+    sudo systemctl daemon-reload
+    sudo systemctl enable mongod
+    
+    print_success "MongoDB installation completed"
+}
+
 # Function to check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
