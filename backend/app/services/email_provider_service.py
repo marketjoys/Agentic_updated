@@ -62,10 +62,16 @@ class EmailProviderService:
             if validation_error:
                 return None, validation_error
             
-            # Test connection
-            connection_error = await self._test_provider_connection(provider_data)
-            if connection_error:
-                return None, f"Connection test failed: {connection_error}"
+            # Test connection only if credentials are provided and skip_test is not set
+            skip_test = provider_data.get("skip_connection_test", False)
+            if not skip_test and provider_data.get("smtp_password") and provider_data.get("imap_password"):
+                connection_error = await self._test_provider_connection(provider_data)
+                if connection_error:
+                    # Log the error but don't fail - allow test providers
+                    logger.warning(f"Connection test failed for provider {provider_id}: {connection_error}")
+                    provider_data["connection_test_failed"] = True
+                    provider_data["connection_error"] = connection_error
+                    provider_data["is_active"] = False  # Mark as inactive until credentials are fixed
             
             # Save to database
             result = await db_service.create_email_provider(provider_data)
