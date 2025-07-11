@@ -139,9 +139,11 @@ class GroqService:
                                subject: str, 
                                classified_intents: List[Dict], 
                                conversation_context: List[Dict] = None,
-                               prospect_data: Dict = None) -> Dict:
+                               prospect_data: Dict = None,
+                               use_knowledge_base: bool = True,
+                               use_custom_prompt: bool = True) -> Dict:
         """
-        Generate contextual response using Groq AI
+        Enhanced response generation with knowledge base integration and custom prompts
         """
         try:
             # Convert datetime objects to strings in prospect_data
@@ -150,13 +152,50 @@ class GroqService:
                     if hasattr(value, 'isoformat'):  # datetime object
                         prospect_data[key] = value.isoformat()
             
+            # Get custom system prompt for response generation
+            system_prompt = ""
+            if use_custom_prompt:
+                custom_prompt = await db_service.get_default_system_prompt("response_generation")
+                if custom_prompt:
+                    system_prompt = custom_prompt["prompt_text"]
+                    # Update usage count
+                    await db_service.update_system_prompt(custom_prompt["id"], {
+                        "usage_count": custom_prompt.get("usage_count", 0) + 1,
+                        "last_used": datetime.utcnow()
+                    })
+            
+            # Fallback to default prompt
+            if not system_prompt:
+                system_prompt = "You are a professional email response generator. Always respond with valid JSON and create engaging, contextual email responses."
+            
+            # Get relevant knowledge base articles
+            knowledge_context = ""
+            knowledge_used = []
+            if use_knowledge_base and classified_intents:
+                for intent in classified_intents:
+                    intent_name = intent.get("intent_name", "")
+                    relevant_articles = await knowledge_base_service.get_relevant_knowledge_for_intent(
+                        intent_name, email_content[:200]
+                    )
+                    
+                    for article in relevant_articles[:3]:  # Top 3 articles per intent
+                        knowledge_context += f"\n**{article['title']}**\n{article['content'][:300]}...\n"
+                        knowledge_used.append(article['id'])
+            
+            # Add personalization knowledge
+            if use_knowledge_base and prospect_data:
+                personalization_articles = await knowledge_base_service.get_knowledge_for_personalization(prospect_data)
+                for article in personalization_articles[:2]:  # Top 2 personalization articles
+                    knowledge_context += f"\n**{article['title']}**\n{article['content'][:200]}...\n"
+                    knowledge_used.append(article['id'])
+            
             # Get templates for the classified intents
             templates = await self._get_templates_for_intents(classified_intents)
             
             if not templates:
                 return {"error": "No templates found for classified intents"}
             
-            # Build context from conversation history
+            # Build enhanced context from conversation history
             context_text = ""
             if conversation_context:
                 context_text = "\n\nConversation History:\n"
@@ -180,35 +219,18 @@ class GroqService:
                 prospect_context += f"- Company: {prospect_data.get('company', '')}\n"
                 prospect_context += f"- Job Title: {prospect_data.get('job_title', '')}\n"
                 prospect_context += f"- Industry: {prospect_data.get('industry', '')}\n"
+                prospect_context += f"- Location: {prospect_data.get('location', '')}\n"
             
-            # Convert templates to JSON-safe format
-            safe_templates = []
-            for template in templates:
-                safe_template = {}
-                for key, value in template.items():
-                    if hasattr(value, 'isoformat'):  # datetime object
-                        safe_template[key] = value.isoformat()
-                    else:
-                        safe_template[key] = value
-                safe_templates.append(safe_template)
+            # Convert data to JSON-safe format
+            safe_templates = self._make_json_safe(templates)
+            safe_intents = self._make_json_safe(classified_intents)
             
-            # Convert classified_intents to JSON-safe format  
-            safe_intents = []
-            for intent in classified_intents:
-                safe_intent = {}
-                for key, value in intent.items():
-                    if hasattr(value, 'isoformat'):  # datetime object
-                        safe_intent[key] = value.isoformat()
-                    else:
-                        safe_intent[key] = value
-                safe_intents.append(safe_intent)
-            
-            # Create response generation prompt with enhanced context handling
+            # Create enhanced response generation prompt
             prompt = f"""
-            Generate a personalized email response that addresses ALL identified intents and uses conversation context effectively.
+            Generate a personalized, professional email response that addresses ALL identified intents using the provided knowledge base and context.
 
             Original Email Subject: {subject}
-            Original Email Content: {email_content}
+            Original Email Content: {email_content[:500]}
 
             Classified Intents (prioritized by confidence):
             {json.dumps(safe_intents, indent=2)}
@@ -219,37 +241,43 @@ class GroqService:
             {context_text}
             {prospect_context}
 
-            Instructions:
-            1. Create a comprehensive response that addresses ALL identified intents
-            2. Use conversation history to maintain context and avoid repetition
-            3. If multiple intents are present, structure response to address each one
-            4. Personalize using prospect data (name, company, industry, etc.)
-            5. Use appropriate templates as guidance but adapt for multiple intents
-            6. Maintain professional yet warm tone throughout
-            7. Include relevant call-to-action for the highest confidence intent
-            8. Reference previous conversations if context is available
+            Knowledge Base Context:
+            {knowledge_context}
 
-            Multi-Intent Handling:
-            - If "Positive Response" + "Request More Info": Express appreciation for interest, then provide requested information
-            - If "Questions" + "Demo Request": Answer questions briefly, then focus on scheduling demo
-            - If multiple intents conflict, prioritize by confidence score
+            Enhanced Instructions:
+            1. Create a comprehensive response that addresses ALL identified intents
+            2. Use the knowledge base information to provide accurate, helpful details
+            3. Personalize extensively using prospect data (name, company, industry, job title)
+            4. Maintain conversation context and avoid repetition from previous messages
+            5. Use templates as guidance but enhance with knowledge base information
+            6. Structure response for multiple intents: greeting → address each intent → call to action
+            7. Include relevant knowledge base insights naturally in the response
+            8. Match the tone and formality level of the original email
+            9. End with appropriate call-to-action based on highest confidence intent
+
+            Multi-Intent Handling Examples:
+            - "Interest + Questions": Express appreciation, then provide detailed answers with knowledge base insights
+            - "Pricing + Demo Request": Acknowledge interest, provide pricing context, focus on scheduling demo
+            - "Objection + Request Info": Address concerns with knowledge base facts, then provide requested information
 
             Response Format:
             {{
-                "subject": "Contextual response subject line that reflects main intent",
-                "content": "Full HTML email content addressing all intents",
+                "subject": "Contextual response subject that reflects main intent and personalization",
+                "content": "Full HTML email content addressing all intents with knowledge integration",
                 "intents_addressed": ["intent1", "intent2"],
                 "template_used": "primary_template_id",
+                "knowledge_used": {knowledge_used},
                 "confidence": 0.85,
-                "reasoning": "Explanation of how multiple intents were handled",
-                "conversation_context_used": true/false
+                "reasoning": "Explanation of how multiple intents were handled and knowledge was integrated",
+                "conversation_context_used": true/false,
+                "personalization_elements": ["element1", "element2"]
             }}
             """
             
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a professional email response generator. Always respond with valid JSON and create engaging, contextual email responses."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.4,
@@ -261,19 +289,20 @@ class GroqService:
                 
                 # Try to extract JSON from the response
                 if '{' in response_content and '}' in response_content:
-                    # Find the JSON part
                     start_idx = response_content.find('{')
                     end_idx = response_content.rfind('}') + 1
                     json_str = response_content[start_idx:end_idx]
                     result = json.loads(json_str)
                 else:
                     result = json.loads(response_content)
-                    
+                
+                # Add knowledge used to result
+                result["knowledge_used"] = list(set(knowledge_used))
                 return result
                     
             except json.JSONDecodeError:
                 print(f"Failed to parse JSON from response: {response_content}")
-                return {"error": "Failed to parse AI response"}
+                return {"error": "Failed to parse AI response", "raw_response": response_content}
             
         except Exception as e:
             print(f"Error generating response: {str(e)}")
