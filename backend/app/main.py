@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import (prospects, lists, templates, campaigns, intents, analytics, 
                        email_processing, email_providers, knowledge_base, 
-                       system_prompts, response_verification)
+                       system_prompts, response_verification, smart_follow_up)
 from app.services.database import db_service
 from app.utils.seed_data import init_seed_data
 from datetime import datetime
