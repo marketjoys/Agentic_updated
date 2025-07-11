@@ -303,38 +303,18 @@ main() {
     elif sudo service mongodb start 2>/dev/null; then
         print_success "MongoDB started using mongodb service"
     else
-        # Try starting MongoDB directly
+        # Try starting MongoDB directly with better error handling
         print_status "Starting MongoDB directly..."
-        sudo -u mongodb mongod --config /etc/mongod.conf &
-        sleep 3
-    fi
-    
-    # Wait for MongoDB to be ready
-    local mongo_ready=false
-    local max_attempts=30
-    local attempt=1
-    
-    print_status "Waiting for MongoDB to be ready..."
-    while [ $attempt -le $max_attempts ]; do
-        if mongosh --eval "db.runCommand('ping')" --quiet 2>/dev/null || mongo --eval "db.runCommand('ping')" --quiet 2>/dev/null; then
-            mongo_ready=true
-            print_success "MongoDB is ready!"
-            break
-        fi
-        
-        sleep 2
-        attempt=$((attempt + 1))
-        echo -n "."
-    done
-    
-    if [ "$mongo_ready" = false ]; then
-        print_error "MongoDB failed to start properly"
-        print_status "Trying alternative MongoDB startup..."
-        
-        # Try starting MongoDB with basic configuration
         sudo mkdir -p /data/db
         sudo chown -R $(whoami) /data/db
-        mongod --dbpath /data/db --fork --logpath /tmp/mongod.log --bind_ip_all
+        
+        # Kill any existing mongod processes
+        sudo pkill mongod 2>/dev/null || true
+        sleep 2
+        
+        # Start MongoDB with simple configuration
+        mongod --dbpath /data/db --logpath /tmp/mongod.log --bind_ip_all --port 27017 --fork 2>/dev/null || \
+        mongod --dbpath /data/db --bind_ip_all --port 27017 > /tmp/mongod.log 2>&1 &
         
         sleep 5
         
@@ -343,6 +323,8 @@ main() {
             print_success "MongoDB started with alternative method"
         else
             print_error "MongoDB failed to start with all methods"
+            print_status "MongoDB log output:"
+            cat /tmp/mongod.log | tail -10
             exit 1
         fi
     fi
