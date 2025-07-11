@@ -45,25 +45,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(prospects.router, prefix="/api", tags=["prospects"])
-app.include_router(lists.router, prefix="/api", tags=["lists"])
-app.include_router(templates.router, prefix="/api", tags=["templates"])
-app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
-app.include_router(intents.router, prefix="/api", tags=["intents"])
-app.include_router(analytics.router, prefix="/api", tags=["analytics"])
-app.include_router(email_processing.router, prefix="/api", tags=["email-processing"])
+# Include routers (temporarily commented out to isolate middleware issue)
+# app.include_router(prospects.router, prefix="/api", tags=["prospects"])
+# app.include_router(lists.router, prefix="/api", tags=["lists"])
+# app.include_router(templates.router, prefix="/api", tags=["templates"])
+# app.include_router(campaigns.router, prefix="/api", tags=["campaigns"])
+# app.include_router(intents.router, prefix="/api", tags=["intents"])
+# app.include_router(analytics.router, prefix="/api", tags=["analytics"])
+# app.include_router(email_processing.router, prefix="/api", tags=["email-processing"])
 
-# New enhanced routers
-app.include_router(email_providers.router, prefix="/api", tags=["email-providers"])
-app.include_router(knowledge_base.router, prefix="/api", tags=["knowledge-base"])
-app.include_router(system_prompts.router, prefix="/api", tags=["system-prompts"])
-app.include_router(response_verification.router, prefix="/api", tags=["response-verification"])
-app.include_router(smart_follow_up.router, prefix="/api", tags=["smart-follow-up"])
-app.include_router(context_aware_ai.router, prefix="/api", tags=["context-aware-ai"])
-app.include_router(enhanced_email_processing.router, prefix="/api", tags=["enhanced-email-processing"])
-app.include_router(real_time.router, prefix="/api", tags=["real-time"])
-app.include_router(auth.router, prefix="/api", tags=["authentication"])
+# New enhanced routers (also temporarily commented out)
+# app.include_router(email_providers.router, prefix="/api", tags=["email-providers"])
+# app.include_router(knowledge_base.router, prefix="/api", tags=["knowledge-base"])
+# app.include_router(system_prompts.router, prefix="/api", tags=["system-prompts"])
+# app.include_router(response_verification.router, prefix="/api", tags=["response-verification"])
+# app.include_router(smart_follow_up.router, prefix="/api", tags=["smart-follow-up"])
+# app.include_router(context_aware_ai.router, prefix="/api", tags=["context-aware-ai"])
+# app.include_router(enhanced_email_processing.router, prefix="/api", tags=["enhanced-email-processing"])
+# app.include_router(real_time.router, prefix="/api", tags=["real-time"])
+# app.include_router(auth.router, prefix="/api", tags=["authentication"])
 
 # Health check endpoint
 @app.get("/api/health")
