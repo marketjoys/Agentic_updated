@@ -10,13 +10,14 @@ Run the complete setup with a single command:
 
 This script will:
 
-1. ✅ **Check system dependencies** (Python, Node.js, MongoDB)
-2. 🐍 **Install Python dependencies** (FastAPI, MongoDB drivers, AI libraries)
-3. 🌟 **Install Node.js dependencies** (React, Tailwind, Axios)
-4. 🗄️ **Setup MongoDB database** with test data
-5. 👤 **Create test user account** (testuser/testpass123)
-6. 🚀 **Start all services** (Backend, Frontend, MongoDB)
-7. 🔍 **Perform health checks** and display status
+1. ✅ **Check system dependencies** (Python, Node.js, install MongoDB if needed)
+2. 🗄️ **Install MongoDB** if not already present (Community Edition)
+3. 🐍 **Install Python dependencies** (FastAPI, MongoDB drivers, AI libraries)
+4. 🌟 **Install Node.js dependencies** (React, Tailwind, Axios)
+5. 🗄️ **Setup MongoDB database** with test data
+6. 👤 **Create test user account** (testuser/testpass123)
+7. 🚀 **Start all services** (Backend, Frontend, MongoDB)
+8. 🔍 **Perform health checks** and display status
 
 ## Access Information
 
