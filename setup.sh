@@ -194,24 +194,29 @@ main() {
     # Step 5: Start Backend Service
     print_status "Starting backend service..."
     
-    # Kill any existing backend process
-    pkill -f "uvicorn.*backend.server" 2>/dev/null || true
-    sleep 2
-    
-    # Start backend in background
-    cd /app
-    source /root/.venv/bin/activate
-    nohup uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
-    BACKEND_PID=$!
-    sleep 5
-    
-    # Check if backend is running
-    if ps -p $BACKEND_PID > /dev/null; then
-        print_success "Backend service started (PID: $BACKEND_PID)"
+    # Check if backend is already running
+    if ps aux | grep -v grep | grep 'uvicorn.*backend.server' >/dev/null; then
+        print_success "Backend service is already running"
     else
-        print_error "Backend service failed to start"
-        cat /tmp/backend.log
-        exit 1
+        # Kill any existing backend process
+        pkill -f "uvicorn.*backend.server" 2>/dev/null || true
+        sleep 2
+        
+        # Start backend in background
+        cd /app
+        source /root/.venv/bin/activate
+        nohup uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
+        BACKEND_PID=$!
+        sleep 5
+        
+        # Check if backend is running
+        if ps -p $BACKEND_PID > /dev/null; then
+            print_success "Backend service started (PID: $BACKEND_PID)"
+        else
+            print_error "Backend service failed to start"
+            cat /tmp/backend.log
+            exit 1
+        fi
     fi
     
     # Step 6: Start Frontend Service
