@@ -23,6 +23,7 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/real-time" element={<RealTimeDashboard />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/prospects" element={<Prospects />} />
             <Route path="/lists" element={<Lists />} />
