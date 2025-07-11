@@ -345,6 +345,16 @@ const EmailProviders = () => {
                 />
                 Set as default provider
               </label>
+              
+              <label className="flex items-center mt-3">
+                <input
+                  type="checkbox"
+                  checked={formData.skip_connection_test}
+                  onChange={(e) => setFormData({...formData, skip_connection_test: e.target.checked})}
+                  className="mr-2"
+                />
+                Skip connection test (for demo/test purposes)
+              </label>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
