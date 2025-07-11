@@ -134,7 +134,30 @@ const Layout = ({ children }) => {
           </nav>
           
           {/* Sidebar Footer */}
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-gray-100 space-y-4">
+            {/* User Profile */}
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                <User className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.full_name || user?.username || 'User'}
+                </p>
+                <p className="text-xs text-gray-600 truncate">
+                  {user?.email || 'No email'}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* AI Status */}
             <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
