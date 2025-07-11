@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import RealTimeDashboard from './components/RealTimeDashboard';
 import Campaigns from './pages/Campaigns';
 import Prospects from './pages/Prospects';
 import Lists from './pages/Lists';
