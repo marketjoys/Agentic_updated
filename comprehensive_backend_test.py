@@ -13,7 +13,7 @@ from datetime import datetime
 import sys
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://22cf3ec8-515a-483d-834f-96892586b6a5.preview.emergentagent.com"
+BACKEND_URL = "https://65433d58-2df0-4177-9265-cdb018a7c8d7.preview.emergentagent.com"
 WS_URL = "wss://dd66e847-862b-4e28-9b0c-72de96723a60.preview.emergentagent.com"
 
 class ComprehensiveBackendTester:
