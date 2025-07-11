@@ -11,7 +11,12 @@ import {
   X,
   Sparkles,
   FolderOpen,
-  Mail
+  Mail,
+  Settings,
+  BookOpen,
+  MessageSquare,
+  CheckCircle,
+  Server
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -20,6 +25,8 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
+    
+    // Core Features
     { name: 'Email Processing', href: '/email-processing', icon: Mail, color: 'from-emerald-500 to-emerald-600' },
     { name: 'Campaigns', href: '/campaigns', icon: Send, color: 'from-purple-500 to-purple-600' },
     { name: 'Prospects', href: '/prospects', icon: Users, color: 'from-green-500 to-green-600' },
@@ -27,6 +34,12 @@ const Layout = ({ children }) => {
     { name: 'Templates', href: '/templates', icon: FileText, color: 'from-orange-500 to-orange-600' },
     { name: 'Intents', href: '/intents', icon: Brain, color: 'from-pink-500 to-pink-600' },
     { name: 'Analytics', href: '/analytics', icon: BarChart3, color: 'from-indigo-500 to-indigo-600' },
+    
+    // Advanced Features
+    { name: 'Email Providers', href: '/email-providers', icon: Server, color: 'from-cyan-500 to-cyan-600' },
+    { name: 'Knowledge Base', href: '/knowledge-base', icon: BookOpen, color: 'from-teal-500 to-teal-600' },
+    { name: 'System Prompts', href: '/system-prompts', icon: MessageSquare, color: 'from-amber-500 to-amber-600' },
+    { name: 'Response Verification', href: '/response-verification', icon: CheckCircle, color: 'from-rose-500 to-rose-600' },
   ];
 
   const isActive = (path) => location.pathname === path;
