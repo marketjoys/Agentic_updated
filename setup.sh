@@ -52,7 +52,7 @@ wait_for_service() {
     print_status "Waiting for $service_name to be ready..."
     
     while [ $attempt -le $max_attempts ]; do
-        if sudo supervisorctl status $service_name | grep -q "RUNNING"; then
+        if service $service_name status | grep -q "running\|active"; then
             print_success "$service_name is ready!"
             return 0
         fi
