@@ -107,7 +107,18 @@ If setup fails:
 1. **Check logs**: `tail -f /tmp/backend.log` or `tail -f /tmp/frontend.log`
 2. **Verify ports**: Make sure ports 3000 and 8001 are available
 3. **Check MongoDB**: Ensure MongoDB service is running
-4. **Re-run setup**: The script is idempotent - safe to run multiple times
+4. **MongoDB installation issues**: The script tries multiple installation methods
+5. **Permission issues**: Make sure you have sudo access
+6. **Network issues**: Check internet connectivity for package downloads
+7. **Re-run setup**: The script is idempotent - safe to run multiple times
+
+### MongoDB Specific Issues
+
+- **Installation fails**: Script tries official repo first, then Ubuntu repo
+- **Service won't start**: Script attempts systemd, service command, then direct process
+- **Permission errors**: Script creates necessary directories with proper ownership
+- **Port conflicts**: MongoDB uses port 27017 by default
+- **Log files**: Check `/tmp/mongod.log` for MongoDB startup errors
 
 ## Features Available
 
