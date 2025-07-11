@@ -335,6 +335,60 @@ class GroqService:
         
         return templates
     
+    def _make_json_safe(self, data):
+        """Convert data to JSON-safe format"""
+        if isinstance(data, list):
+            return [self._make_json_safe(item) for item in data]
+        elif isinstance(data, dict):
+            safe_data = {}
+            for key, value in data.items():
+                if hasattr(value, 'isoformat'):  # datetime object
+                    safe_data[key] = value.isoformat()
+                else:
+                    safe_data[key] = value
+            return safe_data
+        else:
+            return data
+    
+    def _fallback_intent_parsing(self, response_content: str, intents: List[Dict], email_content: str) -> Dict:
+        """Fallback intent parsing when JSON parsing fails"""
+        try:
+            result = {"intents": []}
+            content_lower = response_content.lower()
+            email_lower = email_content.lower()
+            
+            # Check for intent keywords in the response
+            for intent in intents:
+                intent_name = intent["name"].lower()
+                if intent_name in content_lower:
+                    result["intents"].append({
+                        "intent_id": intent["id"],
+                        "intent_name": intent["name"],
+                        "confidence": 0.7,
+                        "reasoning": "Detected based on keyword match in AI response"
+                    })
+            
+            # If no intents found in response, check email content for keywords
+            if not result["intents"]:
+                for intent in intents:
+                    for keyword in intent.get("keywords", []):
+                        if keyword.lower() in email_lower:
+                            result["intents"].append({
+                                "intent_id": intent["id"],
+                                "intent_name": intent["name"],
+                                "confidence": 0.6,
+                                "reasoning": f"Keyword match in email: {keyword}"
+                            })
+                            break
+                    if result["intents"]:
+                        break
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error in fallback parsing: {str(e)}")
+            return {"intents": []}
+    
     async def analyze_email_sentiment(self, email_content: str) -> Dict:
         """Analyze email sentiment and urgency"""
         try:
