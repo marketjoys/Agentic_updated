@@ -79,6 +79,16 @@ async def get_me():
         "created_at": datetime.utcnow()
     }
 
+@app.post("/api/auth/refresh")
+async def refresh_token():
+    # Return a new token for token refresh
+    return {"access_token": "test_token_12345", "token_type": "bearer"}
+
+@app.post("/api/auth/logout")
+async def logout():
+    # Simple logout endpoint
+    return {"message": "Logged out successfully"}
+
 # Mock data endpoints
 @app.get("/api/campaigns")
 async def get_campaigns():
