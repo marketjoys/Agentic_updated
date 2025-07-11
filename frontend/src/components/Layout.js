@@ -26,6 +26,11 @@ import {
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
