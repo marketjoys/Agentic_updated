@@ -19,10 +19,10 @@ class GroqService:
         self.client = Groq(api_key=api_key)
         self.model = "llama3-8b-8192"
         
-    async def classify_intents(self, email_content: str, subject: str = "") -> List[Dict]:
+    async def classify_intents(self, email_content: str, subject: str = "", 
+                              use_custom_prompt: bool = True) -> List[Dict]:
         """
-        Classify email intents using Groq AI
-        Returns up to 3 intents with confidence scores
+        Enhanced intent classification using custom system prompts
         """
         try:
             # Get available intents from database
@@ -30,6 +30,22 @@ class GroqService:
             
             if not intents:
                 return []
+            
+            # Get custom system prompt for intent classification
+            system_prompt = ""
+            if use_custom_prompt:
+                custom_prompt = await db_service.get_default_system_prompt("intent_classification")
+                if custom_prompt:
+                    system_prompt = custom_prompt["prompt_text"]
+                    # Update usage count
+                    await db_service.update_system_prompt(custom_prompt["id"], {
+                        "usage_count": custom_prompt.get("usage_count", 0) + 1,
+                        "last_used": datetime.utcnow()
+                    })
+            
+            # Fallback to default prompt if no custom prompt found
+            if not system_prompt:
+                system_prompt = "You are an expert email intent classifier. Always respond with valid JSON."
             
             # Prepare intent descriptions for AI
             intent_descriptions = []
@@ -41,7 +57,7 @@ class GroqService:
                     "keywords": intent.get("keywords", [])
                 })
             
-            # Create classification prompt with enhanced multi-intent detection
+            # Create enhanced classification prompt
             prompt = f"""
             Analyze the following email and classify it into up to 3 most relevant intents from the available options. 
             Pay special attention to detecting multiple intents in a single email.
@@ -76,10 +92,11 @@ class GroqService:
             }}
             """
             
+            # Use custom system prompt or default
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are an expert email intent classifier. Always respond with valid JSON."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
@@ -92,7 +109,6 @@ class GroqService:
                 
                 # Try to extract JSON from the response
                 if '{' in response_content and '}' in response_content:
-                    # Find the JSON part
                     start_idx = response_content.find('{')
                     end_idx = response_content.rfind('}') + 1
                     json_str = response_content[start_idx:end_idx]
@@ -101,40 +117,8 @@ class GroqService:
                     result = json.loads(response_content)
                     
             except json.JSONDecodeError:
-                # If JSON parsing fails, try to extract content and create a manual response
-                content = response.choices[0].message.content
-                print(f"Failed to parse JSON from Groq response: {content}")
-                
-                # Try to find intents mentioned in the response
-                result = {"intents": []}
-                content_lower = content.lower()
-                
-                # Check for intent keywords in the response
-                for intent in intents:
-                    intent_name = intent["name"].lower()
-                    if intent_name in content_lower:
-                        result["intents"].append({
-                            "intent_id": intent["id"],
-                            "intent_name": intent["name"],
-                            "confidence": 0.7,
-                            "reasoning": "Detected based on keyword match"
-                        })
-                
-                # If no intents found, create a fallback based on keywords
-                if not result["intents"]:
-                    email_lower = email_content.lower()
-                    for intent in intents:
-                        for keyword in intent.get("keywords", []):
-                            if keyword.lower() in email_lower:
-                                result["intents"].append({
-                                    "intent_id": intent["id"],
-                                    "intent_name": intent["name"],
-                                    "confidence": 0.6,
-                                    "reasoning": f"Keyword match: {keyword}"
-                                })
-                                break
-                        if result["intents"]:
-                            break
+                # Fallback parsing
+                result = self._fallback_intent_parsing(response_content, intents, email_content)
             
             # Filter and limit to top 3 intents
             classified_intents = []
