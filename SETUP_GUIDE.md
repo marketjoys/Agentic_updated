@@ -33,15 +33,7 @@ After setup completes, you can access:
 - **Password**: `testpass123`
 - **Email**: `test@example.com`
 
-## MongoDB Installation
-
-The setup script automatically handles MongoDB installation:
-
-- **Checks if MongoDB is installed** - skips installation if already present
-- **Installs MongoDB Community Edition** - tries official repository first
-- **Fallback installation** - uses Ubuntu repository if official fails
-- **Configures MongoDB** - sets up proper data directories and configuration
-- **Starts MongoDB service** - handles multiple startup methods
+## Service Management
 
 ### MongoDB Installation Methods
 
