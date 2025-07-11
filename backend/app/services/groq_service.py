@@ -389,5 +389,66 @@ class GroqService:
             print(f"Error in fallback parsing: {str(e)}")
             return {"intents": []}
     
+    async def analyze_email_sentiment(self, email_content: str, subject: str = "") -> Dict:
+        """
+        Analyze email sentiment, urgency, and emotion
+        """
+        try:
+            prompt = f"""
+            Analyze the following email for sentiment, urgency, and emotional tone:
+
+            Subject: {subject}
+            Content: {email_content}
+
+            Please provide a JSON response with:
+            1. sentiment: positive/negative/neutral
+            2. urgency: high/medium/low
+            3. emotion_detected: primary emotion (e.g., excited, frustrated, curious, concerned)
+            4. confidence: 0.0-1.0 confidence score
+            5. reasoning: brief explanation of your analysis
+
+            Format:
+            {{
+                "sentiment": "positive/negative/neutral",
+                "urgency": "high/medium/low",
+                "emotion_detected": "primary_emotion",
+                "confidence": 0.85,
+                "reasoning": "Brief explanation of the analysis"
+            }}
+            """
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are an expert email sentiment analyzer. Always respond with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            
+            response_content = response.choices[0].message.content.strip()
+            
+            # Try to extract JSON from the response
+            if '{' in response_content and '}' in response_content:
+                start_idx = response_content.find('{')
+                end_idx = response_content.rfind('}') + 1
+                json_str = response_content[start_idx:end_idx]
+                result = json.loads(json_str)
+            else:
+                result = json.loads(response_content)
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error analyzing email sentiment: {str(e)}")
+            return {
+                "sentiment": "neutral",
+                "urgency": "medium",
+                "emotion_detected": "neutral",
+                "confidence": 0.5,
+                "reasoning": f"Error in sentiment analysis: {str(e)}"
+            }
+    
 # Create global Groq service instance
 groq_service = GroqService()
