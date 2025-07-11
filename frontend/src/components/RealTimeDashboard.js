@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Wifi, WifiOff, Users, Mail, Target, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Activity, Wifi, WifiOff, Users, Mail, Target, AlertCircle, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { apiService } from '../services/api';
+import toast from 'react-hot-toast';
 
 const RealTimeDashboard = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -8,10 +10,58 @@ const RealTimeDashboard = () => {
   const [websocket, setWebsocket] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [usePolling, setUsePolling] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize WebSocket connection
+  // Initialize connection (WebSocket first, fallback to polling)
   useEffect(() => {
-    const connectWebSocket = () => {
+    const initializeConnection = async () => {
+      try {
+        // First try WebSocket
+        await connectWebSocket();
+      } catch (error) {
+        console.log('WebSocket failed, falling back to polling');
+        setUsePolling(true);
+        await startPolling();
+      }
+    };
+
+    initializeConnection();
+
+    return () => {
+      if (websocket) {
+        websocket.close();
+      }
+    };
+  }, []);
+
+  // Polling fallback when WebSocket fails
+  useEffect(() => {
+    if (usePolling) {
+      const interval = setInterval(async () => {
+        await fetchMetrics();
+      }, 5000); // Poll every 5 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [usePolling]);
+
+  const fetchMetrics = async () => {
+    try {
+      const response = await apiService.get('/api/real-time/dashboard-metrics');
+      setMetrics(response.data.metrics);
+      setLastUpdate(new Date());
+      setIsConnected(true);
+      setConnectionStatus('Connected (Polling)');
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      setIsConnected(false);
+      setConnectionStatus('Disconnected');
+    }
+  };
+
+  const connectWebSocket = async () => {
+    return new Promise((resolve, reject) => {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
       
       // Construct WebSocket URL based on backend URL
@@ -21,7 +71,6 @@ const RealTimeDashboard = () => {
       } else if (backendUrl.startsWith('http://')) {
         wsUrl = backendUrl.replace('http://', 'ws://');
       } else {
-        // Handle case where URL doesn't have protocol
         wsUrl = `ws://${backendUrl}`;
       }
       
@@ -33,8 +82,9 @@ const RealTimeDashboard = () => {
         ws.onopen = () => {
           console.log('WebSocket Connected');
           setIsConnected(true);
-          setConnectionStatus('Connected');
+          setConnectionStatus('Connected (WebSocket)');
           setWebsocket(ws);
+          setUsePolling(false);
           
           // Subscribe to events
           ws.send(JSON.stringify({
@@ -46,6 +96,8 @@ const RealTimeDashboard = () => {
           ws.send(JSON.stringify({
             type: 'get_current_metrics'
           }));
+          
+          resolve(ws);
         };
         
         ws.onmessage = (event) => {
@@ -63,30 +115,28 @@ const RealTimeDashboard = () => {
           setConnectionStatus('Disconnected');
           setWebsocket(null);
           
-          // Attempt to reconnect after 5 seconds
-          setTimeout(connectWebSocket, 5000);
+          // Fallback to polling
+          setUsePolling(true);
         };
         
         ws.onerror = (error) => {
           console.error('WebSocket Error:', error);
           setConnectionStatus('Error');
+          reject(error);
         };
         
       } catch (error) {
         console.error('Failed to create WebSocket:', error);
         setConnectionStatus('Failed to connect');
-        setTimeout(connectWebSocket, 5000);
+        reject(error);
       }
-    };
-    
-    connectWebSocket();
-    
-    return () => {
-      if (websocket) {
-        websocket.close();
-      }
-    };
-  }, []);
+    });
+  };
+
+  const startPolling = async () => {
+    setConnectionStatus('Connecting (Polling)...');
+    await fetchMetrics();
+  };
 
   const handleWebSocketMessage = useCallback((data) => {
     switch (data.type) {
@@ -105,12 +155,10 @@ const RealTimeDashboard = () => {
         break;
         
       case 'campaign_progress':
-        // Handle campaign progress updates
         console.log('Campaign progress:', data);
         break;
         
       case 'provider_status':
-        // Handle provider status updates
         console.log('Provider status:', data);
         break;
         
@@ -118,6 +166,23 @@ const RealTimeDashboard = () => {
         console.log('Unknown message type:', data.type);
     }
   }, []);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      if (usePolling) {
+        await fetchMetrics();
+      } else {
+        // Try to reconnect WebSocket
+        await connectWebSocket();
+      }
+      toast.success('Dashboard refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dismissNotification = (index) => {
     setNotifications(prev => prev.filter((_, i) => i !== index));
@@ -148,15 +213,25 @@ const RealTimeDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Real-Time Dashboard</h1>
-        <div className="flex items-center gap-2">
-          {isConnected ? (
-            <Wifi className="w-5 h-5 text-green-500" />
-          ) : (
-            <WifiOff className="w-5 h-5 text-red-500" />
-          )}
-          <span className={`text-sm font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
-            {connectionStatus}
-          </span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <Wifi className="w-5 h-5 text-green-500" />
+            ) : (
+              <WifiOff className="w-5 h-5 text-red-500" />
+            )}
+            <span className={`text-sm font-medium ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+              {connectionStatus}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -305,6 +380,15 @@ const RealTimeDashboard = () => {
           <p className="text-sm text-gray-500">
             Last updated: {lastUpdate.toLocaleTimeString()}
           </p>
+        </div>
+      )}
+
+      {/* No Data Message */}
+      {!metrics && (
+        <div className="text-center py-12">
+          <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Dashboard</h3>
+          <p className="text-gray-600">Connecting to real-time data...</p>
         </div>
       )}
     </div>
