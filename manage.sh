@@ -95,11 +95,18 @@ show_status() {
     fi
     
     # Check MongoDB
-    if service mongod status 2>/dev/null | grep -q 'running\|active' || service mongodb status 2>/dev/null | grep -q 'running\|active'; then
-        echo -e "MongoDB:  ${GREEN}RUNNING${NC}"
-    else
-        echo -e "MongoDB:  ${RED}STOPPED${NC}"
+    mongo_status="${RED}STOPPED${NC}"
+    if sudo systemctl is-active mongod >/dev/null 2>&1; then
+        mongo_status="${GREEN}RUNNING${NC} (systemd)"
+    elif service mongod status 2>/dev/null | grep -q 'running\|active'; then
+        mongo_status="${GREEN}RUNNING${NC} (service)"
+    elif service mongodb status 2>/dev/null | grep -q 'running\|active'; then
+        mongo_status="${GREEN}RUNNING${NC} (mongodb service)"
+    elif ps aux | grep -v grep | grep 'mongod' >/dev/null; then
+        mongo_status="${GREEN}RUNNING${NC} (process)"
     fi
+    
+    echo -e "MongoDB:  $mongo_status"
     
     echo ""
     echo -e "${BLUE}Application URLs:${NC}"
