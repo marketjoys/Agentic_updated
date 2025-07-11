@@ -44,8 +44,7 @@ start_services() {
     # Start Backend
     print_status "Starting Backend..."
     cd /app
-    source /root/.venv/bin/activate
-    nohup uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
+    nohup /root/.venv/bin/uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload > /tmp/backend.log 2>&1 &
     sleep 3
     
     # Start Frontend
