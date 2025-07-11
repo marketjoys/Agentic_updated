@@ -41,6 +41,7 @@ app.include_router(response_verification.router, prefix="/api", tags=["response-
 app.include_router(smart_follow_up.router, prefix="/api", tags=["smart-follow-up"])
 app.include_router(context_aware_ai.router, prefix="/api", tags=["context-aware-ai"])
 app.include_router(enhanced_email_processing.router, prefix="/api", tags=["enhanced-email-processing"])
+app.include_router(real_time.router, prefix="/api", tags=["real-time"])
 
 # Health check endpoint
 @app.get("/api/health")
