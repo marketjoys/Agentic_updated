@@ -28,7 +28,8 @@ const EmailProviders = () => {
     imap_password: '',
     daily_send_limit: 500,
     hourly_send_limit: 50,
-    is_default: false
+    is_default: false,
+    skip_connection_test: false
   });
 
   useEffect(() => {
