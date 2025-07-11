@@ -260,9 +260,9 @@ main() {
     echo -e "   MongoDB:  ${YELLOW}mongodb://localhost:27017${NC}"
     echo ""
     echo -e "${GREEN}🚀 SERVICES STATUS:${NC}"
-    sudo supervisorctl status | grep -E "(backend|frontend|mongodb)" | while read line; do
-        echo -e "   $line"
-    done
+    echo -e "   Backend:  $(ps aux | grep -v grep | grep 'uvicorn.*backend.server' >/dev/null && echo 'RUNNING' || echo 'STOPPED')"
+    echo -e "   Frontend: $(ps aux | grep -v grep | grep 'yarn.*start' >/dev/null && echo 'RUNNING' || echo 'STOPPED')"
+    echo -e "   MongoDB:  $(service mongod status 2>/dev/null | grep -q 'running\|active' && echo 'RUNNING' || service mongodb status 2>/dev/null | grep -q 'running\|active' && echo 'RUNNING' || echo 'STOPPED')"
     echo ""
     echo -e "${GREEN}🎯 QUICK START:${NC}"
     echo -e "   1. Open browser to: ${BLUE}http://localhost:3000${NC}"
