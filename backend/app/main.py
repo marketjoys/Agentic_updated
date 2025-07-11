@@ -61,6 +61,8 @@ async def get_sample_csv():
 @app.on_event("startup")
 async def startup_event():
     await init_seed_data()
+    # Start real-time monitoring
+    await real_time_service.start_real_time_monitoring()
 
 if __name__ == "__main__":
     import uvicorn
