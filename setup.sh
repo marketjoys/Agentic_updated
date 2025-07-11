@@ -129,8 +129,14 @@ main() {
     
     # Check MongoDB
     if ! command_exists mongod; then
-        print_error "MongoDB is required but not installed"
-        exit 1
+        print_status "MongoDB not found. Installing MongoDB..."
+        
+        # Install MongoDB
+        install_mongodb
+        
+        print_success "MongoDB installed successfully"
+    else
+        print_success "MongoDB is already installed"
     fi
     
     print_success "System dependencies verified"
