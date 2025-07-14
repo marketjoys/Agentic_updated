@@ -35,6 +35,10 @@ class EmailProvider(BaseModel):
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_use_tls: bool = True
+    imap_host: str = ""
+    imap_port: int = 993
+    imap_username: str = ""
+    imap_password: str = ""
     daily_send_limit: int = 500
     hourly_send_limit: int = 50
     is_default: bool = False
