@@ -194,20 +194,27 @@ const EmailProviders = () => {
     }));
   }, []);
 
-  const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
+  const ProviderModal = React.memo(({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
 
     // Handle background click to close modal
-    const handleBackdropClick = (e) => {
+    const handleBackdropClick = useCallback((e) => {
       if (e.target === e.currentTarget) {
         onClose();
       }
-    };
+    }, [onClose]);
 
     // Prevent backdrop click from interfering with form interactions
-    const handleModalClick = (e) => {
+    const handleModalClick = useCallback((e) => {
       e.stopPropagation();
-    };
+    }, []);
+
+    // Handle form submission
+    const handleFormSubmit = useCallback((e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onSubmit(e);
+    }, [onSubmit]);
 
     return (
       <div 
