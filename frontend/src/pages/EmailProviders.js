@@ -180,8 +180,10 @@ const EmailProviders = () => {
   };
 
   // Handle form input changes with better event handling
-  const handleInputChange = (field) => (e) => {
+  const handleInputChange = useCallback((field) => (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const value = e.target.type === 'checkbox' ? e.target.checked : 
                   e.target.type === 'number' ? (parseInt(e.target.value) || 0) : 
                   e.target.value;
@@ -190,7 +192,7 @@ const EmailProviders = () => {
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
   const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
