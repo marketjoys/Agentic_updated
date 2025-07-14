@@ -612,6 +612,8 @@ const EmailProviders = () => {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddProvider}
         title="Add Email Provider"
+        formData={formData}
+        handleInputChange={handleInputChange}
       />
 
       <ProviderModal
@@ -620,6 +622,8 @@ const EmailProviders = () => {
         onSubmit={handleEditProvider}
         title="Edit Email Provider"
         provider={selectedProvider}
+        formData={formData}
+        handleInputChange={handleInputChange}
       />
     </div>
   );
