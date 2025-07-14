@@ -187,6 +187,15 @@ const EmailProviders = () => {
     }));
   };
 
+  // Direct input change handlers for better event handling
+  const handleDirectInputChange = (field) => (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
 
