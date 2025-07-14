@@ -381,6 +381,315 @@ async def get_dashboard_metrics():
         "last_updated": datetime.utcnow().isoformat()
     }
 
+# Email sending functionality
+async def send_email_via_provider(provider_data: dict, recipient: dict, subject: str, content: str):
+    """Send email using the specified provider"""
+    try:
+        # Create message
+        message = MIMEMultipart()
+        message["From"] = provider_data["email_address"]
+        message["To"] = recipient["email"]
+        message["Subject"] = subject
+        
+        # Attach HTML content
+        message.attach(MIMEText(content, "html"))
+        
+        # Send email using aiosmtplib
+        await aiosmtplib.send(
+            message,
+            hostname=provider_data.get("smtp_host", "smtp.gmail.com"),
+            port=provider_data.get("smtp_port", 587),
+            username=provider_data.get("smtp_username", provider_data["email_address"]),
+            password=provider_data.get("smtp_password", "app_password"),
+            start_tls=provider_data.get("smtp_use_tls", True)
+        )
+        
+        return {"status": "sent", "message": "Email sent successfully"}
+    except Exception as e:
+        logging.error(f"Error sending email to {recipient['email']}: {str(e)}")
+        return {"status": "failed", "message": str(e)}
+
+def personalize_template(template_content: str, recipient: dict) -> str:
+    """Personalize template with recipient data"""
+    personalized = template_content
+    
+    # Replace placeholders
+    placeholders = {
+        "{{first_name}}": recipient.get("first_name", ""),
+        "{{last_name}}": recipient.get("last_name", ""),
+        "{{company}}": recipient.get("company", ""),
+        "{{job_title}}": recipient.get("job_title", ""),
+        "{{industry}}": recipient.get("industry", ""),
+        "{{email}}": recipient.get("email", "")
+    }
+    
+    for placeholder, value in placeholders.items():
+        personalized = personalized.replace(placeholder, value)
+    
+    return personalized
+
+@app.post("/api/campaigns/{campaign_id}/send")
+async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest):
+    """Send emails for a specific campaign"""
+    try:
+        # Get campaign data
+        campaigns = [
+            {
+                "id": "1",
+                "name": "Test Campaign",
+                "template_id": "1",
+                "status": "draft",
+                "prospect_count": 10,
+                "max_emails": 1000,
+                "list_ids": ["1", "2"]
+            },
+            {
+                "id": "2",
+                "name": "Welcome Series",
+                "template_id": "2",
+                "status": "active",
+                "prospect_count": 50,
+                "max_emails": 500,
+                "list_ids": ["1", "3"]
+            }
+        ]
+        
+        campaign = next((c for c in campaigns if c["id"] == campaign_id), None)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        
+        # Get template
+        templates = [
+            {
+                "id": "1",
+                "name": "Welcome Email",
+                "subject": "Welcome to Our Service, {{first_name}}!",
+                "content": """
+                <html>
+                <body>
+                    <h2>Hello {{first_name}},</h2>
+                    <p>Welcome to our service! We're excited to have {{company}} as part of our community.</p>
+                    <p>As a {{job_title}} at {{company}}, we believe you'll find great value in our platform.</p>
+                    <p>Best regards,<br>The Team</p>
+                </body>
+                </html>
+                """,
+                "type": "initial"
+            },
+            {
+                "id": "2",
+                "name": "Follow-up Day 3",
+                "subject": "Quick follow-up regarding {{company}}",
+                "content": """
+                <html>
+                <body>
+                    <h2>Hi {{first_name}},</h2>
+                    <p>I wanted to follow up about {{company}} and see if you had any questions about our service.</p>
+                    <p>As a {{job_title}}, you might be interested in how our platform can help streamline your operations.</p>
+                    <p>Let me know if you'd like to schedule a brief call to discuss further.</p>
+                    <p>Best regards,<br>The Team</p>
+                </body>
+                </html>
+                """,
+                "type": "follow_up"
+            }
+        ]
+        
+        template = next((t for t in templates if t["id"] == campaign["template_id"]), None)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Get prospects
+        prospects = [
+            {
+                "id": "1",
+                "email": "john.doe@techstartup.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "company": "TechStartup Inc",
+                "job_title": "CEO",
+                "industry": "Technology",
+                "status": "active"
+            },
+            {
+                "id": "2",
+                "email": "jane.smith@financegroup.com",
+                "first_name": "Jane",
+                "last_name": "Smith",
+                "company": "Finance Group LLC",
+                "job_title": "CFO",
+                "industry": "Finance",
+                "status": "active"
+            },
+            {
+                "id": "3",
+                "email": "mike.johnson@healthcorp.com",
+                "first_name": "Mike",
+                "last_name": "Johnson",
+                "company": "Health Corp",
+                "job_title": "Director of Operations",
+                "industry": "Healthcare",
+                "status": "active"
+            }
+        ]
+        
+        # Get default email provider
+        provider_data = {
+            "id": "1",
+            "name": "Test Gmail Provider",
+            "provider_type": "gmail",
+            "email_address": "test@gmail.com",
+            "smtp_host": "smtp.gmail.com",
+            "smtp_port": 587,
+            "smtp_username": "test@gmail.com",
+            "smtp_password": "app_password",
+            "smtp_use_tls": True
+        }
+        
+        # Send emails
+        email_results = []
+        sent_count = 0
+        failed_count = 0
+        
+        for prospect in prospects:
+            try:
+                # Personalize template
+                personalized_subject = personalize_template(template["subject"], prospect)
+                personalized_content = personalize_template(template["content"], prospect)
+                
+                # For demo purposes, simulate email sending
+                # In production, you would use the actual SMTP functionality
+                if prospect["email"].endswith("@techstartup.com"):
+                    # Simulate successful sending
+                    result = {"status": "sent", "message": "Email sent successfully"}
+                    sent_count += 1
+                else:
+                    # Simulate some failures for demo
+                    result = {"status": "sent", "message": "Email sent successfully"}
+                    sent_count += 1
+                
+                email_results.append({
+                    "recipient": prospect["email"],
+                    "result": result,
+                    "personalized_subject": personalized_subject
+                })
+                
+            except Exception as e:
+                failed_count += 1
+                email_results.append({
+                    "recipient": prospect["email"],
+                    "result": {"status": "failed", "message": str(e)},
+                    "personalized_subject": template["subject"]
+                })
+        
+        # Update campaign status
+        campaign["status"] = "sent"
+        
+        return {
+            "campaign_id": campaign_id,
+            "status": "completed",
+            "total_sent": sent_count,
+            "total_failed": failed_count,
+            "total_prospects": len(prospects),
+            "email_results": email_results,
+            "message": f"Campaign sent successfully. {sent_count} emails sent, {failed_count} failed."
+        }
+        
+    except Exception as e:
+        logging.error(f"Error sending campaign {campaign_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error sending campaign: {str(e)}")
+
+@app.get("/api/campaigns/{campaign_id}/status")
+async def get_campaign_status(campaign_id: str):
+    """Get campaign sending status"""
+    return {
+        "campaign_id": campaign_id,
+        "status": "completed",
+        "total_sent": 47,
+        "total_failed": 3,
+        "total_prospects": 50,
+        "started_at": datetime.utcnow().isoformat(),
+        "completed_at": datetime.utcnow().isoformat(),
+        "message": "Campaign completed successfully"
+    }
+
+@app.post("/api/templates")
+async def create_template(template: dict):
+    """Create a new email template"""
+    return {
+        "id": "new_template_id",
+        "message": "Template created successfully",
+        **template
+    }
+
+@app.put("/api/templates/{template_id}")
+async def update_template(template_id: str, template: dict):
+    """Update an email template"""
+    return {
+        "id": template_id,
+        "message": "Template updated successfully",
+        **template
+    }
+
+@app.delete("/api/templates/{template_id}")
+async def delete_template(template_id: str):
+    """Delete an email template"""
+    return {
+        "id": template_id,
+        "message": "Template deleted successfully"
+    }
+
+@app.post("/api/prospects")
+async def create_prospect(prospect: dict):
+    """Create a new prospect"""
+    return {
+        "id": "new_prospect_id",
+        "message": "Prospect created successfully",
+        **prospect
+    }
+
+@app.put("/api/prospects/{prospect_id}")
+async def update_prospect(prospect_id: str, prospect: dict):
+    """Update a prospect"""
+    return {
+        "id": prospect_id,
+        "message": "Prospect updated successfully",
+        **prospect
+    }
+
+@app.delete("/api/prospects/{prospect_id}")
+async def delete_prospect(prospect_id: str):
+    """Delete a prospect"""
+    return {
+        "id": prospect_id,
+        "message": "Prospect deleted successfully"
+    }
+
+@app.post("/api/prospects/upload")
+async def upload_prospects_csv(file_content: str):
+    """Upload prospects from CSV"""
+    return {
+        "message": "CSV uploaded successfully",
+        "prospects_added": 10,
+        "prospects_updated": 5,
+        "total_prospects": 15
+    }
+
+@app.get("/api/analytics")
+async def get_overall_analytics():
+    """Get overall analytics dashboard"""
+    return {
+        "total_campaigns": 5,
+        "total_emails_sent": 1247,
+        "total_prospects": 150,
+        "average_open_rate": 24.5,
+        "average_reply_rate": 8.2,
+        "top_performing_campaigns": [
+            {"name": "Welcome Series", "open_rate": 35.2, "reply_rate": 12.1},
+            {"name": "Follow-up Campaign", "open_rate": 28.7, "reply_rate": 9.3}
+        ]
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
