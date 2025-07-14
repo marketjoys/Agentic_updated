@@ -354,7 +354,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_host}
-                    onChange={(e) => handleInputChange('imap_host', e.target.value)}
+                    onChange={handleDirectInputChange('imap_host')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., imap.gmail.com"
                   />
