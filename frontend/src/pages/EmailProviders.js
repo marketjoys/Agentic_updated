@@ -179,16 +179,16 @@ const EmailProviders = () => {
       <XCircle className="w-5 h-5 text-red-500" />;
   };
 
+  // Handle form input changes
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
-
-    // Handle form input changes
-    const handleInputChange = (field, value) => {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    };
 
     // Handle background click to close modal
     const handleBackdropClick = (e) => {
