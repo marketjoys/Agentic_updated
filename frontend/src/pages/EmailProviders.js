@@ -182,6 +182,14 @@ const EmailProviders = () => {
   const ProviderModal = ({ show, onClose, onSubmit, title, provider = null }) => {
     if (!show) return null;
 
+    // Handle form input changes
+    const handleInputChange = (field, value) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    };
+
     // Handle background click to close modal
     const handleBackdropClick = (e) => {
       if (e.target === e.currentTarget) {
@@ -221,7 +229,7 @@ const EmailProviders = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                   placeholder="Enter provider name"
@@ -232,7 +240,7 @@ const EmailProviders = () => {
                 <label className="block text-sm font-medium mb-1">Provider Type</label>
                 <select
                   value={formData.provider_type}
-                  onChange={(e) => setFormData({...formData, provider_type: e.target.value})}
+                  onChange={(e) => handleInputChange('provider_type', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="gmail">Gmail</option>
@@ -249,7 +257,7 @@ const EmailProviders = () => {
                 <input
                   type="email"
                   value={formData.email_address}
-                  onChange={(e) => setFormData({...formData, email_address: e.target.value})}
+                  onChange={(e) => handleInputChange('email_address', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -260,8 +268,8 @@ const EmailProviders = () => {
                 <input
                   type="text"
                   value={formData.display_name}
-                  onChange={(e) => setFormData({...formData, display_name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => handleInputChange('display_name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -274,8 +282,8 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.smtp_host}
-                    onChange={(e) => setFormData({...formData, smtp_host: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('smtp_host', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -285,8 +293,8 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.smtp_port}
-                    onChange={(e) => setFormData({...formData, smtp_port: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('smtp_port', parseInt(e.target.value) || 587)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -298,8 +306,8 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.smtp_username}
-                    onChange={(e) => setFormData({...formData, smtp_username: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('smtp_username', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -309,8 +317,8 @@ const EmailProviders = () => {
                   <input
                     type="password"
                     value={formData.smtp_password}
-                    onChange={(e) => setFormData({...formData, smtp_password: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('smtp_password', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -321,7 +329,7 @@ const EmailProviders = () => {
                   <input
                     type="checkbox"
                     checked={formData.smtp_use_tls}
-                    onChange={(e) => setFormData({...formData, smtp_use_tls: e.target.checked})}
+                    onChange={(e) => handleInputChange('smtp_use_tls', e.target.checked)}
                     className="mr-2"
                   />
                   Use TLS
@@ -337,8 +345,8 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_host}
-                    onChange={(e) => setFormData({...formData, imap_host: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('imap_host', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., imap.gmail.com"
                   />
                 </div>
@@ -348,8 +356,8 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.imap_port}
-                    onChange={(e) => setFormData({...formData, imap_port: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('imap_port', parseInt(e.target.value) || 993)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="993"
                   />
                 </div>
@@ -361,8 +369,8 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_username}
-                    onChange={(e) => setFormData({...formData, imap_username: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('imap_username', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as email"
                   />
                 </div>
@@ -372,8 +380,8 @@ const EmailProviders = () => {
                   <input
                     type="password"
                     value={formData.imap_password}
-                    onChange={(e) => setFormData({...formData, imap_password: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('imap_password', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as SMTP password"
                   />
                 </div>
@@ -388,8 +396,8 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.daily_send_limit}
-                    onChange={(e) => setFormData({...formData, daily_send_limit: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('daily_send_limit', parseInt(e.target.value) || 500)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="1"
                     max="2000"
                   />
@@ -400,8 +408,8 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.hourly_send_limit}
-                    onChange={(e) => setFormData({...formData, hourly_send_limit: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => handleInputChange('hourly_send_limit', parseInt(e.target.value) || 50)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="1"
                     max="200"
                   />
@@ -414,7 +422,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.is_default}
-                  onChange={(e) => setFormData({...formData, is_default: e.target.checked})}
+                  onChange={(e) => handleInputChange('is_default', e.target.checked)}
                   className="mr-2"
                 />
                 Set as default provider
@@ -424,7 +432,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.skip_connection_test}
-                  onChange={(e) => setFormData({...formData, skip_connection_test: e.target.checked})}
+                  onChange={(e) => handleInputChange('skip_connection_test', e.target.checked)}
                   className="mr-2"
                 />
                 Skip connection test (for demo/test purposes)
@@ -435,7 +443,7 @@ const EmailProviders = () => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
