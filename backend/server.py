@@ -5,6 +5,11 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional
 import logging
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import asyncio
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
