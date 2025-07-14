@@ -15,8 +15,6 @@ const ProviderModal = React.memo(({
   formData,
   handleInputChange
 }) => {
-  if (!show) return null;
-
   // Handle background click to close modal
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
@@ -35,6 +33,8 @@ const ProviderModal = React.memo(({
     e.stopPropagation();
     onSubmit(e);
   }, [onSubmit]);
+
+  if (!show) return null;
 
   return (
     <div 
