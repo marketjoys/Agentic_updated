@@ -389,7 +389,7 @@ const EmailProviders = () => {
                   <input
                     type="password"
                     value={formData.imap_password}
-                    onChange={(e) => handleInputChange('imap_password', e.target.value)}
+                    onChange={handleDirectInputChange('imap_password')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as SMTP password"
                   />
