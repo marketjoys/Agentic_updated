@@ -245,7 +245,7 @@ const EmailProviders = () => {
                 <label className="block text-sm font-medium mb-1">Provider Type</label>
                 <select
                   value={formData.provider_type}
-                  onChange={handleDirectInputChange('provider_type')}
+                  onChange={handleInputChange('provider_type')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="gmail">Gmail</option>
@@ -262,7 +262,7 @@ const EmailProviders = () => {
                 <input
                   type="email"
                   value={formData.email_address}
-                  onChange={handleDirectInputChange('email_address')}
+                  onChange={handleInputChange('email_address')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -273,7 +273,7 @@ const EmailProviders = () => {
                 <input
                   type="text"
                   value={formData.display_name}
-                  onChange={handleDirectInputChange('display_name')}
+                  onChange={handleInputChange('display_name')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -287,7 +287,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.smtp_host}
-                    onChange={handleDirectInputChange('smtp_host')}
+                    onChange={handleInputChange('smtp_host')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -298,7 +298,7 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.smtp_port}
-                    onChange={(e) => handleInputChange('smtp_port', parseInt(e.target.value) || 587)}
+                    onChange={handleInputChange('smtp_port')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -311,7 +311,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.smtp_username}
-                    onChange={handleDirectInputChange('smtp_username')}
+                    onChange={handleInputChange('smtp_username')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -322,7 +322,7 @@ const EmailProviders = () => {
                   <input
                     type="password"
                     value={formData.smtp_password}
-                    onChange={handleDirectInputChange('smtp_password')}
+                    onChange={handleInputChange('smtp_password')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -334,7 +334,7 @@ const EmailProviders = () => {
                   <input
                     type="checkbox"
                     checked={formData.smtp_use_tls}
-                    onChange={handleDirectInputChange('smtp_use_tls')}
+                    onChange={handleInputChange('smtp_use_tls')}
                     className="mr-2"
                   />
                   Use TLS
@@ -350,7 +350,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_host}
-                    onChange={handleDirectInputChange('imap_host')}
+                    onChange={handleInputChange('imap_host')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="e.g., imap.gmail.com"
                   />
@@ -361,7 +361,7 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.imap_port}
-                    onChange={(e) => handleInputChange('imap_port', parseInt(e.target.value) || 993)}
+                    onChange={handleInputChange('imap_port')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="993"
                   />
@@ -374,7 +374,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_username}
-                    onChange={handleDirectInputChange('imap_username')}
+                    onChange={handleInputChange('imap_username')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as email"
                   />
@@ -385,7 +385,7 @@ const EmailProviders = () => {
                   <input
                     type="password"
                     value={formData.imap_password}
-                    onChange={handleDirectInputChange('imap_password')}
+                    onChange={handleInputChange('imap_password')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as SMTP password"
                   />
@@ -401,7 +401,7 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.daily_send_limit}
-                    onChange={(e) => handleInputChange('daily_send_limit', parseInt(e.target.value) || 500)}
+                    onChange={handleInputChange('daily_send_limit')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="1"
                     max="2000"
@@ -413,7 +413,7 @@ const EmailProviders = () => {
                   <input
                     type="number"
                     value={formData.hourly_send_limit}
-                    onChange={(e) => handleInputChange('hourly_send_limit', parseInt(e.target.value) || 50)}
+                    onChange={handleInputChange('hourly_send_limit')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     min="1"
                     max="200"
@@ -427,7 +427,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.is_default}
-                  onChange={handleDirectInputChange('is_default')}
+                  onChange={handleInputChange('is_default')}
                   className="mr-2"
                 />
                 Set as default provider
@@ -437,7 +437,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.skip_connection_test}
-                  onChange={handleDirectInputChange('skip_connection_test')}
+                  onChange={handleInputChange('skip_connection_test')}
                   className="mr-2"
                 />
                 Skip connection test (for demo/test purposes)
