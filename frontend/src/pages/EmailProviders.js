@@ -472,7 +472,7 @@ const EmailProviders = () => {
         </div>
       </div>
     );
-  };
+  });
 
   if (loading) {
     return (
