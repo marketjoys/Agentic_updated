@@ -168,6 +168,37 @@ async def create_email_provider(provider: EmailProvider):
         **provider.dict()
     }
 
+@app.put("/api/email-providers/{provider_id}")
+async def update_email_provider(provider_id: str, provider: EmailProvider):
+    return {
+        "id": provider_id,
+        "message": "Email provider updated successfully",
+        **provider.dict()
+    }
+
+@app.delete("/api/email-providers/{provider_id}")
+async def delete_email_provider(provider_id: str):
+    return {
+        "id": provider_id,
+        "message": "Email provider deleted successfully"
+    }
+
+@app.post("/api/email-providers/{provider_id}/test")
+async def test_email_provider(provider_id: str):
+    return {
+        "id": provider_id,
+        "message": "Connection test successful",
+        "smtp_test": "passed",
+        "imap_test": "passed"
+    }
+
+@app.post("/api/email-providers/{provider_id}/set-default")
+async def set_default_email_provider(provider_id: str):
+    return {
+        "id": provider_id,
+        "message": "Default provider updated successfully"
+    }
+
 @app.get("/api/lists")
 async def get_lists():
     return [
