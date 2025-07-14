@@ -179,17 +179,13 @@ const EmailProviders = () => {
       <XCircle className="w-5 h-5 text-red-500" />;
   };
 
-  // Handle form input changes
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Direct input change handlers for better event handling
-  const handleDirectInputChange = (field) => (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  // Handle form input changes with better event handling
+  const handleInputChange = (field) => (e) => {
+    e.preventDefault();
+    const value = e.target.type === 'checkbox' ? e.target.checked : 
+                  e.target.type === 'number' ? (parseInt(e.target.value) || 0) : 
+                  e.target.value;
+    
     setFormData(prev => ({
       ...prev,
       [field]: value
