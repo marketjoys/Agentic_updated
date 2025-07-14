@@ -139,25 +139,28 @@ const EmailProviders = () => {
   const openEditModal = (provider) => {
     setSelectedProvider(provider);
     setFormData({
-      name: provider.name,
-      provider_type: provider.provider_type,
-      email_address: provider.email_address,
-      display_name: provider.display_name,
-      smtp_host: provider.smtp_host,
-      smtp_port: provider.smtp_port,
-      smtp_username: provider.smtp_username,
-      smtp_password: provider.smtp_password,
-      smtp_use_tls: provider.smtp_use_tls,
-      imap_host: provider.imap_host,
-      imap_port: provider.imap_port,
-      imap_username: provider.imap_username,
-      imap_password: provider.imap_password,
-      daily_send_limit: provider.daily_send_limit,
-      hourly_send_limit: provider.hourly_send_limit,
-      is_default: provider.is_default,
+      name: provider.name || '',
+      provider_type: provider.provider_type || 'gmail',
+      email_address: provider.email_address || '',
+      display_name: provider.display_name || '',
+      smtp_host: provider.smtp_host || '',
+      smtp_port: provider.smtp_port || 587,
+      smtp_username: provider.smtp_username || '',
+      smtp_password: provider.smtp_password || '',
+      smtp_use_tls: provider.smtp_use_tls !== undefined ? provider.smtp_use_tls : true,
+      imap_host: provider.imap_host || '',
+      imap_port: provider.imap_port || 993,
+      imap_username: provider.imap_username || '',
+      imap_password: provider.imap_password || '',
+      daily_send_limit: provider.daily_send_limit || 500,
+      hourly_send_limit: provider.hourly_send_limit || 50,
+      is_default: provider.is_default || false,
       skip_connection_test: provider.skip_connection_test || false
     });
-    setShowEditModal(true);
+    // Use setTimeout to ensure state is set before opening modal
+    setTimeout(() => {
+      setShowEditModal(true);
+    }, 0);
   };
 
   const getProviderIcon = (type) => {
