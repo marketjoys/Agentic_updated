@@ -333,6 +333,57 @@ const EmailProviders = () => {
             </div>
 
             <div className="border-t pt-4">
+              <h3 className="text-lg font-semibold mb-3">IMAP Settings (Optional)</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">IMAP Host</label>
+                  <input
+                    type="text"
+                    value={formData.imap_host}
+                    onChange={(e) => setFormData({...formData, imap_host: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g., imap.gmail.com"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">IMAP Port</label>
+                  <input
+                    type="number"
+                    value={formData.imap_port}
+                    onChange={(e) => setFormData({...formData, imap_port: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="993"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">IMAP Username</label>
+                  <input
+                    type="text"
+                    value={formData.imap_username}
+                    onChange={(e) => setFormData({...formData, imap_username: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Usually same as email"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">IMAP Password</label>
+                  <input
+                    type="password"
+                    value={formData.imap_password}
+                    onChange={(e) => setFormData({...formData, imap_password: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Usually same as SMTP password"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
               <h3 className="text-lg font-semibold mb-3">Rate Limits</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
