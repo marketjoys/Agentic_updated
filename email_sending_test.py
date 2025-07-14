@@ -296,10 +296,9 @@ david.brown@startup.io,David,Brown,Startup.io,CTO,Technology,+1-555-0200
 emma.davis@finance.com,Emma,Davis,Finance Corp,VP Finance,Finance,+1-555-0201
 alex.johnson@health.org,Alex,Johnson,Health Organization,Director,Healthcare,+1-555-0202"""
             
-            # Test CSV upload
-            response = requests.post(f"{self.base_url}/api/prospects/upload", 
-                                   data=csv_content, 
-                                   headers={"Content-Type": "text/csv"})
+            # Test CSV upload with query parameter
+            response = requests.post(f"{self.base_url}/api/prospects/upload?file_content={csv_content}", 
+                                   headers=self.get_headers())
             
             if response.status_code != 200:
                 self.log_result("CSV Upload", False, f"HTTP {response.status_code}", response.text)
