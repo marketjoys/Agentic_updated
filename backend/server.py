@@ -53,6 +53,12 @@ class Campaign(BaseModel):
     name: str
     template_id: str
     list_ids: List[str] = []
+    max_emails: int = 1000
+    schedule: Optional[str] = None
+
+class EmailSendRequest(BaseModel):
+    campaign_id: str
+    send_immediately: bool = True
     email_provider_id: str = ""
     max_emails: int = 1000
     schedule_type: str = "immediate"
