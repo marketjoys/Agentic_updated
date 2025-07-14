@@ -431,7 +431,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.is_default}
-                  onChange={(e) => handleInputChange('is_default', e.target.checked)}
+                  onChange={handleDirectInputChange('is_default')}
                   className="mr-2"
                 />
                 Set as default provider
