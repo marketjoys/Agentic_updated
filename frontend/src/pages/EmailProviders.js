@@ -378,7 +378,7 @@ const EmailProviders = () => {
                   <input
                     type="text"
                     value={formData.imap_username}
-                    onChange={(e) => handleInputChange('imap_username', e.target.value)}
+                    onChange={handleDirectInputChange('imap_username')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Usually same as email"
                   />
