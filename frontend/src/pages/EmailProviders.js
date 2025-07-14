@@ -338,7 +338,7 @@ const EmailProviders = () => {
                   <input
                     type="checkbox"
                     checked={formData.smtp_use_tls}
-                    onChange={(e) => handleInputChange('smtp_use_tls', e.target.checked)}
+                    onChange={handleDirectInputChange('smtp_use_tls')}
                     className="mr-2"
                   />
                   Use TLS
