@@ -249,7 +249,7 @@ const EmailProviders = () => {
                 <label className="block text-sm font-medium mb-1">Provider Type</label>
                 <select
                   value={formData.provider_type}
-                  onChange={(e) => handleInputChange('provider_type', e.target.value)}
+                  onChange={handleDirectInputChange('provider_type')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="gmail">Gmail</option>
