@@ -441,7 +441,7 @@ const EmailProviders = () => {
                 <input
                   type="checkbox"
                   checked={formData.skip_connection_test}
-                  onChange={(e) => handleInputChange('skip_connection_test', e.target.checked)}
+                  onChange={handleDirectInputChange('skip_connection_test')}
                   className="mr-2"
                 />
                 Skip connection test (for demo/test purposes)
