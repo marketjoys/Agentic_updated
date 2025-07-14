@@ -157,10 +157,7 @@ const EmailProviders = () => {
       is_default: provider.is_default || false,
       skip_connection_test: provider.skip_connection_test || false
     });
-    // Use setTimeout to ensure state is set before opening modal
-    setTimeout(() => {
-      setShowEditModal(true);
-    }, 0);
+    setShowEditModal(true);
   };
 
   const getProviderIcon = (type) => {
