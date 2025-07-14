@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://797d9892-73ae-4447-8bfb-7e1df54212bf.preview.emergentagent.com"
+BACKEND_URL = "https://a8bd911a-65bb-44fc-ba90-227985817201.preview.emergentagent.com"
 
 class AuthTester:
     def __init__(self):
