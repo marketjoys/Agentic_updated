@@ -593,9 +593,7 @@ class DatabaseService:
         verifications = await self.db.response_verifications.find({
             "status": {"$in": ["pending", "needs_review"]}
         }).to_list(length=100)
-        for verification in verifications:
-            verification.pop('_id', None)
-        return verifications
+        return clean_document(verifications)
     
     async def get_response_verification_by_id(self, verification_id: str):
         """Get response verification by ID"""
