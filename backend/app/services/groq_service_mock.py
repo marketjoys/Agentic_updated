@@ -98,6 +98,30 @@ class GroqService:
             print(f"Error in mock response generation: {str(e)}")
             return {"error": f"Mock response generation failed: {str(e)}"}
     
+    async def analyze_email_sentiment(self, email_content: str) -> Dict:
+        """
+        Mock sentiment analysis for testing
+        """
+        try:
+            # Mock sentiment analysis
+            return {
+                "sentiment": "positive",
+                "urgency": "medium",
+                "emotion_detected": "interested",
+                "confidence": 0.85,
+                "reasoning": "Mock sentiment analysis for testing purposes"
+            }
+            
+        except Exception as e:
+            print(f"Error in mock sentiment analysis: {str(e)}")
+            return {
+                "sentiment": "neutral",
+                "urgency": "low",
+                "emotion_detected": "neutral",
+                "confidence": 0.5,
+                "reasoning": f"Error in sentiment analysis: {str(e)}"
+            }
+    
     def _make_json_safe(self, data):
         """Convert data to JSON-safe format"""
         if isinstance(data, list):
