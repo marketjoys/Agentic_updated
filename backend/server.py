@@ -446,8 +446,11 @@ def personalize_template(template_content: str, recipient: dict) -> str:
 
 @app.post("/api/campaigns/{campaign_id}/send")
 async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest):
-    """Send emails for a specific campaign"""
+    """Send emails for a specific campaign with AI enhancement"""
     try:
+        # Import the AI enhanced email service
+        from app.services.ai_enhanced_email_service import ai_enhanced_email_service
+        
         # Get campaign data
         campaigns = [
             {
@@ -457,7 +460,8 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 "status": "draft",
                 "prospect_count": 10,
                 "max_emails": 1000,
-                "list_ids": ["1", "2"]
+                "list_ids": ["1", "2"],
+                "intent_context": "general_outreach"
             },
             {
                 "id": "2",
@@ -466,7 +470,8 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 "status": "active",
                 "prospect_count": 50,
                 "max_emails": 500,
-                "list_ids": ["1", "3"]
+                "list_ids": ["1", "3"],
+                "intent_context": "welcome_series"
             }
         ]
         
@@ -562,16 +567,30 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
             "smtp_use_tls": True
         }
         
-        # Send emails
+        # Send emails with AI enhancement
         email_results = []
         sent_count = 0
         failed_count = 0
+        knowledge_articles_used = []
+        verification_results = []
         
         for prospect in prospects:
             try:
-                # Personalize template
-                personalized_subject = personalize_template(template["subject"], prospect)
-                personalized_content = personalize_template(template["content"], prospect)
+                # Use AI enhanced email service
+                enhanced_email = await ai_enhanced_email_service.process_campaign_email(
+                    campaign, template, prospect
+                )
+                
+                # Track knowledge articles used
+                if enhanced_email.get("knowledge_articles_used"):
+                    knowledge_articles_used.extend(enhanced_email["knowledge_articles_used"])
+                
+                # Track verification results
+                if enhanced_email.get("verification_result"):
+                    verification_results.append({
+                        "prospect": prospect["email"],
+                        "verification": enhanced_email["verification_result"]
+                    })
                 
                 # For demo purposes, simulate email sending
                 # In production, you would use the actual SMTP functionality
@@ -587,7 +606,11 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 email_results.append({
                     "recipient": prospect["email"],
                     "result": result,
-                    "personalized_subject": personalized_subject
+                    "enhanced_subject": enhanced_email.get("subject", ""),
+                    "enhanced_content": enhanced_email.get("content", ""),
+                    "ai_enhancement_applied": enhanced_email.get("ai_enhancement_applied", False),
+                    "knowledge_articles_count": len(enhanced_email.get("knowledge_articles_used", [])),
+                    "verification_score": enhanced_email.get("verification_result", {}).get("overall_score", 0) if enhanced_email.get("verification_result") else 0
                 })
                 
             except Exception as e:
@@ -595,11 +618,23 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 email_results.append({
                     "recipient": prospect["email"],
                     "result": {"status": "failed", "message": str(e)},
-                    "personalized_subject": template["subject"]
+                    "enhanced_subject": template["subject"],
+                    "enhanced_content": template["content"],
+                    "ai_enhancement_applied": False,
+                    "knowledge_articles_count": 0,
+                    "verification_score": 0
                 })
         
         # Update campaign status
         campaign["status"] = "sent"
+        
+        # Remove duplicates from knowledge articles
+        unique_knowledge_articles = []
+        seen_ids = set()
+        for article in knowledge_articles_used:
+            if article.get("id") not in seen_ids:
+                unique_knowledge_articles.append(article)
+                seen_ids.add(article.get("id"))
         
         return {
             "campaign_id": campaign_id,
@@ -608,7 +643,12 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
             "total_failed": failed_count,
             "total_prospects": len(prospects),
             "email_results": email_results,
-            "message": f"Campaign sent successfully. {sent_count} emails sent, {failed_count} failed."
+            "ai_enhancement_stats": {
+                "knowledge_articles_used": unique_knowledge_articles,
+                "verification_results": verification_results,
+                "ai_enhanced_emails": len([r for r in email_results if r.get("ai_enhancement_applied", False)])
+            },
+            "message": f"Campaign sent successfully with AI enhancement. {sent_count} emails sent, {failed_count} failed."
         }
         
     except Exception as e:
