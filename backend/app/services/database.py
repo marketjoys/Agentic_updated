@@ -539,9 +539,7 @@ class DatabaseService:
             "is_default": True,
             "is_active": True
         })
-        if prompt:
-            prompt.pop('_id', None)
-        return prompt
+        return clean_document(prompt) if prompt else None
     
     async def update_knowledge_article_usage(self, article_id: str):
         """Update knowledge article usage count"""
