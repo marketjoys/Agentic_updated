@@ -235,7 +235,12 @@ class DatabaseService:
     async def create_email_record(self, email_data: dict):
         """Create an email record"""
         result = await self.db.emails.insert_one(email_data)
-        return result
+        # Clean the result object to remove ObjectId fields
+        cleaned_result = {
+            "acknowledged": result.acknowledged,
+            "inserted_id": str(result.inserted_id) if result.inserted_id else None
+        }
+        return cleaned_result
         
     async def update_prospect_last_contact(self, prospect_id: str, last_contact):
         """Update prospect's last contact time"""
