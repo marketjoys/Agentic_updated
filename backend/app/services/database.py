@@ -387,9 +387,7 @@ class DatabaseService:
     async def get_email_providers(self):
         """Get all email providers"""
         providers = await self.db.email_providers.find().to_list(length=100)
-        for provider in providers:
-            provider.pop('_id', None)
-        return providers
+        return clean_document(providers)
     
     async def get_email_provider_by_id(self, provider_id: str):
         """Get email provider by ID"""
