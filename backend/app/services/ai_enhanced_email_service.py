@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any
 import logging
 from datetime import datetime
 from app.services.database import db_service, clean_document
-from app.services.groq_service import groq_service
+from app.services.groq_service_mock import groq_service
 from app.services.knowledge_base_service import knowledge_base_service
 from app.services.response_verification_service import response_verification_service
 from app.utils.helpers import generate_id, personalize_template
