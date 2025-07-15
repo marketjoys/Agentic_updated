@@ -100,9 +100,7 @@ class DatabaseService:
     async def get_prospect_by_email(self, email: str):
         """Get prospect by email"""
         prospect = await self.db.prospects.find_one({"email": email})
-        if prospect:
-            prospect.pop('_id', None)
-        return prospect
+        return clean_document(prospect) if prospect else None
         
     # Lists operations
     async def create_list(self, list_data: dict):
