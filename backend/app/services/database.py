@@ -511,9 +511,7 @@ class DatabaseService:
     async def get_system_prompts(self):
         """Get all system prompts"""
         prompts = await self.db.system_prompts.find().to_list(length=100)
-        for prompt in prompts:
-            prompt.pop('_id', None)
-        return prompts
+        return clean_document(prompts)
     
     async def get_system_prompt_by_id(self, prompt_id: str):
         """Get system prompt by ID"""
