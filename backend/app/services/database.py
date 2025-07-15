@@ -591,7 +591,12 @@ class DatabaseService:
     async def create_response_verification(self, verification_data: dict):
         """Create a response verification record"""
         result = await self.db.response_verifications.insert_one(verification_data)
-        return result
+        # Clean the result object to remove ObjectId fields
+        cleaned_result = {
+            "acknowledged": result.acknowledged,
+            "inserted_id": str(result.inserted_id) if result.inserted_id else None
+        }
+        return cleaned_result
     
     async def get_pending_verifications(self):
         """Get pending verifications"""
