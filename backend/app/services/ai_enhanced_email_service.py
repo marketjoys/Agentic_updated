@@ -131,8 +131,10 @@ class AIEnhancedEmailService:
                 if article.get("id") not in seen_ids:
                     unique_articles.append(article)
                     seen_ids.add(article.get("id"))
-                    
-            return unique_articles[:5]  # Limit to top 5 most relevant
+            
+            # Clean the articles to remove ObjectId fields
+            cleaned_articles = clean_document(unique_articles[:5])
+            return cleaned_articles  # Limit to top 5 most relevant
             
         except Exception as e:
             logger.error(f"Error getting relevant knowledge: {str(e)}")
