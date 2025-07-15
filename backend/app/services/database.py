@@ -22,6 +22,7 @@ class DatabaseService:
         
     async def create_prospect(self, prospect_data: dict):
         """Create a new prospect with email duplication check"""
+        await self.connect()
         # Check if email already exists
         existing_prospect = await self.db.prospects.find_one({"email": prospect_data["email"]})
         if existing_prospect:
@@ -33,6 +34,7 @@ class DatabaseService:
         
     async def get_prospects(self, skip: int = 0, limit: int = 100):
         """Get prospects with pagination"""
+        await self.connect()
         prospects = await self.db.prospects.find().skip(skip).limit(limit).to_list(length=limit)
         for prospect in prospects:
             prospect.pop('_id', None)
