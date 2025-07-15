@@ -355,9 +355,7 @@ class DatabaseService:
     async def get_thread_by_prospect_id(self, prospect_id: str):
         """Get thread by prospect ID"""
         thread = await self.db.threads.find_one({"prospect_id": prospect_id})
-        if thread:
-            thread.pop('_id', None)
-        return thread
+        return clean_document(thread) if thread else None
     
     async def add_message_to_thread(self, thread_id: str, message_data: dict):
         """Add message to thread"""
