@@ -598,9 +598,7 @@ class DatabaseService:
     async def get_response_verification_by_id(self, verification_id: str):
         """Get response verification by ID"""
         verification = await self.db.response_verifications.find_one({"id": verification_id})
-        if verification:
-            verification.pop('_id', None)
-        return verification
+        return clean_document(verification) if verification else None
     
     async def update_response_verification(self, verification_id: str, verification_data: dict):
         """Update a response verification"""
