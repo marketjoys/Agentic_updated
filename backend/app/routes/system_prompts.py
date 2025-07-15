@@ -129,7 +129,7 @@ async def test_system_prompt(prompt_id: str, test_data: Dict):
     
     try:
         # Import groq service for testing
-        from app.services.groq_service import groq_service
+        from app.services.groq_service_mock import groq_service
         
         # Test the prompt
         response = await groq_service.client.chat.completions.create(
