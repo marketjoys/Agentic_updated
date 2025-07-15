@@ -315,9 +315,7 @@ class DatabaseService:
     async def get_intent_by_id(self, intent_id: str):
         """Get specific intent by ID"""
         intent = await self.db.intents.find_one({"id": intent_id})
-        if intent:
-            intent.pop('_id', None)
-        return intent
+        return clean_document(intent) if intent else None
     
     async def update_intent(self, intent_id: str, intent_data: dict):
         """Update an intent"""
