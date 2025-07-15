@@ -449,122 +449,34 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
     try:
         # Import the AI enhanced email service
         from app.services.ai_enhanced_email_service import ai_enhanced_email_service
+        from app.services.database import db_service
         
-        # Get campaign data
-        campaigns = [
-            {
-                "id": "1",
-                "name": "Test Campaign",
-                "template_id": "1",
-                "status": "draft",
-                "prospect_count": 10,
-                "max_emails": 1000,
-                "list_ids": ["1", "2"],
-                "intent_context": "general_outreach"
-            },
-            {
-                "id": "2",
-                "name": "Welcome Series",
-                "template_id": "2",
-                "status": "active",
-                "prospect_count": 50,
-                "max_emails": 500,
-                "list_ids": ["1", "3"],
-                "intent_context": "welcome_series"
-            }
-        ]
+        # Connect to database
+        await db_service.connect()
         
-        campaign = next((c for c in campaigns if c["id"] == campaign_id), None)
+        # Get campaign data from database
+        campaign = await db_service.get_campaign_by_id(campaign_id)
         if not campaign:
             raise HTTPException(status_code=404, detail="Campaign not found")
         
-        # Get template
-        templates = [
-            {
-                "id": "1",
-                "name": "Welcome Email",
-                "subject": "Welcome to Our Service, {{first_name}}!",
-                "content": """
-                <html>
-                <body>
-                    <h2>Hello {{first_name}},</h2>
-                    <p>Welcome to our service! We're excited to have {{company}} as part of our community.</p>
-                    <p>As a {{job_title}} at {{company}}, we believe you'll find great value in our platform.</p>
-                    <p>Best regards,<br>The Team</p>
-                </body>
-                </html>
-                """,
-                "type": "initial"
-            },
-            {
-                "id": "2",
-                "name": "Follow-up Day 3",
-                "subject": "Quick follow-up regarding {{company}}",
-                "content": """
-                <html>
-                <body>
-                    <h2>Hi {{first_name}},</h2>
-                    <p>I wanted to follow up about {{company}} and see if you had any questions about our service.</p>
-                    <p>As a {{job_title}}, you might be interested in how our platform can help streamline your operations.</p>
-                    <p>Let me know if you'd like to schedule a brief call to discuss further.</p>
-                    <p>Best regards,<br>The Team</p>
-                </body>
-                </html>
-                """,
-                "type": "follow_up"
-            }
-        ]
-        
-        template = next((t for t in templates if t["id"] == campaign["template_id"]), None)
+        # Get template data
+        template = await db_service.get_template_by_id(campaign["template_id"])
         if not template:
             raise HTTPException(status_code=404, detail="Template not found")
         
-        # Get prospects
-        prospects = [
-            {
-                "id": "1",
-                "email": "john.doe@techstartup.com",
-                "first_name": "John",
-                "last_name": "Doe",
-                "company": "TechStartup Inc",
-                "job_title": "CEO",
-                "industry": "Technology",
-                "status": "active"
-            },
-            {
-                "id": "2",
-                "email": "jane.smith@financegroup.com",
-                "first_name": "Jane",
-                "last_name": "Smith",
-                "company": "Finance Group LLC",
-                "job_title": "CFO",
-                "industry": "Finance",
-                "status": "active"
-            },
-            {
-                "id": "3",
-                "email": "mike.johnson@healthcorp.com",
-                "first_name": "Mike",
-                "last_name": "Johnson",
-                "company": "Health Corp",
-                "job_title": "Director of Operations",
-                "industry": "Healthcare",
-                "status": "active"
-            }
-        ]
+        # Get prospects (for now, get all active prospects)
+        prospects = await db_service.get_prospects(limit=send_request.max_emails)
+        if not prospects:
+            raise HTTPException(status_code=404, detail="No prospects found")
         
-        # Get default email provider
-        provider_data = {
-            "id": "1",
-            "name": "Test Gmail Provider",
-            "provider_type": "gmail",
-            "email_address": "test@gmail.com",
-            "smtp_host": "smtp.gmail.com",
-            "smtp_port": 587,
-            "smtp_username": "test@gmail.com",
-            "smtp_password": "app_password",
-            "smtp_use_tls": True
-        }
+        # Get email provider
+        if send_request.email_provider_id:
+            provider = await db_service.get_email_provider_by_id(send_request.email_provider_id)
+        else:
+            provider = await db_service.get_default_email_provider()
+        
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
         
         # Send emails with AI enhancement
         email_results = []
@@ -593,14 +505,25 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 
                 # For demo purposes, simulate email sending
                 # In production, you would use the actual SMTP functionality
-                if prospect["email"].endswith("@techstartup.com"):
-                    # Simulate successful sending
-                    result = {"status": "sent", "message": "Email sent successfully"}
-                    sent_count += 1
-                else:
-                    # Simulate some failures for demo
-                    result = {"status": "sent", "message": "Email sent successfully"}
-                    sent_count += 1
+                # For now, we'll mark all as sent successfully
+                result = {"status": "sent", "message": "Email sent successfully"}
+                sent_count += 1
+                
+                # Create email record in database
+                email_record = {
+                    "id": f"email_{prospect['id']}_{campaign_id}",
+                    "campaign_id": campaign_id,
+                    "prospect_id": prospect["id"],
+                    "recipient_email": prospect["email"],
+                    "subject": enhanced_email.get("subject", ""),
+                    "content": enhanced_email.get("content", ""),
+                    "status": "sent",
+                    "sent_at": datetime.utcnow(),
+                    "provider_id": provider["id"],
+                    "enhanced_by_ai": enhanced_email.get("ai_enhancement_applied", False)
+                }
+                
+                await db_service.create_email_record(email_record)
                 
                 email_results.append({
                     "recipient": prospect["email"],
@@ -625,7 +548,7 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 })
         
         # Update campaign status
-        campaign["status"] = "sent"
+        await db_service.update_campaign(campaign_id, {"status": "sent"})
         
         # Remove duplicates from knowledge articles
         unique_knowledge_articles = []
@@ -634,6 +557,8 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
             if article.get("id") not in seen_ids:
                 unique_knowledge_articles.append(article)
                 seen_ids.add(article.get("id"))
+        
+        await db_service.disconnect()
         
         return {
             "campaign_id": campaign_id,
