@@ -1,6 +1,35 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
 import os
+from bson import ObjectId
+from typing import Any, Dict, List, Union
+
+def clean_document(doc: Union[Dict, List, Any]) -> Union[Dict, List, Any]:
+    """
+    Recursively clean MongoDB documents by converting ObjectId to string
+    and removing/converting non-serializable fields
+    """
+    if isinstance(doc, dict):
+        cleaned = {}
+        for key, value in doc.items():
+            if key == '_id':
+                # Skip MongoDB's _id field entirely
+                continue
+            elif isinstance(value, ObjectId):
+                # Convert ObjectId to string
+                cleaned[key] = str(value)
+            elif isinstance(value, (dict, list)):
+                # Recursively clean nested structures
+                cleaned[key] = clean_document(value)
+            else:
+                cleaned[key] = value
+        return cleaned
+    elif isinstance(doc, list):
+        return [clean_document(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    else:
+        return doc
 
 class DatabaseService:
     def __init__(self):
