@@ -334,9 +334,7 @@ class DatabaseService:
     async def get_prospect_by_id(self, prospect_id: str):
         """Get prospect by ID"""
         prospect = await self.db.prospects.find_one({"id": prospect_id})
-        if prospect:
-            prospect.pop('_id', None)
-        return prospect
+        return clean_document(prospect) if prospect else None
     
     # Thread Context operations
     async def create_thread_context(self, thread_data: dict):
