@@ -527,6 +527,16 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 
                 await db_service.create_email_record(email_record)
                 
+                # Update prospect for follow-up tracking
+                prospect_update = {
+                    "last_contact": datetime.utcnow(),
+                    "campaign_id": campaign_id,
+                    "follow_up_status": "active" if send_request.follow_up_enabled else "stopped",
+                    "follow_up_count": 0
+                }
+                
+                await db_service.update_prospect(prospect["id"], prospect_update)
+                
                 email_results.append({
                     "recipient": prospect["email"],
                     "result": result,
