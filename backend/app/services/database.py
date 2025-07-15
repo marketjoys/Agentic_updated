@@ -562,9 +562,7 @@ class DatabaseService:
     async def get_follow_up_rules(self):
         """Get all follow-up rules"""
         rules = await self.db.follow_up_rules.find().to_list(length=100)
-        for rule in rules:
-            rule.pop('_id', None)
-        return rules
+        return clean_document(rules)
     
     async def get_follow_up_rule_by_id(self, rule_id: str):
         """Get follow-up rule by ID"""
