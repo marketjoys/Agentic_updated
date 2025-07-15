@@ -176,9 +176,7 @@ class DatabaseService:
     async def get_templates(self):
         """Get all templates"""
         templates = await self.db.templates.find().to_list(length=100)
-        for template in templates:
-            template.pop('_id', None)
-        return templates
+        return clean_document(templates)
         
     async def get_template_by_id(self, template_id: str):
         """Get a specific template by ID"""
