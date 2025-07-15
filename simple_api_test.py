@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 class SimpleBackendTester:
-    def __init__(self, base_url="https://a8bd911a-65bb-44fc-ba90-227985817201.preview.emergentagent.com"):
+    def __init__(self, base_url="https://5891bd0e-da58-44c3-a7d7-a414416de1b5.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
