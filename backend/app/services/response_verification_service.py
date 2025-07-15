@@ -5,7 +5,7 @@ import logging
 import json
 from app.models import ResponseVerification
 from app.services.database import db_service
-from app.services.groq_service import groq_service
+from app.services.groq_service_mock import groq_service
 from app.services.knowledge_base_service import knowledge_base_service
 from app.utils.helpers import generate_id
 
