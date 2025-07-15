@@ -58,7 +58,7 @@ const KnowledgeBase = () => {
   const handleAddArticle = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${BACKEND_URL}/api/knowledge-base/articles`, {
+      await axios.post(`${BACKEND_URL}/api/knowledge-base`, {
         ...formData,
         tags: formData.tags.filter(tag => tag.trim() !== ''),
         keywords: formData.keywords.filter(keyword => keyword.trim() !== '')
@@ -77,7 +77,7 @@ const KnowledgeBase = () => {
   const handleEditArticle = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${BACKEND_URL}/api/knowledge-base/articles/${selectedArticle.id}`, {
+      await axios.put(`${BACKEND_URL}/api/knowledge-base/${selectedArticle.id}`, {
         ...formData,
         tags: formData.tags.filter(tag => tag.trim() !== ''),
         keywords: formData.keywords.filter(keyword => keyword.trim() !== '')
@@ -96,7 +96,7 @@ const KnowledgeBase = () => {
   const handleDeleteArticle = async (articleId) => {
     if (window.confirm('Are you sure you want to delete this knowledge article?')) {
       try {
-        await axios.delete(`${BACKEND_URL}/api/knowledge-base/articles/${articleId}`);
+        await axios.delete(`${BACKEND_URL}/api/knowledge-base/${articleId}`);
         toast.success('Knowledge article deleted successfully');
         fetchArticles();
         fetchStatistics();
