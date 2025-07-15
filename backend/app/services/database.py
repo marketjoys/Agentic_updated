@@ -200,9 +200,7 @@ class DatabaseService:
     async def get_campaigns(self):
         """Get all campaigns"""
         campaigns = await self.db.campaigns.find().to_list(length=100)
-        for campaign in campaigns:
-            campaign.pop('_id', None)
-        return campaigns
+        return clean_document(campaigns)
         
     async def get_campaign_by_id(self, campaign_id: str):
         """Get a specific campaign by ID"""
