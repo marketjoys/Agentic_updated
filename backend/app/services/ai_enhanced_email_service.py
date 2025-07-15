@@ -269,7 +269,9 @@ class AIEnhancedEmailService:
                 verification_request["prospect_data"]
             )
             
-            return verification_result
+            # Clean the verification result to remove ObjectId fields
+            cleaned_verification_result = clean_document(verification_result)
+            return cleaned_verification_result
             
         except Exception as e:
             logger.error(f"Error verifying response quality: {str(e)}")
