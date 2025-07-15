@@ -181,9 +181,7 @@ class DatabaseService:
     async def get_template_by_id(self, template_id: str):
         """Get a specific template by ID"""
         template = await self.db.templates.find_one({"id": template_id})
-        if template:
-            template.pop('_id', None)
-        return template
+        return clean_document(template) if template else None
         
     async def update_template(self, template_id: str, template_data: dict):
         """Update a template"""
