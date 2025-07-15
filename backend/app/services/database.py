@@ -540,6 +540,7 @@ class DatabaseService:
     
     async def get_default_system_prompt(self, prompt_type: str = "general"):
         """Get default system prompt by type"""
+        await self.connect()
         prompt = await self.db.system_prompts.find_one({
             "prompt_type": prompt_type,
             "is_default": True,
@@ -548,6 +549,18 @@ class DatabaseService:
         if prompt:
             prompt.pop('_id', None)
         return prompt
+    
+    async def update_knowledge_article_usage(self, article_id: str):
+        """Update knowledge article usage count"""
+        await self.connect()
+        result = await self.db.knowledge_base.update_one(
+            {"id": article_id},
+            {
+                "$inc": {"usage_count": 1},
+                "$set": {"last_used": datetime.utcnow()}
+            }
+        )
+        return result.modified_count > 0
     
     # Follow-up Rule operations
     async def create_follow_up_rule(self, rule_data: dict):
