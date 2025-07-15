@@ -455,9 +455,7 @@ class DatabaseService:
     async def get_knowledge_article_by_id(self, article_id: str):
         """Get knowledge article by ID"""
         article = await self.db.knowledge_base.find_one({"id": article_id})
-        if article:
-            article.pop('_id', None)
-        return article
+        return clean_document(article) if article else None
     
     async def update_knowledge_article(self, article_id: str, article_data: dict):
         """Update a knowledge article"""
