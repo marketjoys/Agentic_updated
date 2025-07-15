@@ -450,9 +450,7 @@ class DatabaseService:
             query["is_active"] = True
         
         articles = await self.db.knowledge_base.find(query).to_list(length=100)
-        for article in articles:
-            article.pop('_id', None)
-        return articles
+        return clean_document(articles)
     
     async def get_knowledge_article_by_id(self, article_id: str):
         """Get knowledge article by ID"""
