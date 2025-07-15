@@ -32,7 +32,7 @@ const KnowledgeBase = () => {
 
   const fetchArticles = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/knowledge-base/articles`);
+      const response = await axios.get(`${BACKEND_URL}/api/knowledge-base`);
       setArticles(response.data);
       
       // Extract unique categories
@@ -48,7 +48,7 @@ const KnowledgeBase = () => {
 
   const fetchStatistics = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/knowledge-base/statistics`);
+      const response = await axios.get(`${BACKEND_URL}/api/knowledge-base/statistics/overview`);
       setStatistics(response.data);
     } catch (error) {
       console.error('Error fetching statistics:', error);
