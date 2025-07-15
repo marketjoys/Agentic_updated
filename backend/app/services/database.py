@@ -59,7 +59,12 @@ class DatabaseService:
         
         # Insert new prospect
         result = await self.db.prospects.insert_one(prospect_data)
-        return result, None
+        # Clean the result object to remove ObjectId fields
+        cleaned_result = {
+            "acknowledged": result.acknowledged,
+            "inserted_id": str(result.inserted_id) if result.inserted_id else None
+        }
+        return cleaned_result, None
         
     async def get_prospects(self, skip: int = 0, limit: int = 100):
         """Get prospects with pagination"""
