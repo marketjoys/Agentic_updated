@@ -65,12 +65,11 @@ class DatabaseService:
         """Get prospects with pagination"""
         await self.connect()
         prospects = await self.db.prospects.find().skip(skip).limit(limit).to_list(length=limit)
-        for prospect in prospects:
-            prospect.pop('_id', None)
-        return prospects
+        return clean_document(prospects)
         
     async def upload_prospects(self, prospects_data: list):
         """Upload multiple prospects with email duplication handling"""
+        await self.connect()
         successful_inserts = []
         failed_inserts = []
         
@@ -92,8 +91,11 @@ class DatabaseService:
                     "email": prospect_data["email"],
                     "error": str(e)
                 })
-                
-        return successful_inserts, failed_inserts
+        
+        return {
+            "successful_inserts": successful_inserts,
+            "failed_inserts": failed_inserts
+        }
         
     async def get_prospect_by_email(self, email: str):
         """Get prospect by email"""
