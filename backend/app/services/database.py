@@ -410,9 +410,7 @@ class DatabaseService:
     async def get_default_email_provider(self):
         """Get default email provider"""
         provider = await self.db.email_providers.find_one({"is_default": True})
-        if provider:
-            provider.pop('_id', None)
-        return provider
+        return clean_document(provider) if provider else None
     
     async def update_all_email_providers(self, update_data: dict):
         """Update all email providers"""
