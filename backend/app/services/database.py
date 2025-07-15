@@ -123,14 +123,13 @@ class DatabaseService:
         """Get a specific list by ID"""
         list_item = await self.db.prospect_lists.find_one({"id": list_id})
         if list_item:
-            list_item.pop('_id', None)
             # Get prospects in this list
             prospects = await self.db.prospects.find({"list_ids": list_id}).to_list(length=1000)
-            for prospect in prospects:
-                prospect.pop('_id', None)
-            list_item["prospects"] = prospects
+            cleaned_prospects = [clean_document(prospect) for prospect in prospects]
+            list_item["prospects"] = cleaned_prospects
             list_item["prospect_count"] = len(prospects)
-        return list_item
+            return clean_document(list_item)
+        return None
         
     async def update_list(self, list_id: str, list_data: dict):
         """Update a prospect list"""
