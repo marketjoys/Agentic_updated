@@ -4,8 +4,21 @@ import os
 
 class DatabaseService:
     def __init__(self):
-        self.client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
-        self.db = self.client.email_responder
+        self.client = None
+        self.db = None
+        
+    async def connect(self):
+        """Connect to the database"""
+        if not self.client:
+            self.client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
+            self.db = self.client.email_responder
+            
+    async def disconnect(self):
+        """Disconnect from the database"""
+        if self.client:
+            self.client.close()
+            self.client = None
+            self.db = None
         
     async def create_prospect(self, prospect_data: dict):
         """Create a new prospect with email duplication check"""
