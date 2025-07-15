@@ -73,7 +73,6 @@ class Campaign(BaseModel):
     schedule: Optional[str] = None
 
 class EmailSendRequest(BaseModel):
-    campaign_id: str
     send_immediately: bool = True
     email_provider_id: str = ""
     max_emails: int = 1000
