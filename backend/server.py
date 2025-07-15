@@ -706,6 +706,36 @@ async def get_overall_analytics():
         ]
     }
 
+# Initialize database and services on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection and services"""
+    try:
+        from app.services.database import db_service
+        await db_service.connect()
+        logging.info("Database connected successfully")
+        
+        # Initialize services
+        try:
+            from app.services.knowledge_base_service import knowledge_base_service
+            from app.services.response_verification_service import response_verification_service
+            logging.info("Services initialized successfully")
+        except ImportError as e:
+            logging.warning(f"Could not initialize some services: {e}")
+            
+    except Exception as e:
+        logging.error(f"Error during startup: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    try:
+        from app.services.database import db_service
+        await db_service.disconnect()
+        logging.info("Database disconnected")
+    except Exception as e:
+        logging.error(f"Error during shutdown: {e}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
