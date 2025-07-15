@@ -111,12 +111,13 @@ class DatabaseService:
     async def get_lists(self):
         """Get all prospect lists with prospect counts"""
         lists = await self.db.prospect_lists.find().to_list(length=100)
+        cleaned_lists = []
         for list_item in lists:
-            list_item.pop('_id', None)
             # Update prospect count
             count = await self.db.prospects.count_documents({"list_ids": list_item["id"]})
             list_item["prospect_count"] = count
-        return lists
+            cleaned_lists.append(clean_document(list_item))
+        return cleaned_lists
         
     async def get_list_by_id(self, list_id: str):
         """Get a specific list by ID"""
