@@ -350,9 +350,7 @@ class DatabaseService:
     async def get_thread_by_id(self, thread_id: str):
         """Get specific thread by ID"""
         thread = await self.db.threads.find_one({"id": thread_id})
-        if thread:
-            thread.pop('_id', None)
-        return thread
+        return clean_document(thread) if thread else None
     
     async def get_thread_by_prospect_id(self, prospect_id: str):
         """Get thread by prospect ID"""
