@@ -345,9 +345,7 @@ class DatabaseService:
     async def get_threads(self):
         """Get all thread contexts"""
         threads = await self.db.threads.find().to_list(length=1000)
-        for thread in threads:
-            thread.pop('_id', None)
-        return threads
+        return clean_document(threads)
     
     async def get_thread_by_id(self, thread_id: str):
         """Get specific thread by ID"""
