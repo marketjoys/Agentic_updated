@@ -477,9 +477,7 @@ class DatabaseService:
             search_query["category"] = category
         
         articles = await self.db.knowledge_base.find(search_query).limit(limit).to_list(length=limit)
-        for article in articles:
-            article.pop('_id', None)
-        return articles
+        return clean_document(articles)
     
     async def get_knowledge_statistics(self):
         """Get knowledge base statistics"""
