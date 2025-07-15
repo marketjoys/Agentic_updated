@@ -16,6 +16,22 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="AI Email Responder", version="1.0.0")
 
+# Import the missing routes
+try:
+    from app.routes.knowledge_base import router as knowledge_base_router
+    from app.routes.response_verification import router as response_verification_router  
+    from app.routes.system_prompts import router as system_prompts_router
+    
+    # Include the routers
+    app.include_router(knowledge_base_router, prefix="/api", tags=["knowledge-base"])
+    app.include_router(response_verification_router, prefix="/api", tags=["response-verification"])
+    app.include_router(system_prompts_router, prefix="/api", tags=["system-prompts"])
+    
+    logging.info("Successfully imported and included knowledge base, response verification, and system prompts routes")
+except ImportError as e:
+    logging.warning(f"Could not import additional routes: {e}")
+    logging.warning("Running with basic functionality only")
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
