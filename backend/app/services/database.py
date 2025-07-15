@@ -567,9 +567,7 @@ class DatabaseService:
     async def get_follow_up_rule_by_id(self, rule_id: str):
         """Get follow-up rule by ID"""
         rule = await self.db.follow_up_rules.find_one({"id": rule_id})
-        if rule:
-            rule.pop('_id', None)
-        return rule
+        return clean_document(rule) if rule else None
     
     async def update_follow_up_rule(self, rule_id: str, rule_data: dict):
         """Update a follow-up rule"""
