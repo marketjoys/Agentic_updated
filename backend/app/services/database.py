@@ -205,9 +205,7 @@ class DatabaseService:
     async def get_campaign_by_id(self, campaign_id: str):
         """Get a specific campaign by ID"""
         campaign = await self.db.campaigns.find_one({"id": campaign_id})
-        if campaign:
-            campaign.pop('_id', None)
-        return campaign
+        return clean_document(campaign) if campaign else None
         
     async def update_campaign(self, campaign_id: str, campaign_data: dict):
         """Update a campaign"""
