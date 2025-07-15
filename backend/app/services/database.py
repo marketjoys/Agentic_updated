@@ -516,9 +516,7 @@ class DatabaseService:
     async def get_system_prompt_by_id(self, prompt_id: str):
         """Get system prompt by ID"""
         prompt = await self.db.system_prompts.find_one({"id": prompt_id})
-        if prompt:
-            prompt.pop('_id', None)
-        return prompt
+        return clean_document(prompt) if prompt else None
     
     async def update_system_prompt(self, prompt_id: str, prompt_data: dict):
         """Update a system prompt"""
