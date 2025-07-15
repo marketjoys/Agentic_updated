@@ -224,9 +224,7 @@ class DatabaseService:
     async def get_intents(self):
         """Get all intents"""
         intents = await self.db.intents.find().to_list(length=100)
-        for intent in intents:
-            intent.pop('_id', None)
-        return intents
+        return clean_document(intents)
         
     # Email operations
     async def create_email_record(self, email_data: dict):
