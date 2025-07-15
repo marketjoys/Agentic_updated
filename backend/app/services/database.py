@@ -392,9 +392,7 @@ class DatabaseService:
     async def get_email_provider_by_id(self, provider_id: str):
         """Get email provider by ID"""
         provider = await self.db.email_providers.find_one({"id": provider_id})
-        if provider:
-            provider.pop('_id', None)
-        return provider
+        return clean_document(provider) if provider else None
     
     async def update_email_provider(self, provider_id: str, provider_data: dict):
         """Update an email provider"""
