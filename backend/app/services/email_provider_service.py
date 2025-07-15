@@ -96,6 +96,7 @@ class EmailProviderService:
     async def get_email_provider_by_id(self, provider_id: str) -> Optional[Dict]:
         """Get email provider by ID"""
         try:
+            await db_service.connect()
             provider = await db_service.get_email_provider_by_id(provider_id)
             return provider
         except Exception as e:
