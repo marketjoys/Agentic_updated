@@ -694,28 +694,87 @@ async def delete_template(template_id: str):
 @app.post("/api/prospects")
 async def create_prospect(prospect: dict):
     """Create a new prospect"""
-    return {
-        "id": "new_prospect_id",
-        "message": "Prospect created successfully",
-        **prospect
-    }
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID and add timestamps
+        prospect_id = generate_id()
+        prospect["id"] = prospect_id
+        prospect["created_at"] = datetime.utcnow()
+        prospect["updated_at"] = datetime.utcnow()
+        prospect["status"] = prospect.get("status", "active")
+        
+        # Create prospect in database
+        result, error = await db_service.create_prospect(prospect)
+        
+        if result:
+            return {
+                "id": prospect_id,
+                "message": "Prospect created successfully",
+                **prospect
+            }
+        else:
+            raise HTTPException(status_code=400, detail=error or "Failed to create prospect")
+            
+    except Exception as e:
+        logging.error(f"Error creating prospect: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating prospect: {str(e)}")
 
 @app.put("/api/prospects/{prospect_id}")
 async def update_prospect(prospect_id: str, prospect: dict):
     """Update a prospect"""
-    return {
-        "id": prospect_id,
-        "message": "Prospect updated successfully",
-        **prospect
-    }
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Add update timestamp
+        prospect["updated_at"] = datetime.utcnow()
+        
+        # Update prospect in database
+        result = await db_service.update_prospect(prospect_id, prospect)
+        
+        if result:
+            return {
+                "id": prospect_id,
+                "message": "Prospect updated successfully",
+                **prospect
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Prospect not found")
+            
+    except Exception as e:
+        logging.error(f"Error updating prospect: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating prospect: {str(e)}")
 
 @app.delete("/api/prospects/{prospect_id}")
 async def delete_prospect(prospect_id: str):
     """Delete a prospect"""
-    return {
-        "id": prospect_id,
-        "message": "Prospect deleted successfully"
-    }
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Delete prospect from database
+        result = await db_service.delete_prospect(prospect_id)
+        
+        if result:
+            return {
+                "id": prospect_id,
+                "message": "Prospect deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Prospect not found")
+            
+    except Exception as e:
+        logging.error(f"Error deleting prospect: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting prospect: {str(e)}")
 
 @app.post("/api/prospects/upload")
 async def upload_prospects_csv(file_content: str):
