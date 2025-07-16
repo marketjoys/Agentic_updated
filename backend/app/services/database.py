@@ -651,6 +651,12 @@ class DatabaseService:
             "approved_verifications": approved_verifications,
             "rejected_verifications": rejected_verifications
         }
+    
+    async def get_prospects_by_list_id(self, list_id: str):
+        """Get prospects by list ID"""
+        await self.connect()
+        prospects = await self.db.prospects.find({"list_ids": list_id}).to_list(length=1000)
+        return clean_document(prospects)
 
 # Create global database service instance
 db_service = DatabaseService()
