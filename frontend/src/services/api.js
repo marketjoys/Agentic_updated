@@ -85,7 +85,24 @@ export const apiService = {
   getCampaigns: () => api.get('/api/campaigns'),
   createCampaign: (campaign) => api.post('/api/campaigns', campaign),
   getCampaign: (id) => api.get(`/api/campaigns/${id}`),
-  sendCampaign: (id) => api.post(`/api/campaigns/${id}/send`),
+  sendCampaign: (id, sendRequest = {}) => {
+    // Default send request parameters
+    const defaultSendRequest = {
+      send_immediately: true,
+      email_provider_id: "",
+      max_emails: 1000,
+      schedule_type: "immediate",
+      start_time: null,
+      follow_up_enabled: true,
+      follow_up_intervals: [3, 7, 14],
+      follow_up_templates: []
+    };
+    
+    // Merge with provided parameters
+    const finalSendRequest = { ...defaultSendRequest, ...sendRequest };
+    
+    return api.post(`/api/campaigns/${id}/send`, finalSendRequest);
+  },
 
   // Intents
   getIntents: () => api.get('/api/intents'),
