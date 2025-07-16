@@ -391,32 +391,26 @@ async def get_lists():
 
 @app.get("/api/templates")
 async def get_templates():
-    return [
-        {
-            "id": "1",
-            "name": "Welcome Email",
-            "subject": "Welcome to Our Service, {{first_name}}!",
-            "content": "Hello {{first_name}}, welcome to our service!",
-            "type": "initial",
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "2",
-            "name": "Follow-up Day 3",
-            "subject": "Quick follow-up regarding {{company}}",
-            "content": "Hi {{first_name}}, I wanted to follow up about {{company}}...",
-            "type": "follow_up",
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "3",
-            "name": "Follow-up Day 7",
-            "subject": "Final follow-up for {{company}}",
-            "content": "Hi {{first_name}}, this is my final follow-up about {{company}}...",
-            "type": "follow_up",
-            "created_at": datetime.utcnow()
-        }
-    ]
+    """Get all templates from database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get templates from database
+        templates = await db_service.get_templates()
+        
+        # If no templates exist, return empty list
+        if not templates:
+            return []
+        
+        return templates
+        
+    except Exception as e:
+        logging.error(f"Error fetching templates: {str(e)}")
+        # Return empty list on error instead of mock data
+        return []
 
 @app.get("/api/prospects")
 async def get_prospects(skip: int = 0, limit: int = 100):
