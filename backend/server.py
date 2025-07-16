@@ -246,6 +246,7 @@ async def delete_campaign(campaign_id: str):
 
 @app.get("/api/email-providers")
 async def get_email_providers():
+    """Get all email providers from database"""
     try:
         from app.services.database import db_service
         
@@ -255,57 +256,16 @@ async def get_email_providers():
         # Get email providers from database
         providers = await db_service.get_email_providers()
         
+        # If no providers exist, return empty list (no mock data)
         if not providers:
-            # Return default test providers if none exist
-            return [
-                {
-                    "id": "1",
-                    "name": "Test Gmail Provider",
-                    "provider_type": "gmail",
-                    "email_address": "test@gmail.com",
-                    "is_active": True,
-                    "is_default": True,
-                    "daily_send_limit": 500,
-                    "hourly_send_limit": 50,
-                    "current_daily_count": 0,
-                    "current_hourly_count": 0,
-                    "last_sync": datetime.utcnow()
-                },
-                {
-                    "id": "2",
-                    "name": "Test Outlook Provider",
-                    "provider_type": "outlook",
-                    "email_address": "test@outlook.com",
-                    "is_active": True,
-                    "is_default": False,
-                    "daily_send_limit": 300,
-                    "hourly_send_limit": 30,
-                    "current_daily_count": 0,
-                    "current_hourly_count": 0,
-                    "last_sync": datetime.utcnow()
-                }
-            ]
+            return []
         
         return providers
         
     except Exception as e:
         logging.error(f"Error fetching email providers: {str(e)}")
-        # Return default providers on error
-        return [
-            {
-                "id": "1",
-                "name": "Test Gmail Provider",
-                "provider_type": "gmail",
-                "email_address": "test@gmail.com",
-                "is_active": True,
-                "is_default": True,
-                "daily_send_limit": 500,
-                "hourly_send_limit": 50,
-                "current_daily_count": 0,
-                "current_hourly_count": 0,
-                "last_sync": datetime.utcnow()
-            }
-        ]
+        # Return empty list on error instead of mock data
+        return []
 
 @app.post("/api/email-providers")
 async def create_email_provider(provider: EmailProvider):
