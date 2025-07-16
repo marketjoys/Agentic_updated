@@ -610,28 +610,86 @@ async def get_campaign_status(campaign_id: str):
 @app.post("/api/templates")
 async def create_template(template: dict):
     """Create a new email template"""
-    return {
-        "id": "new_template_id",
-        "message": "Template created successfully",
-        **template
-    }
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID and add timestamps
+        template_id = generate_id()
+        template["id"] = template_id
+        template["created_at"] = datetime.utcnow()
+        template["updated_at"] = datetime.utcnow()
+        
+        # Create template in database
+        result = await db_service.create_template(template)
+        
+        if result:
+            return {
+                "id": template_id,
+                "message": "Template created successfully",
+                **template
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create template")
+            
+    except Exception as e:
+        logging.error(f"Error creating template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating template: {str(e)}")
 
 @app.put("/api/templates/{template_id}")
 async def update_template(template_id: str, template: dict):
     """Update an email template"""
-    return {
-        "id": template_id,
-        "message": "Template updated successfully",
-        **template
-    }
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Add update timestamp
+        template["updated_at"] = datetime.utcnow()
+        
+        # Update template in database
+        result = await db_service.update_template(template_id, template)
+        
+        if result:
+            return {
+                "id": template_id,
+                "message": "Template updated successfully",
+                **template
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Template not found")
+            
+    except Exception as e:
+        logging.error(f"Error updating template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating template: {str(e)}")
 
 @app.delete("/api/templates/{template_id}")
 async def delete_template(template_id: str):
     """Delete an email template"""
-    return {
-        "id": template_id,
-        "message": "Template deleted successfully"
-    }
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Delete template from database
+        result = await db_service.delete_template(template_id)
+        
+        if result:
+            return {
+                "id": template_id,
+                "message": "Template deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Template not found")
+            
+    except Exception as e:
+        logging.error(f"Error deleting template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting template: {str(e)}")
 
 @app.post("/api/prospects")
 async def create_prospect(prospect: dict):
