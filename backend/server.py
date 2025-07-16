@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import asyncio
 import re
+from app.models import EmailProviderType
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
