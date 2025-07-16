@@ -149,15 +149,100 @@ async def get_campaigns():
 
 @app.post("/api/campaigns")
 async def create_campaign(campaign: Campaign):
-    return {
-        "id": "new_campaign_id",
-        "name": campaign.name,
-        "status": "draft",
-        "prospect_count": 0,
-        "max_emails": campaign.max_emails,
-        "created_at": datetime.utcnow(),
-        "message": "Campaign created successfully"
-    }
+    """Create a new campaign"""
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID and add timestamps
+        campaign_id = generate_id()
+        campaign_data = {
+            "id": campaign_id,
+            "name": campaign.name,
+            "template_id": campaign.template_id,
+            "list_ids": campaign.list_ids,
+            "max_emails": campaign.max_emails,
+            "schedule": campaign.schedule,
+            "status": "draft",
+            "prospect_count": 0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        # Create campaign in database
+        result = await db_service.create_campaign(campaign_data)
+        
+        if result:
+            return {
+                "id": campaign_id,
+                "name": campaign.name,
+                "status": "draft",
+                "prospect_count": 0,
+                "max_emails": campaign.max_emails,
+                "created_at": datetime.utcnow(),
+                "message": "Campaign created successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create campaign")
+            
+    except Exception as e:
+        logging.error(f"Error creating campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating campaign: {str(e)}")
+
+@app.put("/api/campaigns/{campaign_id}")
+async def update_campaign(campaign_id: str, campaign: dict):
+    """Update a campaign"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Add update timestamp
+        campaign["updated_at"] = datetime.utcnow()
+        
+        # Update campaign in database
+        result = await db_service.update_campaign(campaign_id, campaign)
+        
+        if result:
+            return {
+                "id": campaign_id,
+                "message": "Campaign updated successfully",
+                **campaign
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+            
+    except Exception as e:
+        logging.error(f"Error updating campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating campaign: {str(e)}")
+
+@app.delete("/api/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: str):
+    """Delete a campaign"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Delete campaign from database
+        result = await db_service.delete_campaign(campaign_id)
+        
+        if result:
+            return {
+                "id": campaign_id,
+                "message": "Campaign deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+            
+    except Exception as e:
+        logging.error(f"Error deleting campaign: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting campaign: {str(e)}")
 
 @app.get("/api/email-providers")
 async def get_email_providers():
