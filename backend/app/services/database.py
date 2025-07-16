@@ -188,12 +188,9 @@ class DatabaseService:
         template = await self.db.templates.find_one({"id": template_id})
         return clean_document(template) if template else None
         
-    async def update_template(self, template_id: str, template_data: dict):
-        """Update a template"""
-        result = await self.db.templates.update_one(
-            {"id": template_id},
-            {"$set": template_data}
-        )
+    async def delete_template(self, template_id: str):
+        """Delete a template"""
+        result = await self.db.templates.delete_one({"id": template_id})
         return result
         
     # Campaigns operations
