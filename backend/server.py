@@ -779,12 +779,54 @@ async def delete_prospect(prospect_id: str):
 @app.post("/api/prospects/upload")
 async def upload_prospects_csv(file_content: str):
     """Upload prospects from CSV"""
-    return {
-        "message": "CSV uploaded successfully",
-        "prospects_added": 10,
-        "prospects_updated": 5,
-        "total_prospects": 15
-    }
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        import csv
+        import io
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Parse CSV content
+        csv_reader = csv.DictReader(io.StringIO(file_content))
+        prospects_data = []
+        
+        for row in csv_reader:
+            # Generate ID and add timestamps
+            prospect_id = generate_id()
+            prospect = {
+                "id": prospect_id,
+                "email": row.get("email", "").strip(),
+                "first_name": row.get("first_name", "").strip(),
+                "last_name": row.get("last_name", "").strip(),
+                "company": row.get("company", "").strip(),
+                "job_title": row.get("job_title", "").strip(),
+                "industry": row.get("industry", "").strip(),
+                "status": row.get("status", "active").strip(),
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+            
+            # Validate required fields
+            if prospect["email"] and "@" in prospect["email"]:
+                prospects_data.append(prospect)
+        
+        # Upload prospects to database
+        result = await db_service.upload_prospects(prospects_data)
+        
+        return {
+            "message": "CSV uploaded successfully",
+            "prospects_added": len(result["successful_inserts"]),
+            "prospects_failed": len(result["failed_inserts"]),
+            "total_prospects": len(prospects_data),
+            "successful_inserts": result["successful_inserts"],
+            "failed_inserts": result["failed_inserts"]
+        }
+        
+    except Exception as e:
+        logging.error(f"Error uploading CSV: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
 
 @app.get("/api/analytics")
 async def get_overall_analytics():
