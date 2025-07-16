@@ -93,6 +93,8 @@ export const apiService = {
   createCampaign: (campaign) => api.post('/api/campaigns', campaign),
   getCampaign: (id) => api.get(`/api/campaigns/${id}`),
   sendCampaign: (id, sendRequest = {}) => {
+    console.log('📡 sendCampaign called with id:', id, 'sendRequest:', sendRequest);
+    
     // Default send request parameters
     const defaultSendRequest = {
       send_immediately: true,
@@ -107,6 +109,9 @@ export const apiService = {
     
     // Merge with provided parameters
     const finalSendRequest = { ...defaultSendRequest, ...sendRequest };
+    
+    console.log('📤 Final send request:', finalSendRequest);
+    console.log('🎯 Making POST request to:', `/api/campaigns/${id}/send`);
     
     return api.post(`/api/campaigns/${id}/send`, finalSendRequest);
   },
