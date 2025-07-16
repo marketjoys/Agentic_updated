@@ -192,6 +192,11 @@ class DatabaseService:
         """Delete a template"""
         result = await self.db.templates.delete_one({"id": template_id})
         return result
+    
+    async def delete_prospect(self, prospect_id: str):
+        """Delete a prospect"""
+        result = await self.db.prospects.delete_one({"id": prospect_id})
+        return result
         
     # Campaigns operations
     async def create_campaign(self, campaign_data: dict):
