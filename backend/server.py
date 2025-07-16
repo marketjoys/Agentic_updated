@@ -387,6 +387,7 @@ async def get_prospects(skip: int = 0, limit: int = 100):
             "job_title": "CEO",
             "industry": "Technology",
             "status": "active",
+            "list_ids": ["1"],  # Assign to Tech Startups list
             "created_at": datetime.utcnow()
         },
         {
@@ -398,6 +399,7 @@ async def get_prospects(skip: int = 0, limit: int = 100):
             "job_title": "CFO",
             "industry": "Finance",
             "status": "active",
+            "list_ids": ["2"],  # Assign to Finance Companies list
             "created_at": datetime.utcnow()
         },
         {
@@ -409,6 +411,7 @@ async def get_prospects(skip: int = 0, limit: int = 100):
             "job_title": "Director of Operations",
             "industry": "Healthcare",
             "status": "active",
+            "list_ids": ["3"],  # Assign to Healthcare Organizations list
             "created_at": datetime.utcnow()
         }
     ]
