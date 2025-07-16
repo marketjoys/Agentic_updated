@@ -368,35 +368,26 @@ async def set_default_email_provider(provider_id: str):
 
 @app.get("/api/lists")
 async def get_lists():
-    return [
-        {
-            "id": "1",
-            "name": "Tech Startups",
-            "description": "Technology startup companies",
-            "color": "#3B82F6",
-            "prospect_count": 5,
-            "tags": ["tech", "startup", "b2b"],
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "2",
-            "name": "Finance Companies",
-            "description": "Financial services companies",
-            "color": "#10B981",
-            "prospect_count": 3,
-            "tags": ["finance", "services", "b2b"],
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "3",
-            "name": "Healthcare Organizations",
-            "description": "Healthcare and medical organizations",
-            "color": "#EF4444",
-            "prospect_count": 2,
-            "tags": ["healthcare", "medical", "b2b"],
-            "created_at": datetime.utcnow()
-        }
-    ]
+    """Get all lists from database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get lists from database
+        lists = await db_service.get_lists()
+        
+        # If no lists exist, return empty list
+        if not lists:
+            return []
+        
+        return lists
+        
+    except Exception as e:
+        logging.error(f"Error fetching lists: {str(e)}")
+        # Return empty list on error instead of mock data
+        return []
 
 @app.get("/api/templates")
 async def get_templates():
