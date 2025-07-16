@@ -6,7 +6,7 @@ Simple test for email sending functionality
 import requests
 import json
 
-BACKEND_URL = "https://8397aecf-41cf-41e9-b7eb-72b72babddee.preview.emergentagent.com"
+BACKEND_URL = "https://08c520dc-7bb9-4375-b999-4e835c4201c3.preview.emergentagent.com"
 
 def test_email_sending():
     # Authenticate
