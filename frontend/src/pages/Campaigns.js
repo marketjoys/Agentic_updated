@@ -15,14 +15,24 @@ const Campaigns = () => {
 
   const loadData = async () => {
     try {
+      console.log('🔄 Loading campaigns and templates...');
+      
       const [campaignsResponse, templatesResponse] = await Promise.all([
         apiService.getCampaigns(),
         apiService.getTemplates()
       ]);
+      
+      console.log('📊 Campaigns response:', campaignsResponse.data);
+      console.log('📝 Templates response:', templatesResponse.data);
+      
       setCampaigns(campaignsResponse.data);
       setTemplates(templatesResponse.data);
+      
+      console.log('✅ Data loaded successfully');
     } catch (error) {
-      toast.error('Failed to load data');
+      console.error('❌ Error loading data:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      toast.error('Failed to load data: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
