@@ -430,7 +430,7 @@ The AI Email Responder application is now **100% functional** with all critical 
 ## 🧪 CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com
+- **URL**: https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive frontend functionality testing
@@ -781,7 +781,7 @@ The backend API provides a **solid foundation** for the email marketing system w
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com
+- **Backend URL**: https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com
 
 ### 🎉 FINAL TEST RESULTS: ALL SYSTEMS OPERATIONAL
 
@@ -958,7 +958,7 @@ The AI Email Responder backend API is now **FULLY FUNCTIONAL** and **PRODUCTION-
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com
+- **Backend URL**: https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com
 
 ### 🎉 COMPREHENSIVE EMAIL CAMPAIGN SENDING TESTS - ALL PASSED
 
@@ -1148,7 +1148,7 @@ The AI Email Responder backend API is **FULLY FUNCTIONAL** and **PRODUCTION-READ
 
 #### ✅ Backend Status: FULLY FUNCTIONAL
 - **API Endpoint**: `/api/campaigns/{id}/send` is implemented and working
-- **Direct API Test**: `curl -H "Authorization: Bearer test_token_12345" "https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com/api/campaigns"` returns expected data
+- **Direct API Test**: `curl -H "Authorization: Bearer test_token_12345" "https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com/api/campaigns"` returns expected data
 - **Campaign Data**: Returns 2 campaigns (Test Campaign - draft, Welcome Series - active)
 - **Services**: All services running properly (backend, frontend, mongodb)
 
@@ -1213,7 +1213,7 @@ The issue appears to be **intermittent frontend data loading** rather than campa
 ## 🧪 FRONTEND CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com
+- **URL**: https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 
@@ -1222,7 +1222,7 @@ The issue appears to be **intermittent frontend data loading** rather than campa
 ## 🧪 LATEST FRONTEND TESTING RESULTS - DECEMBER 16, 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://d91c1d61-d849-44ea-aabf-3847cd5b2bcc.preview.emergentagent.com
+- **URL**: https://23dd8771-8412-4940-ba67-b97474b3fe6d.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive frontend functionality testing
