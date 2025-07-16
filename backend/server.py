@@ -551,7 +551,8 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 "id": campaign_id,
                 "name": "Test Campaign",
                 "template_id": "1",
-                "status": "active"
+                "list_ids": ["1", "2", "3"],  # Add all test lists
+                "status": "draft"
             }
         
         # Get template data
@@ -566,10 +567,33 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 "content": "Hello {{first_name}}, welcome to our service! We're excited to work with {{company}}."
             }
         
-        # Get prospects
-        prospects = await db_service.get_prospects(limit=send_request.max_emails)
+        # Get prospects from the campaign's lists
+        prospects = []
+        list_ids = campaign.get("list_ids", [])
+        
+        if list_ids:
+            # Get prospects from specific lists
+            for list_id in list_ids:
+                list_prospects = await db_service.get_prospects_by_list_id(list_id)
+                if list_prospects:
+                    prospects.extend(list_prospects)
+        
+        # If no prospects from lists, get all prospects (fallback)
         if not prospects:
-            raise HTTPException(status_code=404, detail="No prospects found")
+            prospects = await db_service.get_prospects(limit=send_request.max_emails)
+        
+        # Remove duplicates by email
+        seen_emails = set()
+        unique_prospects = []
+        for prospect in prospects:
+            if prospect["email"] not in seen_emails:
+                seen_emails.add(prospect["email"])
+                unique_prospects.append(prospect)
+        
+        prospects = unique_prospects[:send_request.max_emails]
+        
+        if not prospects:
+            raise HTTPException(status_code=404, detail="No prospects found for this campaign")
         
         # Get email provider
         if send_request.email_provider_id:
