@@ -414,44 +414,26 @@ async def get_templates():
 
 @app.get("/api/prospects")
 async def get_prospects(skip: int = 0, limit: int = 100):
-    return [
-        {
-            "id": "1",
-            "email": "john.doe@techstartup.com",
-            "first_name": "John",
-            "last_name": "Doe",
-            "company": "TechStartup Inc",
-            "job_title": "CEO",
-            "industry": "Technology",
-            "status": "active",
-            "list_ids": ["1"],  # Assign to Tech Startups list
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "2",
-            "email": "jane.smith@financegroup.com",
-            "first_name": "Jane",
-            "last_name": "Smith",
-            "company": "Finance Group LLC",
-            "job_title": "CFO",
-            "industry": "Finance",
-            "status": "active",
-            "list_ids": ["2"],  # Assign to Finance Companies list
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "3",
-            "email": "mike.johnson@healthcorp.com",
-            "first_name": "Mike",
-            "last_name": "Johnson",
-            "company": "Health Corp",
-            "job_title": "Director of Operations",
-            "industry": "Healthcare",
-            "status": "active",
-            "list_ids": ["3"],  # Assign to Healthcare Organizations list
-            "created_at": datetime.utcnow()
-        }
-    ]
+    """Get all prospects from database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get prospects from database
+        prospects = await db_service.get_prospects(skip=skip, limit=limit)
+        
+        # If no prospects exist, return empty list
+        if not prospects:
+            return []
+        
+        return prospects
+        
+    except Exception as e:
+        logging.error(f"Error fetching prospects: {str(e)}")
+        # Return empty list on error instead of mock data
+        return []
 
 @app.get("/api/intents")
 async def get_intents():
