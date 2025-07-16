@@ -40,12 +40,21 @@ const Campaigns = () => {
   };
 
   const handleSendCampaign = async (campaignId) => {
+    console.log('🚀 handleSendCampaign called with campaignId:', campaignId);
+    
     try {
+      console.log('📡 Sending campaign via API...');
       const response = await apiService.sendCampaign(campaignId);
-      toast.success(response.data.message);
+      console.log('✅ Campaign sent successfully:', response.data);
+      
+      toast.success(response.data.message || 'Campaign sent successfully!');
       loadData();
     } catch (error) {
-      toast.error('Failed to send campaign');
+      console.error('❌ Campaign sending failed:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      
+      const errorMessage = error.response?.data?.detail || 'Failed to send campaign';
+      toast.error(errorMessage);
     }
   };
 
