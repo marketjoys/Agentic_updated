@@ -570,26 +570,16 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
         # Get campaign data
         campaign = await db_service.get_campaign_by_id(campaign_id)
         if not campaign:
-            # Create mock campaign data for testing
-            campaign = {
-                "id": campaign_id,
-                "name": "Test Campaign",
-                "template_id": "1",
-                "list_ids": ["1", "2", "3"],  # Add all test lists
-                "status": "draft"
-            }
+            raise HTTPException(status_code=404, detail="Campaign not found")
         
         # Get template data
-        template_id = campaign.get("template_id", "1")
+        template_id = campaign.get("template_id")
+        if not template_id:
+            raise HTTPException(status_code=400, detail="Campaign has no template assigned")
+            
         template = await db_service.get_template_by_id(template_id)
         if not template:
-            # Use sample template for testing
-            template = {
-                "id": template_id,
-                "name": "Welcome Email",
-                "subject": "Welcome to Our Service, {{first_name}}!",
-                "content": "Hello {{first_name}}, welcome to our service! We're excited to work with {{company}}."
-            }
+            raise HTTPException(status_code=404, detail="Template not found")
         
         # Get prospects from the campaign's lists
         prospects = []
