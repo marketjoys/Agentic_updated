@@ -14,6 +14,7 @@ const Campaigns = () => {
   }, []);
 
   const loadData = async () => {
+    console.log('🔄 Starting loadData...');
     try {
       console.log('🔄 Loading campaigns and templates...');
       
@@ -25,15 +26,18 @@ const Campaigns = () => {
       console.log('📊 Campaigns response:', campaignsResponse.data);
       console.log('📝 Templates response:', templatesResponse.data);
       
+      console.log('🔄 Setting state...');
       setCampaigns(campaignsResponse.data);
       setTemplates(templatesResponse.data);
       
       console.log('✅ Data loaded successfully');
+      console.log('🔄 Setting loading to false...');
     } catch (error) {
       console.error('❌ Error loading data:', error);
       console.error('Error details:', error.response?.data || error.message);
       toast.error('Failed to load data: ' + (error.response?.data?.detail || error.message));
     } finally {
+      console.log('🔄 Finally block: setting loading to false');
       setLoading(false);
     }
   };
