@@ -84,14 +84,25 @@ const Campaigns = () => {
       const response = await apiService.sendCampaign(campaignId);
       console.log('✅ Campaign sent successfully:', response.data);
       
-      toast.success(response.data.message || 'Campaign sent successfully!');
+      // Enhanced success message with details
+      const result = response.data;
+      const successMessage = `Campaign sent successfully! ${result.total_sent} emails sent, ${result.total_failed} failed.`;
+      
+      toast.success(successMessage, {
+        duration: 6000,
+        position: 'top-right',
+      });
+      
       loadData();
     } catch (error) {
       console.error('❌ Campaign sending failed:', error);
       console.error('Error details:', error.response?.data || error.message);
       
       const errorMessage = error.response?.data?.detail || 'Failed to send campaign';
-      toast.error(errorMessage);
+      toast.error(errorMessage, {
+        duration: 8000,
+        position: 'top-right',
+      });
     }
   };
 
