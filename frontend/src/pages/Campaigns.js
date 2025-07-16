@@ -15,26 +15,49 @@ const Campaigns = () => {
 
   const loadData = async () => {
     console.log('🔄 Starting loadData...');
+    
+    // Add a small delay to ensure proper initialization
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     try {
       console.log('🔄 Loading campaigns and templates...');
       
-      const [campaignsResponse, templatesResponse] = await Promise.all([
-        apiService.getCampaigns(),
-        apiService.getTemplates()
-      ]);
-      
+      // Load campaigns and templates separately to better handle errors
+      const campaignsResponse = await apiService.getCampaigns();
       console.log('📊 Campaigns response:', campaignsResponse.data);
+      
+      const templatesResponse = await apiService.getTemplates();
       console.log('📝 Templates response:', templatesResponse.data);
       
       console.log('🔄 Setting state...');
-      setCampaigns(campaignsResponse.data);
-      setTemplates(templatesResponse.data);
+      
+      // Ensure data is valid before setting state
+      if (campaignsResponse.data && Array.isArray(campaignsResponse.data)) {
+        setCampaigns(campaignsResponse.data);
+        console.log('✅ Campaigns state set successfully');
+      } else {
+        console.warn('⚠️ Invalid campaigns data:', campaignsResponse.data);
+        setCampaigns([]);
+      }
+      
+      if (templatesResponse.data && Array.isArray(templatesResponse.data)) {
+        setTemplates(templatesResponse.data);
+        console.log('✅ Templates state set successfully');
+      } else {
+        console.warn('⚠️ Invalid templates data:', templatesResponse.data);
+        setTemplates([]);
+      }
       
       console.log('✅ Data loaded successfully');
       console.log('🔄 Setting loading to false...');
     } catch (error) {
       console.error('❌ Error loading data:', error);
       console.error('Error details:', error.response?.data || error.message);
+      
+      // Set empty arrays on error to prevent undefined state
+      setCampaigns([]);
+      setTemplates([]);
+      
       toast.error('Failed to load data: ' + (error.response?.data?.detail || error.message));
     } finally {
       console.log('🔄 Finally block: setting loading to false');
