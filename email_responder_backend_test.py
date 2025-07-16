@@ -224,10 +224,29 @@ class EmailResponderTester:
             self.log_test("Campaign Database Retrieval", True, 
                         f"Retrieved {initial_count} campaigns from database")
             
+            # Get templates to use a valid template ID
+            template_response = requests.get(
+                f"{self.base_url}/api/templates",
+                headers=self.get_headers(),
+                timeout=10
+            )
+            
+            if template_response.status_code != 200:
+                self.log_test("Get Templates for Campaign", False, f"HTTP {template_response.status_code}")
+                return False
+            
+            templates = template_response.json()
+            if not templates:
+                self.log_test("Template Availability", False, "No templates available for campaign creation")
+                return False
+            
+            # Use the first available template
+            template_id = templates[0]['id']
+            
             # Test campaign creation
             campaign_data = {
                 "name": f"Test Campaign {int(time.time())}",
-                "template_id": "1",  # Assuming template with ID 1 exists
+                "template_id": template_id,
                 "list_ids": [],
                 "max_emails": 100,
                 "schedule": None
