@@ -244,8 +244,8 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,Founder,Technol
 lisa.chen.{unique_timestamp}@enterprise.com,Lisa,Chen,Enterprise Corp,VP Sales,Enterprise"""
             
             response = requests.post(f"{self.base_url}/api/prospects/upload", 
-                                   data=csv_content,
-                                   headers={"Content-Type": "text/csv"})
+                                   params={"file_content": csv_content},
+                                   headers=self.get_headers())
             
             if response.status_code == 200:
                 result = response.json()
