@@ -309,11 +309,71 @@ async def get_email_providers():
 
 @app.post("/api/email-providers")
 async def create_email_provider(provider: EmailProvider):
-    return {
-        "id": "new_provider_id",
-        "message": "Email provider created successfully",
-        **provider.dict()
-    }
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID and add timestamps
+        provider_id = generate_id()
+        provider_data = {
+            "id": provider_id,
+            "name": provider.name,
+            "provider_type": provider.provider_type,
+            "email_address": provider.email_address,
+            "display_name": provider.display_name,
+            "smtp_host": provider.smtp_host,
+            "smtp_port": provider.smtp_port,
+            "smtp_username": provider.smtp_username,
+            "smtp_password": provider.smtp_password,
+            "smtp_use_tls": provider.smtp_use_tls,
+            "imap_host": provider.imap_host,
+            "imap_port": provider.imap_port,
+            "imap_username": provider.imap_username,
+            "imap_password": provider.imap_password,
+            "daily_send_limit": provider.daily_send_limit,
+            "hourly_send_limit": provider.hourly_send_limit,
+            "is_default": provider.is_default,
+            "is_active": True,
+            "skip_connection_test": provider.skip_connection_test,
+            "current_daily_count": 0,
+            "current_hourly_count": 0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "last_sync": datetime.utcnow()
+        }
+        
+        # If this is set as default, unset other defaults
+        if provider.is_default:
+            await db_service.unset_default_email_providers()
+        
+        # Create email provider in database
+        result = await db_service.create_email_provider(provider_data)
+        
+        if result:
+            return {
+                "id": provider_id,
+                "message": "Email provider created successfully",
+                "name": provider.name,
+                "provider_type": provider.provider_type,
+                "email_address": provider.email_address,
+                "is_active": True,
+                "is_default": provider.is_default,
+                "daily_send_limit": provider.daily_send_limit,
+                "hourly_send_limit": provider.hourly_send_limit,
+                "current_daily_count": 0,
+                "current_hourly_count": 0,
+                "created_at": provider_data["created_at"],
+                "last_sync": provider_data["last_sync"]
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create email provider")
+            
+    except Exception as e:
+        logging.error(f"Error creating email provider: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating email provider: {str(e)}")
 
 @app.put("/api/email-providers/{provider_id}")
 async def update_email_provider(provider_id: str, provider: EmailProvider):
