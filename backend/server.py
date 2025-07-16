@@ -786,7 +786,16 @@ async def create_prospect(prospect: dict):
             return {
                 "id": prospect_id,
                 "message": "Prospect created successfully",
-                **prospect
+                "email": prospect.get("email"),
+                "first_name": prospect.get("first_name"),
+                "last_name": prospect.get("last_name"),
+                "company": prospect.get("company"),
+                "job_title": prospect.get("job_title"),
+                "industry": prospect.get("industry"),
+                "phone": prospect.get("phone"),
+                "status": prospect.get("status"),
+                "created_at": prospect["created_at"].isoformat(),
+                "updated_at": prospect["updated_at"].isoformat()
             }
         else:
             raise HTTPException(status_code=400, detail=error or "Failed to create prospect")
