@@ -123,29 +123,29 @@ async def logout():
     # Simple logout endpoint
     return {"message": "Logged out successfully"}
 
-# Mock data endpoints
+# Real database endpoints
 @app.get("/api/campaigns")
 async def get_campaigns():
-    return [
-        {
-            "id": "1",
-            "name": "Test Campaign",
-            "status": "draft",
-            "prospect_count": 10,
-            "max_emails": 1000,
-            "created_at": datetime.utcnow(),
-            "schedule": None
-        },
-        {
-            "id": "2",
-            "name": "Welcome Series",
-            "status": "active",
-            "prospect_count": 50,
-            "max_emails": 500,
-            "created_at": datetime.utcnow(),
-            "schedule": None
-        }
-    ]
+    """Get all campaigns from database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get campaigns from database
+        campaigns = await db_service.get_campaigns()
+        
+        # If no campaigns exist, return empty list
+        if not campaigns:
+            return []
+        
+        return campaigns
+        
+    except Exception as e:
+        logging.error(f"Error fetching campaigns: {str(e)}")
+        # Return empty list on error instead of mock data
+        return []
 
 @app.post("/api/campaigns")
 async def create_campaign(campaign: Campaign):
