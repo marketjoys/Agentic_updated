@@ -606,43 +606,9 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
         if not prospects:
             prospects = await db_service.get_prospects(limit=send_request.max_emails)
         
-        # If still no prospects from database, use mock data for testing
+        # If still no prospects from database, return error
         if not prospects:
-            prospects = [
-                {
-                    "id": "1",
-                    "email": "john.doe@techstartup.com",
-                    "first_name": "John",
-                    "last_name": "Doe",
-                    "company": "TechStartup Inc",
-                    "job_title": "CEO",
-                    "industry": "Technology",
-                    "status": "active",
-                    "list_ids": ["1"]
-                },
-                {
-                    "id": "2",
-                    "email": "jane.smith@financegroup.com",
-                    "first_name": "Jane",
-                    "last_name": "Smith",
-                    "company": "Finance Group LLC",
-                    "job_title": "CFO",
-                    "industry": "Finance",
-                    "status": "active",
-                    "list_ids": ["2"]
-                },
-                {
-                    "id": "3",
-                    "email": "mike.johnson@healthcorp.com",
-                    "first_name": "Mike",
-                    "last_name": "Johnson",
-                    "company": "Health Corp",
-                    "job_title": "Director of Operations",
-                    "industry": "Healthcare",
-                    "status": "active",
-                    "list_ids": ["3"]
-                }
-            ]
+            raise HTTPException(status_code=404, detail="No prospects found for this campaign")
         
         # Remove duplicates by email
         seen_emails = set()
