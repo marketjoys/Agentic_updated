@@ -214,6 +214,14 @@ class DatabaseService:
         campaign = await self.db.campaigns.find_one({"id": campaign_id})
         return clean_document(campaign) if campaign else None
         
+    async def update_campaign(self, campaign_id: str, campaign_data: dict):
+        """Update a campaign"""
+        result = await self.db.campaigns.update_one(
+            {"id": campaign_id},
+            {"$set": campaign_data}
+        )
+        return result
+        
     async def delete_campaign(self, campaign_id: str):
         """Delete a campaign"""
         result = await self.db.campaigns.delete_one({"id": campaign_id})
