@@ -696,7 +696,12 @@ async def create_template(template: dict):
             return {
                 "id": template_id,
                 "message": "Template created successfully",
-                **template
+                "name": template.get("name"),
+                "subject": template.get("subject"),
+                "content": template.get("content"),
+                "type": template.get("type"),
+                "created_at": template["created_at"].isoformat(),
+                "updated_at": template["updated_at"].isoformat()
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to create template")
