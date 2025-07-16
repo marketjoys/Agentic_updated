@@ -437,24 +437,26 @@ async def get_prospects(skip: int = 0, limit: int = 100):
 
 @app.get("/api/intents")
 async def get_intents():
-    return [
-        {
-            "id": "1",
-            "name": "Interested",
-            "description": "Prospect shows interest in our service",
-            "keywords": ["interested", "yes", "tell me more", "sounds good"],
-            "auto_respond": True,
-            "created_at": datetime.utcnow()
-        },
-        {
-            "id": "2",
-            "name": "Not Interested",
-            "description": "Prospect is not interested",
-            "keywords": ["not interested", "no thanks", "remove me"],
-            "auto_respond": True,
-            "created_at": datetime.utcnow()
-        }
-    ]
+    """Get all intents from database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get intents from database
+        intents = await db_service.get_intents()
+        
+        # If no intents exist, return empty list
+        if not intents:
+            return []
+        
+        return intents
+        
+    except Exception as e:
+        logging.error(f"Error fetching intents: {str(e)}")
+        # Return empty list on error instead of mock data
+        return []
 
 @app.get("/api/analytics/campaign/{campaign_id}")
 async def get_campaign_analytics(campaign_id: str):
