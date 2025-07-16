@@ -430,7 +430,7 @@ The AI Email Responder application is now **100% functional** with all critical 
 ## 🧪 CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://08c520dc-7bb9-4375-b999-4e835c4201c3.preview.emergentagent.com
+- **URL**: https://f1e48876-6c4d-487d-9bfb-9b4e5d78e5b2.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive frontend functionality testing
@@ -781,7 +781,7 @@ The backend API provides a **solid foundation** for the email marketing system w
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://08c520dc-7bb9-4375-b999-4e835c4201c3.preview.emergentagent.com
+- **Backend URL**: https://f1e48876-6c4d-487d-9bfb-9b4e5d78e5b2.preview.emergentagent.com
 
 ### 🎉 FINAL TEST RESULTS: ALL SYSTEMS OPERATIONAL
 
@@ -958,7 +958,7 @@ The AI Email Responder backend API is now **FULLY FUNCTIONAL** and **PRODUCTION-
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://08c520dc-7bb9-4375-b999-4e835c4201c3.preview.emergentagent.com
+- **Backend URL**: https://f1e48876-6c4d-487d-9bfb-9b4e5d78e5b2.preview.emergentagent.com
 
 ### 🎉 COMPREHENSIVE EMAIL CAMPAIGN SENDING TESTS - ALL PASSED
 
@@ -1198,7 +1198,7 @@ The AI Email Responder application is now **production-ready** for email marketi
 ## 🧪 FRONTEND CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://08c520dc-7bb9-4375-b999-4e835c4201c3.preview.emergentagent.com
+- **URL**: https://f1e48876-6c4d-487d-9bfb-9b4e5d78e5b2.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 
