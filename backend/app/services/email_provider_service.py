@@ -156,12 +156,6 @@ class EmailProviderService:
             if not provider["is_active"]:
                 return False, "Email provider is not active"
             
-            # For test providers, simulate success
-            if provider.get("skip_connection_test", False) or provider.get("smtp_password") == "app_password":
-                logger.info(f"Simulating email send to {to_email} via provider {provider_id}")
-                await self._update_send_counts(provider_id)
-                return True, None
-            
             # Check rate limits
             if not await self._check_rate_limits(provider_id):
                 return False, "Rate limit exceeded"
