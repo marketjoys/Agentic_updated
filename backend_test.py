@@ -18,12 +18,15 @@ AUTH_TOKEN = "test_token_12345"
 class BackendTester:
     def __init__(self):
         self.base_url = BACKEND_URL
+        self.auth_token = AUTH_TOKEN
+        self.headers = {"Authorization": f"Bearer {self.auth_token}"}
         self.test_results = {}
         self.created_resources = {
             'prospects': [],
             'templates': [],
             'lists': [],
-            'intents': []
+            'campaigns': [],
+            'email_providers': []
         }
     
     def log_result(self, test_name, success, message="", details=None):
@@ -38,6 +41,42 @@ class BackendTester:
         print(f"{status} {test_name}: {message}")
         if details:
             print(f"   Details: {details}")
+    
+    def test_authentication(self):
+        """Test authentication system"""
+        try:
+            # Test login
+            login_data = {"username": "testuser", "password": "testpass123"}
+            response = requests.post(f"{self.base_url}/api/auth/login", json=login_data)
+            
+            if response.status_code != 200:
+                self.log_result("Authentication Login", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            auth_result = response.json()
+            if 'access_token' not in auth_result:
+                self.log_result("Authentication Login", False, "No access token in response", auth_result)
+                return False
+            
+            self.log_result("Authentication Login", True, "Login successful")
+            
+            # Test protected endpoint
+            response = requests.get(f"{self.base_url}/api/auth/me", headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Authentication Protected Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            user_data = response.json()
+            if 'username' not in user_data:
+                self.log_result("Authentication Protected Endpoint", False, "No username in response", user_data)
+                return False
+            
+            self.log_result("Authentication Protected Endpoint", True, f"User: {user_data['username']}")
+            return True
+            
+        except Exception as e:
+            self.log_result("Authentication", False, f"Exception: {str(e)}")
+            return False
     
     def test_health_check(self):
         """Test API health endpoint"""
