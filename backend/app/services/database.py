@@ -461,6 +461,14 @@ class DatabaseService:
         )
         return result
     
+    async def unset_default_email_providers(self):
+        """Unset all email providers as default"""
+        result = await self.db.email_providers.update_many(
+            {"is_default": True},
+            {"$set": {"is_default": False}}
+        )
+        return result
+    
     # Knowledge Base operations
     async def create_knowledge_article(self, article_data: dict):
         """Create a new knowledge article"""
