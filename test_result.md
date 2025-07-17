@@ -365,11 +365,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Campaign Sending Functionality"
     - "Campaign Creation Process"
     - "Database Data Population"
-  stuck_tasks:
-    - "Campaign Sending Functionality"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
