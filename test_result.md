@@ -363,8 +363,8 @@ metadata:
 test_plan:
   current_focus:
     - "Campaign Sending Functionality"
-    - "Play Button Rendering Issue"
-    - "Campaign Status Management"
+    - "Campaign Creation Process"
+    - "Database Data Population"
   stuck_tasks:
     - "Campaign Sending Functionality"
   test_all: false
