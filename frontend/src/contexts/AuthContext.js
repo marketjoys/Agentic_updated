@@ -61,27 +61,33 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
+      console.log('🔐 AuthContext: Starting login process for username:', username);
       const response = await axios.post(`${backendUrl}/api/auth/login`, {
         username,
         password
       });
       
+      console.log('✅ AuthContext: Login response received:', response.data);
       const { access_token } = response.data;
       
       // Store token
+      console.log('💾 AuthContext: Storing token in localStorage');
       localStorage.setItem('token', access_token);
       setToken(access_token);
       
       // Get user info
+      console.log('👤 AuthContext: Fetching user info');
       const userResponse = await axios.get(`${backendUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${access_token}` }
       });
       
+      console.log('✅ AuthContext: User info received:', userResponse.data);
       setUser(userResponse.data);
       
+      console.log('🎉 AuthContext: Login successful');
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ AuthContext: Login error:', error);
       return { 
         success: false, 
         error: error.response?.data?.detail || 'Login failed' 
