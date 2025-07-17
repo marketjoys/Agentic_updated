@@ -275,15 +275,26 @@ Best regards,
             # Add all prospects to the first list (Technology Companies)
             tech_list_id = prospect_lists[0]["id"]
             prospect_ids = [p["id"] for p in prospects]
-            await db_service.add_prospects_to_list(tech_list_id, prospect_ids)
+            
+            # First, let's add the list_ids to the prospects
+            for prospect in prospects:
+                if "list_ids" not in prospect:
+                    prospect["list_ids"] = []
+                prospect["list_ids"].append(tech_list_id)
+                # Update the prospect in the database
+                await db_service.update_prospect(prospect["id"], {"list_ids": prospect["list_ids"]})
+            
             print(f"✅ Added {len(prospect_ids)} prospects to Technology Companies list")
             
             # Add AI-related prospects to AI & ML list
             if len(prospect_lists) > 1:
                 ai_list_id = prospect_lists[1]["id"]
-                ai_prospects = [p["id"] for p in prospects if "ai" in p.get("industry", "").lower() or "data" in p.get("industry", "").lower()]
+                ai_prospects = [p for p in prospects if "ai" in p.get("industry", "").lower() or "data" in p.get("industry", "").lower()]
                 if ai_prospects:
-                    await db_service.add_prospects_to_list(ai_list_id, ai_prospects)
+                    for prospect in ai_prospects:
+                        if ai_list_id not in prospect.get("list_ids", []):
+                            prospect["list_ids"].append(ai_list_id)
+                            await db_service.update_prospect(prospect["id"], {"list_ids": prospect["list_ids"]})
                     print(f"✅ Added {len(ai_prospects)} prospects to AI & ML list")
         
         # Now create a sample campaign using the first template and lists
