@@ -356,11 +356,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "List Management CRUD Operations"
     - "Campaign Sending Functionality"
-    - "Template and Prospect Management"
-    - "Edge Cases and Validation"
-  stuck_tasks: []
+    - "Play Button Rendering Issue"
+    - "Campaign Status Management"
+  stuck_tasks:
+    - "Campaign Sending Functionality"
   test_all: false
   test_priority: "high_first"
 
