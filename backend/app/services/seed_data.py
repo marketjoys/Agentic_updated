@@ -260,6 +260,16 @@ Best regards,
         else:
             print("✅ Prospect lists already exist, skipping list creation")
         
+        # Always create lists if they don't exist (this is the main fix)
+        if not existing_lists:
+            # Create prospect lists
+            for prospect_list in prospect_lists:
+                await db_service.create_list(prospect_list)
+            print(f"✅ Created {len(prospect_lists)} sample prospect lists")
+        else:
+            print("✅ Prospect lists already exist, skipping list creation")
+            prospect_lists = existing_lists
+        
         # Add prospects to lists based on their industry
         if prospect_lists and prospects:
             # Add all prospects to the first list (Technology Companies)
@@ -269,14 +279,18 @@ Best regards,
             print(f"✅ Added {len(prospect_ids)} prospects to Technology Companies list")
             
             # Add AI-related prospects to AI & ML list
-            ai_list_id = prospect_lists[1]["id"]
-            ai_prospects = [p["id"] for p in prospects if "ai" in p.get("industry", "").lower() or "data" in p.get("industry", "").lower()]
-            if ai_prospects:
-                await db_service.add_prospects_to_list(ai_list_id, ai_prospects)
-                print(f"✅ Added {len(ai_prospects)} prospects to AI & ML list")
+            if len(prospect_lists) > 1:
+                ai_list_id = prospect_lists[1]["id"]
+                ai_prospects = [p["id"] for p in prospects if "ai" in p.get("industry", "").lower() or "data" in p.get("industry", "").lower()]
+                if ai_prospects:
+                    await db_service.add_prospects_to_list(ai_list_id, ai_prospects)
+                    print(f"✅ Added {len(ai_prospects)} prospects to AI & ML list")
         
         # Now create a sample campaign using the first template and lists
-        if templates and prospect_lists:
+        existing_campaigns = await db_service.get_campaigns()
+        if not existing_campaigns and existing_templates and prospect_lists:
+            # Get the first template
+            templates = await db_service.get_templates()
             campaign = {
                 "id": generate_id(),
                 "name": "Q1 2025 Outreach Campaign",
@@ -292,6 +306,8 @@ Best regards,
             
             await db_service.create_campaign(campaign)
             print(f"✅ Created sample campaign linked to prospect list")
+        else:
+            print("✅ Campaign already exists, skipping campaign creation")
         
         print("🎉 Seed data initialization completed successfully!")
         
