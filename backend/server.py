@@ -485,7 +485,7 @@ async def delete_list(list_id: str):
         raise HTTPException(status_code=500, detail=f"Error deleting list: {str(e)}")
 
 @app.post("/api/lists/{list_id}/prospects")
-async def add_prospects_to_list(list_id: str, prospect_ids: list):
+async def add_prospects_to_list(list_id: str, request: AddProspectsRequest):
     """Add prospects to a list"""
     try:
         from app.services.database import db_service
@@ -494,13 +494,13 @@ async def add_prospects_to_list(list_id: str, prospect_ids: list):
         await db_service.connect()
         
         # Add prospects to list
-        result = await db_service.add_prospects_to_list(list_id, prospect_ids)
+        result = await db_service.add_prospects_to_list(list_id, request.prospect_ids)
         
         if result:
             return {
                 "list_id": list_id,
-                "message": f"Added {len(prospect_ids)} prospects to list",
-                "prospects_added": len(prospect_ids)
+                "message": f"Added {len(request.prospect_ids)} prospects to list",
+                "prospects_added": len(request.prospect_ids)
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to add prospects to list")
@@ -510,7 +510,7 @@ async def add_prospects_to_list(list_id: str, prospect_ids: list):
         raise HTTPException(status_code=500, detail=f"Error adding prospects to list: {str(e)}")
 
 @app.delete("/api/lists/{list_id}/prospects")
-async def remove_prospects_from_list(list_id: str, prospect_ids: list):
+async def remove_prospects_from_list(list_id: str, request: AddProspectsRequest):
     """Remove prospects from a list"""
     try:
         from app.services.database import db_service
@@ -519,13 +519,13 @@ async def remove_prospects_from_list(list_id: str, prospect_ids: list):
         await db_service.connect()
         
         # Remove prospects from list
-        result = await db_service.remove_prospects_from_list(list_id, prospect_ids)
+        result = await db_service.remove_prospects_from_list(list_id, request.prospect_ids)
         
         if result:
             return {
                 "list_id": list_id,
-                "message": f"Removed {len(prospect_ids)} prospects from list",
-                "prospects_removed": len(prospect_ids)
+                "message": f"Removed {len(request.prospect_ids)} prospects from list",
+                "prospects_removed": len(request.prospect_ids)
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to remove prospects from list")
