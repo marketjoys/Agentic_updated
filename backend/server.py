@@ -77,6 +77,9 @@ class Campaign(BaseModel):
     max_emails: int = 1000
     schedule: Optional[str] = None
 
+class AddProspectsRequest(BaseModel):
+    prospect_ids: List[str]
+
 class EmailSendRequest(BaseModel):
     send_immediately: bool = True
     email_provider_id: str = ""
