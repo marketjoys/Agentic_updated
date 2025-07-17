@@ -350,9 +350,12 @@ frontend:
 
 metadata:
   created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 1
-  run_ui: false
+  version: "1.1"
+  test_sequence: 2
+  run_ui: true
+  last_tested: "2025-07-17"
+  test_environment: "https://bbc11d71-603f-41b2-86f2-d0484b77fc27.preview.emergentagent.com"
+  test_credentials: "testuser/testpass123"
 
 test_plan:
   current_focus:
