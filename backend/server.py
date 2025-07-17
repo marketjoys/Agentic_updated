@@ -1007,6 +1007,14 @@ async def startup_event():
         await db_service.connect()
         logging.info("Database connected successfully")
         
+        # Initialize seed data
+        try:
+            from app.services.seed_data import initialize_seed_data
+            await initialize_seed_data(db_service)
+            logging.info("Seed data initialization completed")
+        except Exception as e:
+            logging.warning(f"Could not initialize seed data: {e}")
+        
         # Initialize services
         try:
             from app.services.knowledge_base_service import knowledge_base_service
