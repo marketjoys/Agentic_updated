@@ -344,7 +344,108 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
             self.log_result("List CRUD", False, f"Exception: {str(e)}")
             return False
     
-    def test_intent_management(self):
+    def test_campaign_crud_and_sending(self):
+        """Test campaign CRUD operations and email sending functionality"""
+        try:
+            # First ensure we have templates and prospects
+            templates_response = requests.get(f"{self.base_url}/api/templates", headers=self.headers)
+            if templates_response.status_code != 200 or not templates_response.json():
+                self.log_result("Campaign Test Prerequisites", False, "No templates available for campaign")
+                return False
+            
+            prospects_response = requests.get(f"{self.base_url}/api/prospects", headers=self.headers)
+            if prospects_response.status_code != 200 or not prospects_response.json():
+                self.log_result("Campaign Test Prerequisites", False, "No prospects available for campaign")
+                return False
+            
+            template_id = templates_response.json()[0]['id']
+            
+            # CREATE campaign
+            campaign_data = {
+                "name": "Test Email Campaign",
+                "template_id": template_id,
+                "list_ids": [],  # Use all prospects
+                "max_emails": 100,
+                "schedule": None
+            }
+            
+            response = requests.post(f"{self.base_url}/api/campaigns", json=campaign_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Campaign CREATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            created_campaign = response.json()
+            if 'id' not in created_campaign:
+                self.log_result("Campaign CREATE", False, "No ID in response", created_campaign)
+                return False
+            
+            campaign_id = created_campaign['id']
+            self.created_resources['campaigns'].append(campaign_id)
+            self.log_result("Campaign CREATE", True, f"Created campaign with ID: {campaign_id}")
+            
+            # READ campaigns
+            response = requests.get(f"{self.base_url}/api/campaigns", headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Campaign READ", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            campaigns = response.json()
+            if not isinstance(campaigns, list):
+                self.log_result("Campaign READ", False, "Response is not a list", campaigns)
+                return False
+            
+            self.log_result("Campaign READ", True, f"Retrieved {len(campaigns)} campaigns")
+            
+            # UPDATE campaign
+            update_data = {
+                "name": "Updated Test Campaign",
+                "template_id": template_id,
+                "max_emails": 50
+            }
+            
+            response = requests.put(f"{self.base_url}/api/campaigns/{campaign_id}", json=update_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Campaign UPDATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            self.log_result("Campaign UPDATE", True, "Campaign updated successfully")
+            
+            # Test CAMPAIGN SENDING - This is the critical functionality
+            send_request = {
+                "send_immediately": True,
+                "max_emails": 5,  # Limit to 5 for testing
+                "schedule_type": "immediate",
+                "follow_up_enabled": False
+            }
+            
+            response = requests.post(f"{self.base_url}/api/campaigns/{campaign_id}/send", 
+                                   json=send_request, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Campaign SEND", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            send_result = response.json()
+            if 'total_sent' not in send_result and 'total_failed' not in send_result:
+                self.log_result("Campaign SEND", False, "Invalid send result format", send_result)
+                return False
+            
+            total_sent = send_result.get('total_sent', 0)
+            total_failed = send_result.get('total_failed', 0)
+            self.log_result("Campaign SEND", True, f"Campaign sent: {total_sent} sent, {total_failed} failed")
+            
+            # Check campaign status after sending
+            response = requests.get(f"{self.base_url}/api/campaigns/{campaign_id}/status", headers=self.headers)
+            if response.status_code == 200:
+                status_result = response.json()
+                self.log_result("Campaign Status Check", True, f"Status: {status_result.get('status', 'unknown')}")
+            else:
+                self.log_result("Campaign Status Check", False, f"HTTP {response.status_code}", response.text)
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Campaign CRUD and Sending", False, f"Exception: {str(e)}")
+            return False
         """Test intent management and template association"""
         try:
             # First create a template for the intent
