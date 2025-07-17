@@ -251,10 +251,14 @@ Best regards,
             }
         ]
         
-        # Create prospect lists
-        for prospect_list in prospect_lists:
-            await db_service.create_list(prospect_list)
-        print(f"✅ Created {len(prospect_lists)} sample prospect lists")
+        # Only create lists if they don't exist (this is the main fix)
+        if not existing_lists:
+            # Create prospect lists
+            for prospect_list in prospect_lists:
+                await db_service.create_list(prospect_list)
+            print(f"✅ Created {len(prospect_lists)} sample prospect lists")
+        else:
+            print("✅ Prospect lists already exist, skipping list creation")
         
         # Add prospects to lists based on their industry
         if prospect_lists and prospects:
