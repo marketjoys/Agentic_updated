@@ -390,6 +390,168 @@ async def get_lists():
         # Return empty list on error instead of mock data
         return []
 
+@app.post("/api/lists")
+async def create_list(list_data: dict):
+    """Create a new prospect list"""
+    try:
+        from app.services.database import db_service
+        from app.utils.helpers import generate_id
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID and add timestamps
+        list_id = generate_id()
+        list_data["id"] = list_id
+        list_data["created_at"] = datetime.utcnow()
+        list_data["updated_at"] = datetime.utcnow()
+        list_data["prospect_count"] = 0
+        
+        # Create list in database
+        result = await db_service.create_list(list_data)
+        
+        if result:
+            return {
+                "id": list_id,
+                "message": "List created successfully",
+                "name": list_data.get("name"),
+                "description": list_data.get("description"),
+                "color": list_data.get("color"),
+                "tags": list_data.get("tags", []),
+                "prospect_count": 0,
+                "created_at": list_data["created_at"].isoformat(),
+                "updated_at": list_data["updated_at"].isoformat()
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create list")
+            
+    except Exception as e:
+        logging.error(f"Error creating list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating list: {str(e)}")
+
+@app.put("/api/lists/{list_id}")
+async def update_list(list_id: str, list_data: dict):
+    """Update a prospect list"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Add update timestamp
+        list_data["updated_at"] = datetime.utcnow()
+        
+        # Update list in database
+        result = await db_service.update_list(list_id, list_data)
+        
+        if result:
+            return {
+                "id": list_id,
+                "message": "List updated successfully",
+                **list_data
+            }
+        else:
+            raise HTTPException(status_code=404, detail="List not found")
+            
+    except Exception as e:
+        logging.error(f"Error updating list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating list: {str(e)}")
+
+@app.delete("/api/lists/{list_id}")
+async def delete_list(list_id: str):
+    """Delete a prospect list"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Delete list from database
+        result = await db_service.delete_list(list_id)
+        
+        if result:
+            return {
+                "id": list_id,
+                "message": "List deleted successfully"
+            }
+        else:
+            raise HTTPException(status_code=404, detail="List not found")
+            
+    except Exception as e:
+        logging.error(f"Error deleting list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting list: {str(e)}")
+
+@app.post("/api/lists/{list_id}/prospects")
+async def add_prospects_to_list(list_id: str, prospect_ids: list):
+    """Add prospects to a list"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Add prospects to list
+        result = await db_service.add_prospects_to_list(list_id, prospect_ids)
+        
+        if result:
+            return {
+                "list_id": list_id,
+                "message": f"Added {len(prospect_ids)} prospects to list",
+                "prospects_added": len(prospect_ids)
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to add prospects to list")
+            
+    except Exception as e:
+        logging.error(f"Error adding prospects to list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error adding prospects to list: {str(e)}")
+
+@app.delete("/api/lists/{list_id}/prospects")
+async def remove_prospects_from_list(list_id: str, prospect_ids: list):
+    """Remove prospects from a list"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Remove prospects from list
+        result = await db_service.remove_prospects_from_list(list_id, prospect_ids)
+        
+        if result:
+            return {
+                "list_id": list_id,
+                "message": f"Removed {len(prospect_ids)} prospects from list",
+                "prospects_removed": len(prospect_ids)
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to remove prospects from list")
+            
+    except Exception as e:
+        logging.error(f"Error removing prospects from list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error removing prospects from list: {str(e)}")
+
+@app.get("/api/lists/{list_id}")
+async def get_list_by_id(list_id: str):
+    """Get a specific list by ID"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get list from database
+        list_data = await db_service.get_list_by_id(list_id)
+        
+        if list_data:
+            return list_data
+        else:
+            raise HTTPException(status_code=404, detail="List not found")
+            
+    except Exception as e:
+        logging.error(f"Error fetching list: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching list: {str(e)}")
+
 @app.get("/api/templates")
 async def get_templates():
     """Get all templates from database"""
