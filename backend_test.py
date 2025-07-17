@@ -97,6 +97,68 @@ class BackendTester:
             self.log_result("Health Check", False, f"Connection failed: {str(e)}")
             return False
     
+    def test_template_crud(self):
+        """Test template CRUD operations"""
+        try:
+            # CREATE template
+            template_data = {
+                "name": "Test Email Template",
+                "subject": "Welcome {{first_name}}!",
+                "content": "<p>Hello {{first_name}} from {{company}},</p><p>Welcome to our service!</p>",
+                "type": "initial",
+                "placeholders": ["first_name", "company"]
+            }
+            
+            response = requests.post(f"{self.base_url}/api/templates", json=template_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Template CREATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            created_template = response.json()
+            if 'id' not in created_template:
+                self.log_result("Template CREATE", False, "No ID in response", created_template)
+                return False
+            
+            template_id = created_template['id']
+            self.created_resources['templates'].append(template_id)
+            self.log_result("Template CREATE", True, f"Created template with ID: {template_id}")
+            
+            # READ templates
+            response = requests.get(f"{self.base_url}/api/templates", headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Template READ", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            templates = response.json()
+            if not isinstance(templates, list):
+                self.log_result("Template READ", False, "Response is not a list", templates)
+                return False
+            
+            self.log_result("Template READ", True, f"Retrieved {len(templates)} templates")
+            
+            # UPDATE template
+            update_data = {
+                "name": "Updated Test Template",
+                "subject": "Updated Welcome {{first_name}}!",
+                "content": template_data["content"],
+                "type": template_data["type"],
+                "placeholders": template_data["placeholders"]
+            }
+            
+            response = requests.put(f"{self.base_url}/api/templates/{template_id}", json=update_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Template UPDATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            self.log_result("Template UPDATE", True, "Template updated successfully")
+            
+            # DELETE template (will be done in cleanup)
+            return True
+            
+        except Exception as e:
+            self.log_result("Template CRUD", False, f"Exception: {str(e)}")
+            return False
+    
     def test_prospect_management(self):
         """Test prospect management functionality"""
         try:
