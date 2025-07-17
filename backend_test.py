@@ -159,20 +159,22 @@ class BackendTester:
             self.log_result("Template CRUD", False, f"Exception: {str(e)}")
             return False
     
-    def test_prospect_management(self):
-        """Test prospect management functionality"""
+    def test_prospect_crud(self):
+        """Test prospect CRUD operations"""
         try:
-            # Test CREATE prospect
+            # CREATE prospect
             unique_timestamp = int(time.time())
             prospect_data = {
                 "email": f"john.doe.{unique_timestamp}@techcorp.com",
                 "first_name": "John",
                 "last_name": "Doe",
                 "company": "TechCorp Inc",
+                "job_title": "Software Engineer",
+                "industry": "Technology",
                 "phone": "+1-555-0123"
             }
             
-            response = requests.post(f"{self.base_url}/api/prospects", json=prospect_data)
+            response = requests.post(f"{self.base_url}/api/prospects", json=prospect_data, headers=self.headers)
             if response.status_code != 200:
                 self.log_result("Prospect CREATE", False, f"HTTP {response.status_code}", response.text)
                 return False
@@ -182,11 +184,12 @@ class BackendTester:
                 self.log_result("Prospect CREATE", False, "No ID in response", created_prospect)
                 return False
             
-            self.created_resources['prospects'].append(created_prospect['id'])
-            self.log_result("Prospect CREATE", True, f"Created prospect with ID: {created_prospect['id']}")
+            prospect_id = created_prospect['id']
+            self.created_resources['prospects'].append(prospect_id)
+            self.log_result("Prospect CREATE", True, f"Created prospect with ID: {prospect_id}")
             
-            # Test READ prospects
-            response = requests.get(f"{self.base_url}/api/prospects")
+            # READ prospects
+            response = requests.get(f"{self.base_url}/api/prospects", headers=self.headers)
             if response.status_code != 200:
                 self.log_result("Prospect READ", False, f"HTTP {response.status_code}", response.text)
                 return False
@@ -198,31 +201,44 @@ class BackendTester:
             
             self.log_result("Prospect READ", True, f"Retrieved {len(prospects)} prospects")
             
+            # UPDATE prospect
+            update_data = {
+                "first_name": "Johnny",
+                "last_name": "Doe",
+                "company": "Updated TechCorp Inc",
+                "job_title": "Senior Software Engineer"
+            }
+            
+            response = requests.put(f"{self.base_url}/api/prospects/{prospect_id}", json=update_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Prospect UPDATE", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            self.log_result("Prospect UPDATE", True, "Prospect updated successfully")
+            
             # Test CSV upload
-            csv_data = """email,first_name,last_name,company,phone
-sarah.johnson@innovate.com,Sarah,Johnson,Innovate Solutions,+1-555-0124
-mike.wilson@startup.io,Mike,Wilson,Startup.io,+1-555-0125
-lisa.chen@enterprise.com,Lisa,Chen,Enterprise Corp,+1-555-0126"""
+            csv_data = f"""email,first_name,last_name,company,job_title,industry,phone
+sarah.johnson.{unique_timestamp}@innovate.com,Sarah,Johnson,Innovate Solutions,Product Manager,Technology,+1-555-0124
+mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,+1-555-0125"""
             
-            csv_file = io.StringIO(csv_data)
-            files = {'file': ('prospects.csv', csv_file.getvalue(), 'text/csv')}
-            
-            response = requests.post(f"{self.base_url}/api/prospects/upload", files=files)
+            response = requests.post(f"{self.base_url}/api/prospects/upload", 
+                                   data=csv_data, 
+                                   headers={**self.headers, 'Content-Type': 'text/csv'})
             
             if response.status_code != 200:
-                self.log_result("CSV Upload", False, f"HTTP {response.status_code}", response.text)
+                self.log_result("Prospect CSV Upload", False, f"HTTP {response.status_code}", response.text)
                 return False
             
             result = response.json()
-            if 'successful_count' not in result:
-                self.log_result("CSV Upload", False, "Unexpected upload result", result)
+            if 'prospects_added' not in result:
+                self.log_result("Prospect CSV Upload", False, "Unexpected upload result", result)
                 return False
             
-            self.log_result("CSV Upload", True, f"Uploaded {result['successful_count']} prospects from CSV")
+            self.log_result("Prospect CSV Upload", True, f"Uploaded {result['prospects_added']} prospects from CSV")
             return True
             
         except Exception as e:
-            self.log_result("Prospect Management", False, f"Exception: {str(e)}")
+            self.log_result("Prospect CRUD", False, f"Exception: {str(e)}")
             return False
     
     def test_list_management(self):
