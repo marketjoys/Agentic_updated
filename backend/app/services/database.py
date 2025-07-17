@@ -575,6 +575,15 @@ class DatabaseService:
         })
         return clean_document(prompt) if prompt else None
     
+    async def unset_default_system_prompts(self, prompt_type: str):
+        """Unset all system prompts of a specific type as default"""
+        await self.connect()
+        result = await self.db.system_prompts.update_many(
+            {"prompt_type": prompt_type, "is_default": True},
+            {"$set": {"is_default": False}}
+        )
+        return result
+    
     async def update_knowledge_article_usage(self, article_id: str):
         """Update knowledge article usage count"""
         await self.connect()
