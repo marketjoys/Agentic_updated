@@ -217,51 +217,42 @@ Best regards,
         else:
             print("✅ Intents already exist, skipping intent creation")
         
-        # Sample prospect lists
-        prospect_lists = [
-            {
-                "id": generate_id(),
-                "name": "Technology Companies",
-                "description": "CEOs and CTOs from tech startups and established companies",
-                "color": "#3B82F6",
-                "prospect_count": 0,
-                "tags": ["tech", "startup", "enterprise"],
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
-            },
-            {
-                "id": generate_id(),
-                "name": "AI & Machine Learning",
-                "description": "Companies working with AI, ML, and data science",
-                "color": "#10B981",
-                "prospect_count": 0,
-                "tags": ["ai", "ml", "data-science"],
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
-            },
-            {
-                "id": generate_id(),
-                "name": "Software Development",
-                "description": "Software development companies and service providers",
-                "color": "#F59E0B",
-                "prospect_count": 0,
-                "tags": ["software", "development", "services"],
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
-            }
-        ]
-        
-        # Only create lists if they don't exist (this is the main fix)
-        if not existing_lists:
-            # Create prospect lists
-            for prospect_list in prospect_lists:
-                await db_service.create_list(prospect_list)
-            print(f"✅ Created {len(prospect_lists)} sample prospect lists")
-        else:
-            print("✅ Prospect lists already exist, skipping list creation")
-        
         # Always create lists if they don't exist (this is the main fix)
         if not existing_lists:
+            # Sample prospect lists
+            prospect_lists = [
+                {
+                    "id": generate_id(),
+                    "name": "Technology Companies",
+                    "description": "CEOs and CTOs from tech startups and established companies",
+                    "color": "#3B82F6",
+                    "prospect_count": 0,
+                    "tags": ["tech", "startup", "enterprise"],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                },
+                {
+                    "id": generate_id(),
+                    "name": "AI & Machine Learning",
+                    "description": "Companies working with AI, ML, and data science",
+                    "color": "#10B981",
+                    "prospect_count": 0,
+                    "tags": ["ai", "ml", "data-science"],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                },
+                {
+                    "id": generate_id(),
+                    "name": "Software Development",
+                    "description": "Software development companies and service providers",
+                    "color": "#F59E0B",
+                    "prospect_count": 0,
+                    "tags": ["software", "development", "services"],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            ]
+            
             # Create prospect lists
             for prospect_list in prospect_lists:
                 await db_service.create_list(prospect_list)
