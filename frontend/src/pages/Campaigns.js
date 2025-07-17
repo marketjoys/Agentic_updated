@@ -205,6 +205,10 @@ const Campaigns = () => {
 };
 
 const CampaignCard = ({ campaign, onSend }) => {
+  console.log('🔍 Campaign card rendered:', campaign);
+  console.log('🔍 Campaign status:', campaign.status);
+  console.log('🔍 Is draft?', campaign.status === 'draft');
+  
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
