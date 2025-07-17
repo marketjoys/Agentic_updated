@@ -982,12 +982,12 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
 def main():
     """Main test execution"""
     tester = BackendTester()
-    results = tester.run_focused_tests()
+    results, critical_failures = tester.run_comprehensive_tests()
     
     # Print detailed results
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 80)
     print("📋 DETAILED TEST RESULTS")
-    print("=" * 60)
+    print("=" * 80)
     
     for test_name, result in results.items():
         status = "✅ PASS" if result['success'] else "❌ FAIL"
@@ -998,7 +998,29 @@ def main():
             print(f"   Details: {result['details']}")
         print()
     
-    return results
+    # Summary for test_result.md update
+    print("\n" + "=" * 80)
+    print("📝 SUMMARY FOR TEST RESULT UPDATE")
+    print("=" * 80)
+    
+    passed_tests = [name for name, result in results.items() if result['success']]
+    failed_tests = [name for name, result in results.items() if not result['success']]
+    
+    print("✅ PASSED TESTS:")
+    for test in passed_tests:
+        print(f"   - {test}")
+    
+    if failed_tests:
+        print("\n❌ FAILED TESTS:")
+        for test in failed_tests:
+            print(f"   - {test}")
+    
+    if critical_failures:
+        print(f"\n🚨 CRITICAL FAILURES: {len(critical_failures)}")
+        for failure in critical_failures:
+            print(f"   - {failure}")
+    
+    return results, critical_failures
 
 if __name__ == "__main__":
     main()
