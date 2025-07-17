@@ -249,13 +249,13 @@ Best regards,
                 await db_service.add_prospects_to_list(ai_list_id, ai_prospects)
                 print(f"✅ Added {len(ai_prospects)} prospects to AI & ML list")
         
-        # Now create a sample campaign using the first template
-        if templates:
+        # Now create a sample campaign using the first template and lists
+        if templates and prospect_lists:
             campaign = {
                 "id": generate_id(),
                 "name": "Q1 2025 Outreach Campaign",
                 "template_id": templates[0]["id"],  # Use the actual template ID
-                "list_ids": [],
+                "list_ids": [prospect_lists[0]["id"]],  # Use the first list
                 "max_emails": 1000,
                 "schedule": None,
                 "status": "draft",
@@ -265,7 +265,7 @@ Best regards,
             }
             
             await db_service.create_campaign(campaign)
-            print(f"✅ Created sample campaign")
+            print(f"✅ Created sample campaign linked to prospect list")
         
         print("🎉 Seed data initialization completed successfully!")
         
