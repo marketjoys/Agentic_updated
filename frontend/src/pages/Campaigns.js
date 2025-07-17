@@ -253,7 +253,8 @@ const CampaignCard = ({ campaign, onSend }) => {
             {campaign.status === 'draft' && (
               <button
                 onClick={() => onSend(campaign.id)}
-                className="p-1 text-secondary-400 hover:text-green-600"
+                className="p-2 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors"
+                title="Send Campaign"
               >
                 <Play className="h-4 w-4" />
               </button>
