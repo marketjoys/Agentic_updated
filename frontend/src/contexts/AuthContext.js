@@ -30,21 +30,29 @@ export const AuthProvider = ({ children }) => {
   // Check if user is logged in on mount
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔍 AuthContext: Checking authentication, token:', token ? 'present' : 'absent');
       if (token) {
         try {
+          console.log('🔍 AuthContext: Making request to /api/auth/me');
           const response = await axios.get(`${backendUrl}/api/auth/me`);
+          console.log('✅ AuthContext: User data received:', response.data);
           setUser(response.data);
         } catch (error) {
+          console.error('❌ AuthContext: Token validation failed:', error);
           // Token is invalid - try to refresh first
-          console.log('Token validation failed, attempting refresh...');
+          console.log('🔄 AuthContext: Attempting token refresh...');
           const refreshResult = await refreshToken();
           if (!refreshResult.success) {
+            console.log('❌ AuthContext: Token refresh failed, clearing auth');
             localStorage.removeItem('token');
             setToken(null);
             setUser(null);
           }
         }
+      } else {
+        console.log('🔍 AuthContext: No token present');
       }
+      console.log('✅ AuthContext: Authentication check complete, setting loading to false');
       setLoading(false);
     };
 
