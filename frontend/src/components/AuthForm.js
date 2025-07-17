@@ -25,14 +25,17 @@ const AuthForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🔄 AuthForm: Form submitted, starting authentication process');
     setLoading(true);
 
     try {
       let result;
       
       if (isLogin) {
+        console.log('🔐 AuthForm: Calling login function');
         result = await login(formData.username, formData.password);
       } else {
+        console.log('📝 AuthForm: Calling register function');
         result = await register(
           formData.username,
           formData.email,
@@ -41,14 +44,20 @@ const AuthForm = () => {
         );
       }
 
+      console.log('📊 AuthForm: Authentication result:', result);
+
       if (result.success) {
+        console.log('✅ AuthForm: Authentication successful');
         toast.success(isLogin ? 'Login successful!' : 'Registration successful!');
       } else {
+        console.error('❌ AuthForm: Authentication failed:', result.error);
         toast.error(result.error);
       }
     } catch (error) {
+      console.error('❌ AuthForm: Unexpected error:', error);
       toast.error('An unexpected error occurred');
     } finally {
+      console.log('🔄 AuthForm: Setting loading to false');
       setLoading(false);
     }
   };
