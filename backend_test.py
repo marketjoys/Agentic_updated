@@ -554,6 +554,103 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
         except Exception as e:
             self.log_result("Edge Cases and Validation", False, f"Exception: {str(e)}")
             return False
+    
+    def cleanup_resources(self):
+        """Clean up created test resources"""
+        print("\n🧹 Cleaning up test resources...")
+        
+        # Delete campaigns
+        for campaign_id in self.created_resources['campaigns']:
+            try:
+                response = requests.delete(f"{self.base_url}/api/campaigns/{campaign_id}", headers=self.headers)
+                if response.status_code == 200:
+                    print(f"   ✅ Deleted campaign {campaign_id}")
+                else:
+                    print(f"   ⚠️ Failed to delete campaign {campaign_id}: {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Error deleting campaign {campaign_id}: {str(e)}")
+        
+        # Delete lists
+        for list_id in self.created_resources['lists']:
+            try:
+                response = requests.delete(f"{self.base_url}/api/lists/{list_id}", headers=self.headers)
+                if response.status_code == 200:
+                    print(f"   ✅ Deleted list {list_id}")
+                else:
+                    print(f"   ⚠️ Failed to delete list {list_id}: {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Error deleting list {list_id}: {str(e)}")
+        
+        # Delete templates
+        for template_id in self.created_resources['templates']:
+            try:
+                response = requests.delete(f"{self.base_url}/api/templates/{template_id}", headers=self.headers)
+                if response.status_code == 200:
+                    print(f"   ✅ Deleted template {template_id}")
+                else:
+                    print(f"   ⚠️ Failed to delete template {template_id}: {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Error deleting template {template_id}: {str(e)}")
+        
+        # Delete prospects
+        for prospect_id in self.created_resources['prospects']:
+            try:
+                response = requests.delete(f"{self.base_url}/api/prospects/{prospect_id}", headers=self.headers)
+                if response.status_code == 200:
+                    print(f"   ✅ Deleted prospect {prospect_id}")
+                else:
+                    print(f"   ⚠️ Failed to delete prospect {prospect_id}: {response.status_code}")
+            except Exception as e:
+                print(f"   ❌ Error deleting prospect {prospect_id}: {str(e)}")
+    
+    def run_comprehensive_tests(self):
+        """Run comprehensive backend tests focusing on the review request requirements"""
+        print("🚀 Starting AI Email Responder Comprehensive Backend Tests")
+        print("Focus: List Management, Campaign Sending, Template/Prospect CRUD, Edge Cases")
+        print("=" * 80)
+        
+        # Test order matters - some tests depend on others
+        tests = [
+            ("Health Check", self.test_health_check),
+            ("Authentication System", self.test_authentication),
+            ("Template CRUD Operations", self.test_template_crud),
+            ("Prospect CRUD Operations", self.test_prospect_crud),
+            ("List CRUD & Prospect Association", self.test_list_crud),
+            ("Campaign CRUD & Email Sending", self.test_campaign_crud_and_sending),
+            ("Edge Cases & Validation", self.test_edge_cases_and_validation)
+        ]
+        
+        passed = 0
+        total = len(tests)
+        critical_failures = []
+        
+        for test_name, test_func in tests:
+            print(f"\n🧪 Running: {test_name}")
+            try:
+                if test_func():
+                    passed += 1
+                else:
+                    # Mark critical failures
+                    if any(keyword in test_name.lower() for keyword in ['campaign', 'sending', 'list', 'template', 'prospect']):
+                        critical_failures.append(test_name)
+            except Exception as e:
+                self.log_result(test_name, False, f"Test execution failed: {str(e)}")
+                critical_failures.append(test_name)
+        
+        print("\n" + "=" * 80)
+        print(f"📊 Test Results: {passed}/{total} tests passed")
+        
+        if passed == total:
+            print("🎉 All tests passed!")
+        else:
+            print(f"⚠️  {total - passed} tests failed")
+            if critical_failures:
+                print(f"🚨 Critical failures in: {', '.join(critical_failures)}")
+        
+        # Cleanup
+        self.cleanup_resources()
+        
+        return self.test_results, critical_failures
         try:
             # First create a template for the intent
             template_data = {
