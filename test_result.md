@@ -430,7 +430,7 @@ The AI Email Responder application is now **100% functional** with all critical 
 ## 🧪 CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive frontend functionality testing
@@ -781,7 +781,7 @@ The backend API provides a **solid foundation** for the email marketing system w
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **Backend URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 
 ### 🎉 FINAL TEST RESULTS: ALL SYSTEMS OPERATIONAL
 
@@ -958,7 +958,7 @@ The AI Email Responder backend API is now **FULLY FUNCTIONAL** and **PRODUCTION-
 ### Test Credentials Used
 - **Username**: testuser
 - **Password**: testpass123
-- **Backend URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **Backend URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 
 ### 🎉 COMPREHENSIVE EMAIL CAMPAIGN SENDING TESTS - ALL PASSED
 
@@ -1148,7 +1148,7 @@ The AI Email Responder backend API is **FULLY FUNCTIONAL** and **PRODUCTION-READ
 
 #### ✅ Backend Status: FULLY FUNCTIONAL
 - **API Endpoint**: `/api/campaigns/{id}/send` is implemented and working
-- **Direct API Test**: `curl -H "Authorization: Bearer test_token_12345" "https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com/api/campaigns"` returns expected data
+- **Direct API Test**: `curl -H "Authorization: Bearer test_token_12345" "https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com/api/campaigns"` returns expected data
 - **Campaign Data**: Returns 2 campaigns (Test Campaign - draft, Welcome Series - active)
 - **Services**: All services running properly (backend, frontend, mongodb)
 
@@ -1213,7 +1213,7 @@ The issue appears to be **intermittent frontend data loading** rather than campa
 ## 🧪 FRONTEND CAMPAIGN SENDING FUNCTIONALITY TESTING - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 
@@ -1222,7 +1222,7 @@ The issue appears to be **intermittent frontend data loading** rather than campa
 ## 🧪 LATEST FRONTEND TESTING RESULTS - DECEMBER 16, 2024 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive frontend functionality testing
@@ -1391,7 +1391,7 @@ The AI Email Responder has a **critical frontend-backend disconnect**:
 ## 🧪 LATEST COMPREHENSIVE TESTING RESULTS - JULY 2025 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: July 16, 2025
 - **Testing Agent**: Comprehensive frontend functionality testing
@@ -1546,7 +1546,7 @@ The AI Email Responder frontend has a **critical authentication system failure**
 ## 🧪 AUTHENTICATION FLOW TESTING RESULTS - JULY 17, 2025 (Testing Agent)
 
 ### Test Environment Used
-- **URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: July 17, 2025
 - **Testing Agent**: Comprehensive authentication flow testing with detailed console logging analysis
@@ -1945,7 +1945,7 @@ The AI Email Responder frontend is now **FULLY FUNCTIONAL** with all critical ca
 ## 🧪 BACKEND API TESTING RESULTS - DECEMBER 2024 (Testing Agent)
 
 ### Test Environment Used
-- **Backend URL**: https://fbdf98a3-7af3-4950-96eb-9a0f002ac2b4.preview.emergentagent.com
+- **Backend URL**: https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com
 - **Login Credentials**: testuser / testpass123
 - **Test Date**: December 16, 2024
 - **Testing Agent**: Comprehensive backend API functionality testing
