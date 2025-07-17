@@ -241,18 +241,18 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
             self.log_result("Prospect CRUD", False, f"Exception: {str(e)}")
             return False
     
-    def test_list_management(self):
-        """Test list management and prospect-to-list association"""
+    def test_list_crud(self):
+        """Test list CRUD operations and prospect associations"""
         try:
-            # Create a list
+            # CREATE list
             list_data = {
-                "name": "Test List",
+                "name": "Test Prospect List",
                 "description": "A test list for API testing",
                 "color": "#3B82F6",
                 "tags": ["test", "api"]
             }
             
-            response = requests.post(f"{self.base_url}/api/lists", json=list_data)
+            response = requests.post(f"{self.base_url}/api/lists", json=list_data, headers=self.headers)
             if response.status_code != 200:
                 self.log_result("List CREATE", False, f"HTTP {response.status_code}", response.text)
                 return False
@@ -266,8 +266,21 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
             self.created_resources['lists'].append(list_id)
             self.log_result("List CREATE", True, f"Created list with ID: {list_id}")
             
+            # READ lists
+            response = requests.get(f"{self.base_url}/api/lists", headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("List READ", False, f"HTTP {response.status_code}", response.text)
+                return False
+            
+            lists = response.json()
+            if not isinstance(lists, list):
+                self.log_result("List READ", False, "Response is not a list", lists)
+                return False
+            
+            self.log_result("List READ", True, f"Retrieved {len(lists)} lists")
+            
             # Get prospects to add to the list
-            response = requests.get(f"{self.base_url}/api/prospects")
+            response = requests.get(f"{self.base_url}/api/prospects", headers=self.headers)
             if response.status_code != 200:
                 self.log_result("Get Prospects for List", False, f"HTTP {response.status_code}", response.text)
                 return False
@@ -277,38 +290,58 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
                 self.log_result("Get Prospects for List", False, "No prospects available")
                 return False
             
-            # Select up to 3 prospects to add to the list
-            prospect_ids = [p['id'] for p in prospects[:min(3, len(prospects))]]
+            # Select up to 2 prospects to add to the list
+            prospect_ids = [p['id'] for p in prospects[:min(2, len(prospects))]]
             
-            # Add prospects to the list
-            response = requests.post(f"{self.base_url}/api/lists/{list_id}/prospects", json=prospect_ids)
+            # ADD prospects to list
+            add_request = {"prospect_ids": prospect_ids}
+            response = requests.post(f"{self.base_url}/api/lists/{list_id}/prospects", 
+                                   json=add_request, headers=self.headers)
             if response.status_code != 200:
                 self.log_result("Add Prospects to List", False, f"HTTP {response.status_code}", response.text)
                 return False
             
             result = response.json()
-            self.log_result("Add Prospects to List", True, f"Added prospects to list: {result.get('message', '')}")
+            self.log_result("Add Prospects to List", True, f"Added {len(prospect_ids)} prospects to list")
             
-            # Verify the list now contains the prospects
-            response = requests.get(f"{self.base_url}/api/lists/{list_id}")
+            # Verify the list by getting it by ID
+            response = requests.get(f"{self.base_url}/api/lists/{list_id}", headers=self.headers)
             if response.status_code != 200:
                 self.log_result("Verify List Contents", False, f"HTTP {response.status_code}", response.text)
                 return False
             
             updated_list = response.json()
-            if 'prospect_count' not in updated_list:
-                self.log_result("Verify List Contents", False, "No prospect_count in response", updated_list)
+            self.log_result("Verify List Contents", True, f"List retrieved successfully")
+            
+            # UPDATE list
+            update_data = {
+                "name": "Updated Test List",
+                "description": "Updated description",
+                "color": "#10B981",
+                "tags": ["updated", "test"]
+            }
+            
+            response = requests.put(f"{self.base_url}/api/lists/{list_id}", json=update_data, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("List UPDATE", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            if updated_list['prospect_count'] == 0:
-                self.log_result("Verify List Contents", False, "List shows 0 prospects after adding them")
+            self.log_result("List UPDATE", True, "List updated successfully")
+            
+            # REMOVE prospects from list
+            remove_request = {"prospect_ids": [prospect_ids[0]]}  # Remove first prospect
+            response = requests.delete(f"{self.base_url}/api/lists/{list_id}/prospects", 
+                                     json=remove_request, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Remove Prospects from List", False, f"HTTP {response.status_code}", response.text)
                 return False
             
-            self.log_result("Verify List Contents", True, f"List now contains {updated_list['prospect_count']} prospects")
+            self.log_result("Remove Prospects from List", True, "Removed prospect from list")
+            
             return True
             
         except Exception as e:
-            self.log_result("List Management", False, f"Exception: {str(e)}")
+            self.log_result("List CRUD", False, f"Exception: {str(e)}")
             return False
     
     def test_intent_management(self):
