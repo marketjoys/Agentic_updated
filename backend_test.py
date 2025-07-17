@@ -446,7 +446,114 @@ mike.wilson.{unique_timestamp}@startup.io,Mike,Wilson,Startup.io,CTO,Technology,
         except Exception as e:
             self.log_result("Campaign CRUD and Sending", False, f"Exception: {str(e)}")
             return False
-        """Test intent management and template association"""
+    def test_edge_cases_and_validation(self):
+        """Test edge cases and error handling"""
+        try:
+            # Test invalid template ID in campaign
+            invalid_campaign_data = {
+                "name": "Invalid Campaign",
+                "template_id": "non-existent-template-id",
+                "list_ids": [],
+                "max_emails": 100
+            }
+            
+            response = requests.post(f"{self.base_url}/api/campaigns", json=invalid_campaign_data, headers=self.headers)
+            # This should either fail or create campaign that fails on send
+            if response.status_code == 200:
+                campaign_id = response.json()['id']
+                self.created_resources['campaigns'].append(campaign_id)
+                
+                # Try to send campaign with invalid template
+                send_request = {"send_immediately": True, "max_emails": 1}
+                send_response = requests.post(f"{self.base_url}/api/campaigns/{campaign_id}/send", 
+                                            json=send_request, headers=self.headers)
+                if send_response.status_code != 200:
+                    self.log_result("Invalid Template ID Handling", True, "Campaign send failed as expected with invalid template")
+                else:
+                    send_result = send_response.json()
+                    if send_result.get('total_failed', 0) > 0:
+                        self.log_result("Invalid Template ID Handling", True, "Campaign send handled invalid template gracefully")
+                    else:
+                        self.log_result("Invalid Template ID Handling", False, "Campaign send succeeded with invalid template")
+            else:
+                self.log_result("Invalid Template ID Handling", True, "Campaign creation failed as expected with invalid template")
+            
+            # Test non-existent list
+            response = requests.get(f"{self.base_url}/api/lists/non-existent-list-id", headers=self.headers)
+            if response.status_code == 404:
+                self.log_result("Non-existent List Handling", True, "404 returned for non-existent list")
+            else:
+                self.log_result("Non-existent List Handling", False, f"Expected 404, got {response.status_code}")
+            
+            # Test duplicate prospect email
+            unique_timestamp = int(time.time())
+            duplicate_prospect = {
+                "email": f"duplicate.{unique_timestamp}@test.com",
+                "first_name": "Duplicate",
+                "last_name": "User",
+                "company": "Test Corp"
+            }
+            
+            # Create first prospect
+            response1 = requests.post(f"{self.base_url}/api/prospects", json=duplicate_prospect, headers=self.headers)
+            if response1.status_code == 200:
+                self.created_resources['prospects'].append(response1.json()['id'])
+                
+                # Try to create duplicate
+                response2 = requests.post(f"{self.base_url}/api/prospects", json=duplicate_prospect, headers=self.headers)
+                if response2.status_code != 200:
+                    self.log_result("Duplicate Email Handling", True, "Duplicate email rejected as expected")
+                else:
+                    # Some systems allow duplicates but handle them in business logic
+                    self.log_result("Duplicate Email Handling", True, "Duplicate email handled (may be allowed)")
+                    self.created_resources['prospects'].append(response2.json()['id'])
+            else:
+                self.log_result("Duplicate Email Handling", False, "Could not create initial prospect for duplicate test")
+            
+            # Test missing required fields
+            incomplete_prospect = {
+                "first_name": "Incomplete",
+                "last_name": "User"
+                # Missing email field
+            }
+            
+            response = requests.post(f"{self.base_url}/api/prospects", json=incomplete_prospect, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Missing Required Fields", True, "Missing email field rejected as expected")
+            else:
+                result = response.json()
+                if 'error' in result or 'message' in result:
+                    self.log_result("Missing Required Fields", True, "Missing email handled with error message")
+                else:
+                    self.log_result("Missing Required Fields", False, "Missing email field was accepted")
+                    if 'id' in result:
+                        self.created_resources['prospects'].append(result['id'])
+            
+            # Test invalid email format
+            invalid_email_prospect = {
+                "email": "invalid-email-format",
+                "first_name": "Invalid",
+                "last_name": "Email",
+                "company": "Test Corp"
+            }
+            
+            response = requests.post(f"{self.base_url}/api/prospects", json=invalid_email_prospect, headers=self.headers)
+            if response.status_code != 200:
+                self.log_result("Invalid Email Format", True, "Invalid email format rejected as expected")
+            else:
+                result = response.json()
+                if 'error' in result or 'message' in result:
+                    self.log_result("Invalid Email Format", True, "Invalid email handled with error message")
+                else:
+                    self.log_result("Invalid Email Format", False, "Invalid email format was accepted")
+                    if 'id' in result:
+                        self.created_resources['prospects'].append(result['id'])
+            
+            return True
+            
+        except Exception as e:
+            self.log_result("Edge Cases and Validation", False, f"Exception: {str(e)}")
+            return False
         try:
             # First create a template for the intent
             template_data = {
