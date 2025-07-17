@@ -177,25 +177,45 @@ Best regards,
             }
         ]
         
-        # Create templates
-        for template in templates:
-            await db_service.create_template(template)
-        print(f"✅ Created {len(templates)} sample templates")
-        
-        # Create prospects
-        for prospect in prospects:
-            await db_service.create_prospect(prospect)
-        print(f"✅ Created {len(prospects)} sample prospects")
-        
-        # Create email providers
-        for provider in email_providers:
-            await db_service.create_email_provider(provider)
-        print(f"✅ Created {len(email_providers)} sample email providers")
-        
-        # Create intents
-        for intent in intents:
-            await db_service.create_intent(intent)
-        print(f"✅ Created {len(intents)} sample intents")
+        # Only create templates if they don't exist
+        if not existing_templates:
+            # Create templates
+            for template in templates:
+                await db_service.create_template(template)
+            print(f"✅ Created {len(templates)} sample templates")
+        else:
+            print("✅ Templates already exist, skipping template creation")
+            
+        # Only create prospects if they don't exist
+        existing_prospects = await db_service.get_prospects()
+        if not existing_prospects:
+            # Create prospects
+            for prospect in prospects:
+                await db_service.create_prospect(prospect)
+            print(f"✅ Created {len(prospects)} sample prospects")
+        else:
+            print("✅ Prospects already exist, skipping prospect creation")
+            prospects = existing_prospects
+            
+        # Only create email providers if they don't exist
+        existing_providers = await db_service.get_email_providers()
+        if not existing_providers:
+            # Create email providers
+            for provider in email_providers:
+                await db_service.create_email_provider(provider)
+            print(f"✅ Created {len(email_providers)} sample email providers")
+        else:
+            print("✅ Email providers already exist, skipping provider creation")
+            
+        # Only create intents if they don't exist
+        existing_intents = await db_service.get_intents()
+        if not existing_intents:
+            # Create intents
+            for intent in intents:
+                await db_service.create_intent(intent)
+            print(f"✅ Created {len(intents)} sample intents")
+        else:
+            print("✅ Intents already exist, skipping intent creation")
         
         # Sample prospect lists
         prospect_lists = [
