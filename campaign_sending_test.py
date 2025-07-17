@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 
 # Backend URL from environment
-BACKEND_URL = "https://b70710d7-8bb6-4cb4-b1cb-4a984ce1bfa7.preview.emergentagent.com"
+BACKEND_URL = "https://44689f21-93b7-4bf0-a829-3cf92392f4b9.preview.emergentagent.com"
 
 class CampaignSendingTester:
     def __init__(self):
