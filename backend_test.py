@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Focused Backend API Testing for AI Email Responder
-Tests the specific issues that were reported as broken
+Comprehensive Backend API Testing for AI Email Responder
+Focus on List Management, Campaign Sending, Template/Prospect CRUD, and Edge Cases
 """
 
 import requests
 import json
 import io
-import pandas as pd
 from datetime import datetime
 import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://8d067a76-d53a-4b8d-8595-c8de8fc703ee.preview.emergentagent.com"  # Using the configured backend URL
+BACKEND_URL = "https://8d067a76-d53a-4b8d-8595-c8de8fc703ee.preview.emergentagent.com"
+AUTH_TOKEN = "test_token_12345"
 
 class BackendTester:
     def __init__(self):
