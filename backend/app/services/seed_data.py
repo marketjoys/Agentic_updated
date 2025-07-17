@@ -195,6 +195,60 @@ Best regards,
             await db_service.create_intent(intent)
         print(f"✅ Created {len(intents)} sample intents")
         
+        # Sample prospect lists
+        prospect_lists = [
+            {
+                "id": generate_id(),
+                "name": "Technology Companies",
+                "description": "CEOs and CTOs from tech startups and established companies",
+                "color": "#3B82F6",
+                "prospect_count": 0,
+                "tags": ["tech", "startup", "enterprise"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "AI & Machine Learning",
+                "description": "Companies working with AI, ML, and data science",
+                "color": "#10B981",
+                "prospect_count": 0,
+                "tags": ["ai", "ml", "data-science"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Software Development",
+                "description": "Software development companies and service providers",
+                "color": "#F59E0B",
+                "prospect_count": 0,
+                "tags": ["software", "development", "services"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        ]
+        
+        # Create prospect lists
+        for prospect_list in prospect_lists:
+            await db_service.create_list(prospect_list)
+        print(f"✅ Created {len(prospect_lists)} sample prospect lists")
+        
+        # Add prospects to lists based on their industry
+        if prospect_lists and prospects:
+            # Add all prospects to the first list (Technology Companies)
+            tech_list_id = prospect_lists[0]["id"]
+            prospect_ids = [p["id"] for p in prospects]
+            await db_service.add_prospects_to_list(tech_list_id, prospect_ids)
+            print(f"✅ Added {len(prospect_ids)} prospects to Technology Companies list")
+            
+            # Add AI-related prospects to AI & ML list
+            ai_list_id = prospect_lists[1]["id"]
+            ai_prospects = [p["id"] for p in prospects if "ai" in p.get("industry", "").lower() or "data" in p.get("industry", "").lower()]
+            if ai_prospects:
+                await db_service.add_prospects_to_list(ai_list_id, ai_prospects)
+                print(f"✅ Added {len(ai_prospects)} prospects to AI & ML list")
+        
         # Now create a sample campaign using the first template
         if templates:
             campaign = {
