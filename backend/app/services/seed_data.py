@@ -9,7 +9,9 @@ async def initialize_seed_data(db_service):
     try:
         # Check if data already exists
         existing_templates = await db_service.get_templates()
-        if existing_templates:
+        existing_lists = await db_service.get_lists()
+        
+        if existing_templates and existing_lists:
             print("Seed data already exists, skipping initialization")
             return
         
