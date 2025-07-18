@@ -586,17 +586,11 @@ const AddProspectsToListModal = ({ list, prospects, onClose, onSubmit }) => {
   };
 
   const handleProspectToggle = (prospectId) => {
-    console.log('🔘 handleProspectToggle called with:', prospectId);
-    console.log('📊 Current selectedProspects:', selectedProspects);
-    
-    setSelectedProspects(prev => {
-      const newSelected = prev.includes(prospectId) 
+    setSelectedProspects(prev => 
+      prev.includes(prospectId) 
         ? prev.filter(id => id !== prospectId)
-        : [...prev, prospectId];
-      
-      console.log('📊 New selectedProspects:', newSelected);
-      return newSelected;
-    });
+        : [...prev, prospectId]
+    );
   };
 
   const filteredProspects = prospects.filter(prospect => 
