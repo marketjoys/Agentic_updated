@@ -68,8 +68,9 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
             personalized_content = personalize_template(template["content"], prospect)
             personalized_subject = personalize_template(template["subject"], prospect)
             
-            # Send email
-            success = await email_provider_service.send_email(
+            # Send email using email provider service
+            success, error = await email_provider_service.send_email(
+                "f7424071-f1bf-4688-a8dc-09e66d49b051",  # Gmail provider ID
                 prospect["email"],
                 personalized_subject,
                 personalized_content
