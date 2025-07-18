@@ -17,7 +17,7 @@ from datetime import datetime
 import sys
 
 # Backend URL from environment
-BACKEND_URL = "https://7a0ff732-1524-4c03-81e4-ed0532a37aa4.preview.emergentagent.com"
+BACKEND_URL = "https://2f0e9441-c5a6-4abd-86c1-f24f15fd0382.preview.emergentagent.com"
 
 class EmailResponderTester:
     def __init__(self):

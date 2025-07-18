@@ -12,7 +12,7 @@ import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://7a0ff732-1524-4c03-81e4-ed0532a37aa4.preview.emergentagent.com"
+BACKEND_URL = "https://2f0e9441-c5a6-4abd-86c1-f24f15fd0382.preview.emergentagent.com"
 AUTH_TOKEN = "test_token_12345"
 
 class BackendTester:
