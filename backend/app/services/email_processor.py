@@ -130,7 +130,7 @@ class EmailProcessor:
         return scan_result
     
     async def _process_email(self, email_message):
-        """Process individual email"""
+        """Process individual email with enhanced follow-up detection"""
         try:
             # Extract email details
             sender = email_message.get("From", "")
@@ -146,35 +146,45 @@ class EmailProcessor:
             
             if not prospect:
                 logger.info(f"No prospect found for email: {sender_email}")
-                return
+                return False
             
             logger.info(f"Processing email from: {sender_email}")
             
             # Create/update thread context
             thread_context = await self._get_or_create_thread_context(prospect["id"], sender_email)
             
-            # Add message to thread
-            await self._add_message_to_thread(thread_context["id"], {
+            # Check if this is a response to our email
+            is_response_to_our_email = await self._check_if_response_to_our_email(
+                prospect["id"], content, subject, thread_context
+            )
+            
+            # Add message to thread with response flag
+            message_data = {
                 "type": "received",
                 "sender": sender_email,
                 "subject": subject,
                 "content": content,
                 "timestamp": datetime.utcnow(),
-                "raw_email": str(email_message)
-            })
+                "raw_email": str(email_message),
+                "is_response_to_our_email": is_response_to_our_email,
+                "message_id": f"msg_{generate_id()}"
+            }
+            
+            await self._add_message_to_thread(thread_context["id"], message_data)
             
             # Update prospect last contact time
             await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
             
-            # Stop any ongoing follow-ups for this prospect
-            await self._stop_follow_ups_for_prospect(prospect["id"])
+            # Enhanced follow-up stopping logic
+            if is_response_to_our_email:
+                await self._handle_prospect_response(prospect, content, subject, thread_context)
             
             # Classify intents using Groq AI
             classified_intents = await groq_service.classify_intents(content, subject)
             
             if not classified_intents:
                 logger.info("No intents classified for email")
-                return
+                return True
             
             logger.info(f"Classified intents: {classified_intents}")
             
@@ -192,7 +202,7 @@ class EmailProcessor:
             
             if response_data.get("error"):
                 logger.error(f"Response generation failed: {response_data['error']}")
-                return
+                return True
             
             # Check if any intent requires auto-response
             should_auto_respond = await self._should_auto_respond(classified_intents)
@@ -208,9 +218,133 @@ class EmailProcessor:
                 logger.info(f"Automatic response sent to: {sender_email}")
             else:
                 logger.info("Email processed but no auto-response required")
+            
+            return True
                 
         except Exception as e:
             logger.error(f"Error processing email: {str(e)}")
+            return False
+    
+    async def _check_if_response_to_our_email(self, prospect_id: str, content: str, subject: str, thread_context: dict):
+        """Check if this email is a response to our email"""
+        try:
+            # Check if subject contains Re: or similar reply indicators
+            reply_indicators = ["re:", "reply:", "response:", "regarding:", "about:"]
+            subject_lower = subject.lower()
+            
+            for indicator in reply_indicators:
+                if indicator in subject_lower:
+                    logger.info(f"Email appears to be a reply based on subject: {subject}")
+                    return True
+            
+            # Check if we sent any emails to this prospect recently
+            thread_messages = thread_context.get("messages", [])
+            our_recent_emails = [
+                msg for msg in thread_messages 
+                if msg.get("type") == "sent" and msg.get("sent_by_us", False)
+            ]
+            
+            if our_recent_emails:
+                logger.info(f"Found {len(our_recent_emails)} emails we sent to this prospect")
+                return True
+            
+            # Check database for sent emails
+            sent_emails = await db_service.get_sent_emails_in_thread(thread_context["id"])
+            if sent_emails:
+                logger.info(f"Found {len(sent_emails)} sent emails in thread {thread_context['id']}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking if response to our email: {str(e)}")
+            return False
+    
+    async def _handle_prospect_response(self, prospect: dict, content: str, subject: str, thread_context: dict):
+        """Handle when a prospect responds to our email"""
+        try:
+            prospect_id = prospect["id"]
+            
+            # Check if this is an auto-reply
+            is_auto_reply = await self._detect_auto_reply(content, subject)
+            
+            if is_auto_reply:
+                logger.info(f"Auto-reply detected from prospect {prospect_id}, not stopping follow-ups")
+                # Mark as auto-reply but don't stop follow-ups
+                await db_service.update_prospect(prospect_id, {
+                    "last_auto_reply": datetime.utcnow(),
+                    "auto_reply_count": prospect.get("auto_reply_count", 0) + 1
+                })
+                return
+            
+            # This is a manual response - stop follow-ups
+            logger.info(f"Manual response detected from prospect {prospect_id}, stopping follow-ups")
+            
+            # Mark prospect as responded and stop follow-ups
+            await db_service.mark_prospect_as_responded(prospect_id, "manual")
+            
+            # Cancel any pending follow-up emails
+            await db_service.cancel_pending_follow_ups(prospect_id)
+            
+            # Update thread with response flag
+            await db_service.update_thread_with_sent_flag(thread_context["id"], {
+                "type": "prospect_response",
+                "response_type": "manual",
+                "timestamp": datetime.utcnow(),
+                "follow_ups_stopped": True
+            })
+            
+            logger.info(f"Follow-ups stopped for prospect {prospect_id} due to manual response")
+            
+        except Exception as e:
+            logger.error(f"Error handling prospect response: {str(e)}")
+    
+    async def _detect_auto_reply(self, content: str, subject: str):
+        """Enhanced auto-reply detection"""
+        try:
+            content_lower = content.lower()
+            subject_lower = subject.lower()
+            
+            # Extended auto-reply indicators
+            auto_reply_indicators = [
+                "out of office", "vacation", "away", "automatic reply", "auto-reply",
+                "currently unavailable", "on holiday", "leave", "maternity leave",
+                "sick leave", "conference", "traveling", "will be back",
+                "not available", "away message", "vacation message", "out of the office",
+                "currently out", "temporarily unavailable", "on leave", "parental leave",
+                "sabbatical", "business trip", "attending conference", "away from desk"
+            ]
+            
+            # Check for indicators in content and subject
+            for indicator in auto_reply_indicators:
+                if indicator in content_lower or indicator in subject_lower:
+                    logger.info(f"Auto-reply detected: found indicator '{indicator}'")
+                    return True
+            
+            # Check for auto-reply patterns using regex
+            import re
+            auto_reply_patterns = [
+                r"i am (currently )?out of (the )?office",
+                r"automatic reply",
+                r"will be (back|returning) on",
+                r"on vacation until",
+                r"away until",
+                r"currently unavailable",
+                r"thank you for your (email|message)",
+                r"i will (respond|reply) when i return",
+                r"limited access to email"
+            ]
+            
+            for pattern in auto_reply_patterns:
+                if re.search(pattern, content_lower) or re.search(pattern, subject_lower):
+                    logger.info(f"Auto-reply detected: matched pattern '{pattern}'")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error detecting auto-reply: {str(e)}")
+            return False
     
     async def _get_or_create_thread_context(self, prospect_id: str, sender_email: str) -> Dict:
         """Get or create thread context for prospect"""
