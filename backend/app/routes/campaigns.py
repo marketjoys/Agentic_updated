@@ -33,7 +33,7 @@ async def get_campaign(campaign_id: str):
     return campaign
 
 @router.post("/campaigns/{campaign_id}/send")
-async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks):
+async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, send_data: dict = {}):
     """Send campaign emails"""
     campaign = await db_service.get_campaign_by_id(campaign_id)
     if not campaign:
@@ -43,8 +43,23 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks):
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
     
-    # Get all prospects for this campaign
-    prospects = await db_service.get_prospects(0, campaign["max_emails"])
+    # Get prospects from campaign lists
+    prospects = []
+    for list_id in campaign.get("list_ids", []):
+        list_prospects = await db_service.get_prospects_by_list_id(list_id)
+        prospects.extend(list_prospects)
+    
+    # Remove duplicates
+    seen_emails = set()
+    unique_prospects = []
+    for prospect in prospects:
+        if prospect["email"] not in seen_emails:
+            seen_emails.add(prospect["email"])
+            unique_prospects.append(prospect)
+    
+    # Limit to max_emails
+    max_emails = campaign.get("max_emails", 100)
+    prospects = unique_prospects[:max_emails]
     
     # Schedule email sending
     background_tasks.add_task(process_campaign_emails, campaign_id, prospects, template)
@@ -55,7 +70,12 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks):
         "prospect_count": len(prospects)
     })
     
-    return {"message": f"Campaign started. Sending to {len(prospects)} prospects"}
+    return {
+        "campaign_id": campaign_id,
+        "status": "active",
+        "total_prospects": len(prospects),
+        "message": f"Campaign started. Sending to {len(prospects)} prospects"
+    }
 
 async def process_campaign_emails(campaign_id: str, prospects: List[dict], template: dict):
     """Process campaign emails in background"""
