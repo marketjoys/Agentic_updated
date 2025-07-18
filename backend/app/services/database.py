@@ -49,6 +49,10 @@ class DatabaseService:
             self.client.close()
             self.client = None
             self.db = None
+    
+    async def get_current_timestamp(self):
+        """Get current timestamp"""
+        return datetime.utcnow()
         
     async def create_prospect(self, prospect_data: dict):
         """Create a new prospect with email duplication check"""
