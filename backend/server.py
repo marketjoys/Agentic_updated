@@ -25,6 +25,7 @@ try:
     from app.routes.smart_follow_up import router as smart_follow_up_router
     from app.routes.email_processing import router as email_processing_router
     from app.routes.follow_up_monitoring import router as follow_up_monitoring_router
+    from app.routes.intents import router as intents_router
     
     # Include the routers
     app.include_router(knowledge_base_router, prefix="/api", tags=["knowledge-base"])
@@ -33,8 +34,9 @@ try:
     app.include_router(smart_follow_up_router, prefix="/api", tags=["smart-follow-up"])
     app.include_router(email_processing_router, prefix="/api", tags=["email-processing"])
     app.include_router(follow_up_monitoring_router, prefix="/api", tags=["follow-up-monitoring"])
+    app.include_router(intents_router, prefix="/api", tags=["intents"])
     
-    logging.info("Successfully imported and included all routes including follow-up monitoring")
+    logging.info("Successfully imported and included all routes including intents")
 except ImportError as e:
     logging.warning(f"Could not import additional routes: {e}")
     logging.warning("Running with basic functionality only")
