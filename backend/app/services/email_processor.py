@@ -404,7 +404,7 @@ class EmailProcessor:
             return False
     
     async def _send_automatic_response(self, prospect: Dict, response_data: Dict, thread_id: str):
-        """Send automatic response"""
+        """Send automatic response with enhanced tracking"""
         try:
             # Personalize response
             personalized_content = personalize_template(response_data["content"], prospect)
@@ -418,30 +418,40 @@ class EmailProcessor:
             )
             
             if success:
-                # Add response to thread
-                await self._add_message_to_thread(thread_id, {
-                    "type": "sent",
-                    "recipient": prospect["email"],
-                    "subject": personalized_subject,
-                    "content": personalized_content,
-                    "timestamp": datetime.utcnow(),
-                    "ai_generated": True,
-                    "template_used": response_data.get("template_used")
-                })
-                
-                # Create email record
+                # Create email record with enhanced tracking
+                email_id = generate_id()
                 email_record = {
-                    "id": generate_id(),
+                    "id": email_id,
                     "prospect_id": prospect["id"],
                     "campaign_id": "",
                     "subject": personalized_subject,
                     "content": personalized_content,
                     "status": "sent",
                     "sent_at": datetime.utcnow(),
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow(),
+                    "sent_by_us": True,
+                    "thread_id": thread_id,
+                    "ai_generated": True,
+                    "is_auto_response": True
                 }
                 
                 await db_service.create_email_record(email_record)
+                
+                # Mark email as sent by us in the database
+                await db_service.mark_email_as_sent_by_us(email_id, thread_id)
+                
+                # Add response to thread with sent flag
+                await db_service.update_thread_with_sent_flag(thread_id, {
+                    "type": "sent",
+                    "recipient": prospect["email"],
+                    "subject": personalized_subject,
+                    "content": personalized_content,
+                    "timestamp": datetime.utcnow(),
+                    "ai_generated": True,
+                    "is_auto_response": True,
+                    "template_used": response_data.get("template_used"),
+                    "email_id": email_id
+                })
                 
                 logger.info(f"Automatic response sent successfully to: {prospect['email']}")
             else:
