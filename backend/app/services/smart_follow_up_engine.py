@@ -163,7 +163,7 @@ class SmartFollowUpEngine:
     
     async def _send_follow_up_email(self, prospect: Dict, campaign: Dict, 
                                   follow_up_rule: Optional[Dict], follow_up_sequence: int):
-        """Send a follow-up email to a prospect"""
+        """Send a follow-up email to a prospect with enhanced tracking"""
         try:
             prospect_id = prospect["id"]
             campaign_id = campaign["id"]
@@ -197,9 +197,10 @@ class SmartFollowUpEngine:
             )
             
             if success:
-                # Create email record
+                # Create email record with enhanced tracking
+                email_id = generate_id()
                 email_record = {
-                    "id": generate_id(),
+                    "id": email_id,
                     "prospect_id": prospect_id,
                     "campaign_id": campaign_id,
                     "email_provider_id": provider_id,
@@ -209,16 +210,48 @@ class SmartFollowUpEngine:
                     "sent_at": datetime.utcnow(),
                     "is_follow_up": True,
                     "follow_up_sequence": follow_up_sequence,
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.utcnow(),
+                    "sent_by_us": True,
+                    "thread_id": f"thread_{prospect_id}"
                 }
                 
                 await db_service.create_email_record(email_record)
+                
+                # Mark email as sent by us
+                await db_service.mark_email_as_sent_by_us(email_id, f"thread_{prospect_id}")
                 
                 # Update prospect follow-up tracking
                 await db_service.update_prospect(prospect_id, {
                     "follow_up_count": follow_up_sequence,
                     "last_follow_up": datetime.utcnow(),
                     "follow_up_status": FollowUpStatus.ACTIVE
+                })
+                
+                # Get or create thread context for this prospect
+                thread_context = await db_service.get_thread_by_prospect_id(prospect_id)
+                if not thread_context:
+                    thread_data = {
+                        "id": f"thread_{prospect_id}",
+                        "prospect_id": prospect_id,
+                        "campaign_id": campaign_id,
+                        "messages": [],
+                        "last_activity": datetime.utcnow(),
+                        "created_at": datetime.utcnow()
+                    }
+                    await db_service.create_thread_context(thread_data)
+                    thread_context = thread_data
+                
+                # Add to thread with sent flag
+                await db_service.update_thread_with_sent_flag(thread_context["id"], {
+                    "type": "sent",
+                    "recipient": prospect["email"],
+                    "subject": personalized_subject,
+                    "content": personalized_content,
+                    "timestamp": datetime.utcnow(),
+                    "is_follow_up": True,
+                    "follow_up_sequence": follow_up_sequence,
+                    "email_id": email_id,
+                    "template_id": template["id"]
                 })
                 
                 logger.info(f"Follow-up email sent to {prospect['email']} (sequence: {follow_up_sequence})")
