@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, Brain, MessageSquare, TrendingUp, AlertCircle, CheckCircle, Mail, Eye, Send } from 'lucide-react';
+import { Play, Pause, Brain, MessageSquare, TrendingUp, AlertCircle, CheckCircle, Mail, Eye, Send, Settings, Activity, Users, Clock, StopCircle, RotateCcw } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
 const EmailProcessing = () => {
   const [processingStatus, setProcessingStatus] = useState('stopped');
+  const [followUpEngineStatus, setFollowUpEngineStatus] = useState('stopped');
   const [analytics, setAnalytics] = useState({
     total_threads: 0,
     processed_emails: 0,
     auto_responses_sent: 0,
     processing_status: 'stopped'
   });
+  const [followUpDashboard, setFollowUpDashboard] = useState({
+    imap_monitoring: {},
+    follow_up_stats: {},
+    system_status: {}
+  });
   const [threads, setThreads] = useState([]);
+  const [imapLogs, setImapLogs] = useState([]);
+  const [prospectResponses, setProspectResponses] = useState([]);
+  const [healthCheck, setHealthCheck] = useState({});
   const [loading, setLoading] = useState(true);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [showImapLogsModal, setShowImapLogsModal] = useState(false);
+  const [showResponsesModal, setShowResponsesModal] = useState(false);
+  const [showThreadAnalysisModal, setShowThreadAnalysisModal] = useState(false);
   const [selectedThread, setSelectedThread] = useState(null);
+  const [threadAnalysis, setThreadAnalysis] = useState(null);
+  const [selectedProspectId, setSelectedProspectId] = useState('');
 
   useEffect(() => {
     loadData();
@@ -25,17 +39,31 @@ const EmailProcessing = () => {
 
   const loadData = async () => {
     try {
-      const [statusResponse, analyticsResponse, threadsResponse] = await Promise.all([
+      const [
+        statusResponse,
+        analyticsResponse,
+        threadsResponse,
+        followUpDashboardResponse,
+        followUpEngineStatusResponse,
+        healthCheckResponse
+      ] = await Promise.all([
         apiService.getProcessingStatus(),
         apiService.getProcessingAnalytics(),
-        apiService.getThreads()
+        apiService.getThreads(),
+        apiService.getFollowUpDashboard(),
+        apiService.getFollowUpEngineStatus(),
+        apiService.getFollowUpHealthCheck()
       ]);
 
       setProcessingStatus(statusResponse.data.status);
       setAnalytics(analyticsResponse.data);
       setThreads(threadsResponse.data);
+      setFollowUpDashboard(followUpDashboardResponse.data);
+      setFollowUpEngineStatus(followUpEngineStatusResponse.data.status);
+      setHealthCheck(healthCheckResponse.data);
     } catch (error) {
       console.error('Failed to load data:', error);
+      toast.error('Failed to load monitoring data');
     } finally {
       setLoading(false);
     }
@@ -43,7 +71,7 @@ const EmailProcessing = () => {
 
   const handleStartProcessing = async () => {
     try {
-      const response = await apiService.startEmailProcessing();
+      await apiService.startEmailProcessing();
       toast.success('Email processing started successfully');
       setProcessingStatus('running');
       loadData();
@@ -54,7 +82,7 @@ const EmailProcessing = () => {
 
   const handleStopProcessing = async () => {
     try {
-      const response = await apiService.stopEmailProcessing();
+      await apiService.stopEmailProcessing();
       toast.success('Email processing stopped');
       setProcessingStatus('stopped');
       loadData();
@@ -63,8 +91,85 @@ const EmailProcessing = () => {
     }
   };
 
+  const handleStartFollowUpEngine = async () => {
+    try {
+      await apiService.startFollowUpEngine();
+      toast.success('Follow-up engine started successfully');
+      setFollowUpEngineStatus('running');
+      loadData();
+    } catch (error) {
+      toast.error('Failed to start follow-up engine');
+    }
+  };
+
+  const handleStopFollowUpEngine = async () => {
+    try {
+      await apiService.stopFollowUpEngine();
+      toast.success('Follow-up engine stopped');
+      setFollowUpEngineStatus('stopped');
+      loadData();
+    } catch (error) {
+      toast.error('Failed to stop follow-up engine');
+    }
+  };
+
   const handleViewThread = (thread) => {
     setSelectedThread(thread);
+  };
+
+  const handleShowImapLogs = async () => {
+    try {
+      const response = await apiService.getImapLogs(24);
+      setImapLogs(response.data.logs);
+      setShowImapLogsModal(true);
+    } catch (error) {
+      toast.error('Failed to load IMAP logs');
+    }
+  };
+
+  const handleShowResponses = async () => {
+    try {
+      const response = await apiService.getProspectResponses(7);
+      setProspectResponses(response.data.responses);
+      setShowResponsesModal(true);
+    } catch (error) {
+      toast.error('Failed to load prospect responses');
+    }
+  };
+
+  const handleAnalyzeThread = async () => {
+    if (!selectedProspectId) {
+      toast.error('Please enter a prospect ID');
+      return;
+    }
+
+    try {
+      const response = await apiService.analyzeProspectThread(selectedProspectId);
+      setThreadAnalysis(response.data);
+      setShowThreadAnalysisModal(true);
+    } catch (error) {
+      toast.error('Failed to analyze thread');
+    }
+  };
+
+  const handleForceStopFollowUp = async (prospectId) => {
+    try {
+      await apiService.forceStopFollowUp(prospectId);
+      toast.success('Follow-ups stopped for prospect');
+      loadData();
+    } catch (error) {
+      toast.error('Failed to stop follow-ups');
+    }
+  };
+
+  const handleRestartFollowUp = async (prospectId) => {
+    try {
+      await apiService.restartFollowUp(prospectId);
+      toast.success('Follow-ups restarted for prospect');
+      loadData();
+    } catch (error) {
+      toast.error('Failed to restart follow-ups');
+    }
   };
 
   if (loading) {
@@ -80,9 +185,9 @@ const EmailProcessing = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">AI Email Processing</h1>
+          <h1 className="text-3xl font-bold text-secondary-900">AI Email Processing & Follow-Up Monitoring</h1>
           <p className="text-secondary-600 mt-1">
-            Automatic email monitoring and intelligent response system
+            Comprehensive monitoring of email processing and intelligent follow-up systems
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -93,60 +198,130 @@ const EmailProcessing = () => {
             <Brain className="h-4 w-4 mr-2" />
             Test AI
           </button>
-          {processingStatus === 'running' ? (
-            <button
-              onClick={handleStopProcessing}
-              className="btn btn-secondary"
-            >
-              <Pause className="h-4 w-4 mr-2" />
-              Stop Processing
-            </button>
-          ) : (
-            <button
-              onClick={handleStartProcessing}
-              className="btn btn-primary"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Start Processing
-            </button>
-          )}
+          <button
+            onClick={handleShowImapLogs}
+            className="btn btn-secondary"
+          >
+            <Activity className="h-4 w-4 mr-2" />
+            IMAP Logs
+          </button>
+          <button
+            onClick={handleShowResponses}
+            className="btn btn-secondary"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Responses
+          </button>
         </div>
       </div>
 
-      {/* Status Card */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-full ${
-                processingStatus === 'running' 
-                  ? 'bg-green-100 text-green-600' 
-                  : 'bg-red-100 text-red-600'
-              }`}>
-                {processingStatus === 'running' ? 
-                  <CheckCircle className="h-5 w-5" /> : 
-                  <AlertCircle className="h-5 w-5" />
-                }
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-secondary-900">
-                  Email Processing Status
-                </h3>
-                <p className="text-sm text-secondary-600">
-                  {processingStatus === 'running' 
-                    ? 'System is actively monitoring emails and generating responses'
-                    : 'Email processing is currently stopped'
+      {/* System Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Email Processing Status */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-full ${
+                  processingStatus === 'running' 
+                    ? 'bg-green-100 text-green-600' 
+                    : 'bg-red-100 text-red-600'
+                }`}>
+                  {processingStatus === 'running' ? 
+                    <CheckCircle className="h-5 w-5" /> : 
+                    <AlertCircle className="h-5 w-5" />
                   }
-                </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-secondary-900">
+                    Email Processing
+                  </h3>
+                  <p className="text-sm text-secondary-600">
+                    {processingStatus === 'running' 
+                      ? 'Monitoring emails and generating responses'
+                      : 'Email processing is stopped'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  processingStatus === 'running' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {processingStatus.toUpperCase()}
+                </div>
+                {processingStatus === 'running' ? (
+                  <button
+                    onClick={handleStopProcessing}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Pause className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStartProcessing}
+                    className="p-2 text-green-600 hover:bg-green-50 rounded"
+                  >
+                    <Play className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
-            <div className="text-right">
-              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                processingStatus === 'running' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {processingStatus.toUpperCase()}
+          </div>
+        </div>
+
+        {/* Follow-up Engine Status */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 rounded-full ${
+                  followUpEngineStatus === 'running' 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {followUpEngineStatus === 'running' ? 
+                    <Clock className="h-5 w-5" /> : 
+                    <StopCircle className="h-5 w-5" />
+                  }
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-secondary-900">
+                    Follow-up Engine
+                  </h3>
+                  <p className="text-sm text-secondary-600">
+                    {followUpEngineStatus === 'running' 
+                      ? 'Sending scheduled follow-ups'
+                      : 'Follow-up engine is stopped'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  followUpEngineStatus === 'running' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {followUpEngineStatus.toUpperCase()}
+                </div>
+                {followUpEngineStatus === 'running' ? (
+                  <button
+                    onClick={handleStopFollowUpEngine}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                  >
+                    <Pause className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStartFollowUpEngine}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                  >
+                    <Play className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -192,15 +367,110 @@ const EmailProcessing = () => {
           <div className="card-body">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-secondary-600">Success Rate</p>
+                <p className="text-sm text-secondary-600">Follow-up Rate</p>
                 <p className="text-2xl font-bold text-secondary-900">
-                  {analytics.processed_emails > 0 
-                    ? Math.round((analytics.auto_responses_sent / analytics.processed_emails) * 100)
-                    : 0}%
+                  {followUpDashboard.follow_up_stats?.response_rate || 0}%
                 </p>
               </div>
               <TrendingUp className="h-8 w-8 text-emerald-600" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Follow-up Monitoring Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* IMAP Monitoring */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-xl font-bold text-secondary-900">IMAP Monitoring</h3>
+            <p className="text-sm text-secondary-600 mt-1">
+              Real-time email scanning statistics
+            </p>
+          </div>
+          <div className="card-body">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Emails Processed (24h)</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.imap_monitoring?.emails_processed_24h || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Active Threads (24h)</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.imap_monitoring?.threads_active_24h || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Responses (24h)</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.imap_monitoring?.prospects_responded_24h || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Follow-up Statistics */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-xl font-bold text-secondary-900">Follow-up Statistics</h3>
+            <p className="text-sm text-secondary-600 mt-1">
+              Follow-up performance metrics
+            </p>
+          </div>
+          <div className="card-body">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Active Follow-ups</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.follow_up_stats?.active_follow_ups || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Stopped Follow-ups</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.follow_up_stats?.stopped_follow_ups || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Response Rate</span>
+                <span className="font-semibold text-secondary-900">
+                  {followUpDashboard.follow_up_stats?.response_rate || 0}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Thread Analysis Tool */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-xl font-bold text-secondary-900">Thread Analysis Tool</h3>
+          <p className="text-sm text-secondary-600 mt-1">
+            Analyze specific prospect threads for follow-up effectiveness
+          </p>
+        </div>
+        <div className="card-body">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={selectedProspectId}
+                onChange={(e) => setSelectedProspectId(e.target.value)}
+                placeholder="Enter prospect ID to analyze..."
+                className="input"
+              />
+            </div>
+            <button
+              onClick={handleAnalyzeThread}
+              className="btn btn-primary"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Analyze Thread
+            </button>
           </div>
         </div>
       </div>
@@ -225,10 +495,12 @@ const EmailProcessing = () => {
           ) : (
             <div className="space-y-4">
               {threads.slice(0, 5).map((thread) => (
-                <ThreadCard
+                <EnhancedThreadCard
                   key={thread.id}
                   thread={thread}
                   onViewThread={handleViewThread}
+                  onForceStopFollowUp={handleForceStopFollowUp}
+                  onRestartFollowUp={handleRestartFollowUp}
                 />
               ))}
             </div>
@@ -240,6 +512,32 @@ const EmailProcessing = () => {
       {showTestModal && (
         <TestModal
           onClose={() => setShowTestModal(false)}
+        />
+      )}
+
+      {/* IMAP Logs Modal */}
+      {showImapLogsModal && (
+        <ImapLogsModal
+          logs={imapLogs}
+          onClose={() => setShowImapLogsModal(false)}
+        />
+      )}
+
+      {/* Responses Modal */}
+      {showResponsesModal && (
+        <ResponsesModal
+          responses={prospectResponses}
+          onClose={() => setShowResponsesModal(false)}
+        />
+      )}
+
+      {/* Thread Analysis Modal */}
+      {showThreadAnalysisModal && threadAnalysis && (
+        <ThreadAnalysisModal
+          analysis={threadAnalysis}
+          onClose={() => setShowThreadAnalysisModal(false)}
+          onForceStopFollowUp={handleForceStopFollowUp}
+          onRestartFollowUp={handleRestartFollowUp}
         />
       )}
 
