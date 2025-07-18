@@ -62,6 +62,12 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
     sent_count = 0
     failed_count = 0
     
+    # Get default email provider
+    default_provider = await email_provider_service.get_default_provider()
+    if not default_provider:
+        print(f"No default email provider found for campaign {campaign_id}")
+        return
+    
     for prospect in prospects:
         try:
             # Personalize email content
@@ -70,11 +76,14 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
             
             # Send email using email provider service
             success, error = await email_provider_service.send_email(
-                "f7424071-f1bf-4688-a8dc-09e66d49b051",  # Gmail provider ID
+                default_provider["id"],
                 prospect["email"],
                 personalized_subject,
                 personalized_content
             )
+            
+            if not success and error:
+                print(f"Email sending failed to {prospect['email']}: {error}")
             
             # Create email record
             email_record = EmailMessage(
