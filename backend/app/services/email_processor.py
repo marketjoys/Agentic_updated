@@ -56,7 +56,15 @@ class EmailProcessor:
                 await asyncio.sleep(60)  # Wait longer on error
     
     async def _check_for_new_emails(self):
-        """Check for new emails via IMAP"""
+        """Check for new emails via IMAP with enhanced monitoring"""
+        scan_start_time = datetime.utcnow()
+        scan_result = {
+            "new_emails_found": 0,
+            "emails_processed": 0,
+            "errors": [],
+            "scan_duration_seconds": 0
+        }
+        
         try:
             # Connect to IMAP server
             mail = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
@@ -68,6 +76,9 @@ class EmailProcessor:
             
             if status == "OK":
                 message_ids = messages[0].split()
+                scan_result["new_emails_found"] = len(message_ids)
+                
+                logger.info(f"Found {len(message_ids)} new emails to process")
                 
                 for msg_id in message_ids:
                     try:
@@ -80,20 +91,43 @@ class EmailProcessor:
                             email_message = email.message_from_bytes(email_body)
                             
                             # Process the email
-                            await self._process_email(email_message)
+                            processed = await self._process_email(email_message)
+                            if processed:
+                                scan_result["emails_processed"] += 1
                             
                             # Mark as read
                             mail.store(msg_id, '+FLAGS', '\\Seen')
                             
                     except Exception as e:
-                        logger.error(f"Error processing email {msg_id}: {str(e)}")
+                        error_msg = f"Error processing email {msg_id}: {str(e)}"
+                        logger.error(error_msg)
+                        scan_result["errors"].append(error_msg)
                         continue
             
             mail.close()
             mail.logout()
             
         except Exception as e:
-            logger.error(f"IMAP connection error: {str(e)}")
+            error_msg = f"IMAP connection error: {str(e)}"
+            logger.error(error_msg)
+            scan_result["errors"].append(error_msg)
+        
+        # Calculate scan duration
+        scan_duration = (datetime.utcnow() - scan_start_time).total_seconds()
+        scan_result["scan_duration_seconds"] = scan_duration
+        
+        # Log scan activity
+        try:
+            await db_service.log_imap_scan_activity(scan_result)
+        except Exception as e:
+            logger.error(f"Failed to log scan activity: {str(e)}")
+        
+        # Log summary
+        if scan_result["new_emails_found"] > 0:
+            logger.info(f"IMAP scan completed: {scan_result['new_emails_found']} new emails found, "
+                       f"{scan_result['emails_processed']} processed, {len(scan_result['errors'])} errors")
+        
+        return scan_result
     
     async def _process_email(self, email_message):
         """Process individual email"""
