@@ -156,6 +156,22 @@ export const apiService = {
   deleteEmailProvider: (id) => api.delete(`/api/email-providers/${id}`),
   setDefaultEmailProvider: (id) => api.post(`/api/email-providers/${id}/set-default`),
   testEmailProvider: (id) => api.post(`/api/email-providers/${id}/test-connection`),
+
+  // Follow-up Monitoring
+  getFollowUpDashboard: () => api.get('/api/follow-up-monitoring/dashboard'),
+  getImapLogs: (hours = 24) => api.get(`/api/follow-up-monitoring/imap-logs?hours=${hours}`),
+  getProspectResponses: (days = 7) => api.get(`/api/follow-up-monitoring/prospect-responses?days=${days}`),
+  analyzeProspectThread: (prospectId) => api.get(`/api/follow-up-monitoring/thread-analysis/${prospectId}`),
+  forceStopFollowUp: (prospectId) => api.post(`/api/follow-up-monitoring/force-stop-follow-up/${prospectId}`),
+  restartFollowUp: (prospectId) => api.post(`/api/follow-up-monitoring/restart-follow-up/${prospectId}`),
+  getFollowUpHealthCheck: () => api.get('/api/follow-up-monitoring/health-check'),
+
+  // Smart Follow-up Engine
+  startFollowUpEngine: () => api.post('/api/follow-up-engine/start'),
+  stopFollowUpEngine: () => api.post('/api/follow-up-engine/stop'),
+  getFollowUpEngineStatus: () => api.get('/api/follow-up-engine/status'),
+  getFollowUpStatistics: () => api.get('/api/follow-up-engine/statistics'),
+  processEmailResponse: (responseData) => api.post('/api/follow-up-engine/process-response', responseData),
 };
 
 export default api;
