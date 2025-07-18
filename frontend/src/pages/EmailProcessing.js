@@ -552,10 +552,11 @@ const EmailProcessing = () => {
   );
 };
 
-const ThreadCard = ({ thread, onViewThread }) => {
+const EnhancedThreadCard = ({ thread, onViewThread, onForceStopFollowUp, onRestartFollowUp }) => {
   const messageCount = thread.messages?.length || 0;
   const lastMessage = thread.messages?.[messageCount - 1];
   const aiResponses = thread.messages?.filter(m => m.ai_generated)?.length || 0;
+  const sentByUs = thread.messages?.filter(m => m.sent_by_us)?.length || 0;
 
   return (
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -568,7 +569,7 @@ const ThreadCard = ({ thread, onViewThread }) => {
             Thread {thread.id.substring(0, 8)}...
           </h4>
           <p className="text-sm text-secondary-600">
-            {messageCount} messages • {aiResponses} AI responses
+            {messageCount} messages • {aiResponses} AI responses • {sentByUs} sent by us
           </p>
           {lastMessage && (
             <p className="text-xs text-secondary-500 mt-1">
@@ -577,12 +578,287 @@ const ThreadCard = ({ thread, onViewThread }) => {
           )}
         </div>
       </div>
-      <button
-        onClick={() => onViewThread(thread)}
-        className="p-2 text-secondary-400 hover:text-primary-600"
-      >
-        <Eye className="h-4 w-4" />
-      </button>
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={() => onForceStopFollowUp(thread.prospect_id)}
+          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+          title="Force stop follow-ups"
+        >
+          <StopCircle className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => onRestartFollowUp(thread.prospect_id)}
+          className="p-2 text-green-400 hover:text-green-600 hover:bg-green-50 rounded"
+          title="Restart follow-ups"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => onViewThread(thread)}
+          className="p-2 text-secondary-400 hover:text-primary-600"
+        >
+          <Eye className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ImapLogsModal = ({ logs, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="fixed inset-0 bg-black opacity-30"></div>
+        <div className="relative bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-secondary-900">
+              IMAP Scan Logs (Last 24 Hours)
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {logs.length === 0 ? (
+              <p className="text-center text-secondary-500 py-8">
+                No IMAP logs found
+              </p>
+            ) : (
+              logs.map((log, index) => (
+                <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-medium text-secondary-900">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                    <span className="text-xs text-secondary-500">
+                      {log.scan_duration_seconds}s
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-secondary-600">New Emails:</span>
+                      <span className="font-medium ml-2">{log.new_emails_found}</span>
+                    </div>
+                    <div>
+                      <span className="text-secondary-600">Processed:</span>
+                      <span className="font-medium ml-2">{log.emails_processed}</span>
+                    </div>
+                    <div>
+                      <span className="text-secondary-600">Errors:</span>
+                      <span className="font-medium ml-2">{log.errors?.length || 0}</span>
+                    </div>
+                  </div>
+                  {log.errors && log.errors.length > 0 && (
+                    <div className="mt-2 p-2 bg-red-50 rounded text-sm text-red-700">
+                      {log.errors.map((error, i) => (
+                        <div key={i}>{error}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ResponsesModal = ({ responses, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="fixed inset-0 bg-black opacity-30"></div>
+        <div className="relative bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-secondary-900">
+              Recent Prospect Responses (Last 7 Days)
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {responses.length === 0 ? (
+              <p className="text-center text-secondary-500 py-8">
+                No recent responses found
+              </p>
+            ) : (
+              responses.map((response, index) => (
+                <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-medium text-secondary-900">
+                        {response.prospect.email}
+                      </h4>
+                      <p className="text-sm text-secondary-600">
+                        {response.prospect.first_name} {response.prospect.last_name}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      response.response_type === 'manual' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {response.response_type}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-secondary-600">Follow-ups sent:</span>
+                      <span className="font-medium ml-2">{response.follow_up_history.length}</span>
+                    </div>
+                    <div>
+                      <span className="text-secondary-600">Responded:</span>
+                      <span className="font-medium ml-2">
+                        {new Date(response.prospect.responded_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ThreadAnalysisModal = ({ analysis, onClose, onForceStopFollowUp, onRestartFollowUp }) => {
+  const { prospect, analysis: threadAnalysis, messages, follow_up_history } = analysis;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="fixed inset-0 bg-black opacity-30"></div>
+        <div className="relative bg-white rounded-lg max-w-5xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-secondary-900">
+              Thread Analysis - {prospect.email}
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="space-y-6">
+            {/* Prospect Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-secondary-900 mb-2">Prospect Details</h4>
+                <p className="text-sm text-secondary-600">
+                  <span className="font-medium">Name:</span> {prospect.first_name} {prospect.last_name}
+                </p>
+                <p className="text-sm text-secondary-600">
+                  <span className="font-medium">Company:</span> {prospect.company}
+                </p>
+                <p className="text-sm text-secondary-600">
+                  <span className="font-medium">Status:</span> {prospect.follow_up_status}
+                </p>
+              </div>
+              
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-secondary-900 mb-2">Thread Analytics</h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-secondary-600">Total Messages:</span>
+                    <span className="font-medium ml-2">{threadAnalysis.total_messages}</span>
+                  </div>
+                  <div>
+                    <span className="text-secondary-600">Sent by Us:</span>
+                    <span className="font-medium ml-2">{threadAnalysis.sent_by_us}</span>
+                  </div>
+                  <div>
+                    <span className="text-secondary-600">Received:</span>
+                    <span className="font-medium ml-2">{threadAnalysis.received_from_prospect}</span>
+                  </div>
+                  <div>
+                    <span className="text-secondary-600">Follow-ups:</span>
+                    <span className="font-medium ml-2">{threadAnalysis.follow_up_count}</span>
+                  </div>
+                </div>
+                {threadAnalysis.response_time_seconds && (
+                  <p className="text-sm text-secondary-600 mt-2">
+                    <span className="font-medium">Response Time:</span> {Math.round(threadAnalysis.response_time_seconds / 3600)}h
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex space-x-4">
+              <button
+                onClick={() => onForceStopFollowUp(prospect.id)}
+                className="btn btn-secondary"
+              >
+                <StopCircle className="h-4 w-4 mr-2" />
+                Force Stop Follow-ups
+              </button>
+              <button
+                onClick={() => onRestartFollowUp(prospect.id)}
+                className="btn btn-primary"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restart Follow-ups
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div>
+              <h4 className="font-semibold text-secondary-900 mb-4">Thread Messages</h4>
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg ${
+                      message.sent_by_us 
+                        ? 'bg-blue-50 border border-blue-200' 
+                        : 'bg-gray-50 border border-gray-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 text-xs rounded ${
+                          message.sent_by_us 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {message.sent_by_us ? 'Sent by Us' : 'Received'}
+                        </span>
+                        {message.is_follow_up && (
+                          <span className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800">
+                            Follow-up #{message.follow_up_sequence}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-secondary-500">
+                        {new Date(message.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-secondary-900">{message.subject}</p>
+                    <p className="text-xs text-secondary-600 mt-1">
+                      {message.content.substring(0, 100)}...
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
