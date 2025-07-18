@@ -57,20 +57,21 @@ class SmartFollowUpEngine:
                 await asyncio.sleep(600)  # Wait longer on error
     
     async def _check_and_send_follow_ups(self):
-        """Check for prospects that need follow-ups and send them"""
+        """Check for prospects that need follow-ups and send them with enhanced tracking"""
         try:
             # Get active campaigns with follow-up enabled
-            campaigns = await db_service.get_campaigns()
-            active_campaigns = [c for c in campaigns if c.get("follow_up_enabled", False) and c.get("status") == "active"]
+            campaigns = await db_service.get_active_follow_up_campaigns()
             
-            for campaign in active_campaigns:
+            logger.info(f"Found {len(campaigns)} active follow-up campaigns")
+            
+            for campaign in campaigns:
                 await self._process_campaign_follow_ups(campaign)
                 
         except Exception as e:
             logger.error(f"Error checking follow-ups: {str(e)}")
     
     async def _process_campaign_follow_ups(self, campaign: Dict):
-        """Process follow-ups for a specific campaign"""
+        """Process follow-ups for a specific campaign with enhanced response detection"""
         try:
             campaign_id = campaign["id"]
             follow_up_rule_id = campaign.get("follow_up_rule_id")
@@ -85,11 +86,12 @@ class SmartFollowUpEngine:
             if follow_up_rule:
                 follow_up_intervals = [follow_up_rule["trigger_after_days"]]
             
-            # Get prospects for this campaign
-            all_prospects = await db_service.get_prospects()
-            campaign_prospects = [p for p in all_prospects if p.get("campaign_id") == campaign_id]
+            # Get prospects needing follow-up for this campaign
+            prospects_needing_follow_up = await db_service.get_prospects_needing_follow_up(campaign_id)
             
-            for prospect in campaign_prospects:
+            logger.info(f"Found {len(prospects_needing_follow_up)} prospects needing follow-up for campaign {campaign_id}")
+            
+            for prospect in prospects_needing_follow_up:
                 await self._check_prospect_follow_up(prospect, campaign, follow_up_rule, follow_up_intervals)
                 
         except Exception as e:
@@ -97,7 +99,7 @@ class SmartFollowUpEngine:
     
     async def _check_prospect_follow_up(self, prospect: Dict, campaign: Dict, 
                                       follow_up_rule: Optional[Dict], follow_up_intervals: List[int]):
-        """Check if a prospect needs a follow-up email"""
+        """Check if a prospect needs a follow-up email with enhanced response detection"""
         try:
             prospect_id = prospect["id"]
             
@@ -105,7 +107,19 @@ class SmartFollowUpEngine:
             if prospect.get("follow_up_status") in [FollowUpStatus.COMPLETED, FollowUpStatus.STOPPED]:
                 return
             
-            # Skip if prospect has responded (unless auto-reply)
+            # Enhanced response detection - check if prospect responded after our last email
+            last_email_sent_at = prospect.get("last_follow_up") or prospect.get("last_contact")
+            if last_email_sent_at:
+                has_responded = await db_service.check_prospect_response_after_our_email(
+                    prospect_id, last_email_sent_at
+                )
+                
+                if has_responded:
+                    logger.info(f"Prospect {prospect_id} has responded after our email, stopping follow-ups")
+                    await self._stop_prospect_follow_ups(prospect_id, "manual_response")
+                    return
+            
+            # Check if this is an auto-reply response only
             if prospect.get("responded_at") and not await self._is_auto_reply_response(prospect_id):
                 await self._stop_prospect_follow_ups(prospect_id, "manual_response")
                 return
