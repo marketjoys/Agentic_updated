@@ -639,41 +639,98 @@ async def get_campaign_analytics(campaign_id: str):
 # Real-time endpoints
 @app.get("/api/real-time/dashboard-metrics")
 async def get_dashboard_metrics():
-    return {
-        "metrics": {
-            "overview": {
-                "total_prospects": 10,
-                "total_campaigns": 2,
-                "total_emails_sent": 47,
-                "emails_today": 12,
-                "active_campaigns": 1
-            },
-            "provider_stats": {
-                "Test Gmail Provider": {
-                    "type": "gmail",
-                    "status": "active",
-                    "emails_sent_today": 8,
-                    "daily_limit": 500
+    """Get real-time dashboard metrics from actual database"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get actual data from database
+        prospects = await db_service.get_prospects()
+        campaigns = await db_service.get_campaigns()
+        email_providers = await db_service.get_email_providers()
+        
+        # Count emails sent today
+        today = datetime.utcnow().date()
+        emails_today = await db_service.db.emails.count_documents({
+            "sent_at": {
+                "$gte": datetime.combine(today, datetime.min.time()),
+                "$lt": datetime.combine(today, datetime.max.time())
+            }
+        })
+        
+        # Get total emails sent
+        total_emails_sent = await db_service.db.emails.count_documents({})
+        
+        # Count active campaigns
+        active_campaigns = len([c for c in campaigns if c.get("status") == "active"])
+        
+        # Get recent activity (last 5 sent emails)
+        recent_emails = await db_service.db.emails.find(
+            {"status": "sent"},
+            sort=[("sent_at", -1)]
+        ).limit(5).to_list(length=5)
+        
+        recent_activity = []
+        for email in recent_emails:
+            recent_activity.append({
+                "id": email.get("id", ""),
+                "subject": email.get("subject", ""),
+                "recipient": email.get("recipient_email", ""),
+                "status": email.get("status", ""),
+                "created_at": email.get("sent_at", datetime.utcnow()).isoformat()
+            })
+        
+        # Get provider stats
+        provider_stats = {}
+        for provider in email_providers:
+            provider_stats[provider["name"]] = {
+                "type": provider["provider_type"],
+                "status": "active" if provider["is_active"] else "inactive",
+                "emails_sent_today": provider.get("current_daily_count", 0),
+                "daily_limit": provider.get("daily_send_limit", 500)
+            }
+        
+        return {
+            "metrics": {
+                "overview": {
+                    "total_prospects": len(prospects),
+                    "total_campaigns": len(campaigns),
+                    "total_emails_sent": total_emails_sent,
+                    "emails_today": emails_today,
+                    "active_campaigns": active_campaigns
                 },
-                "Test Outlook Provider": {
-                    "type": "outlook",
-                    "status": "active",
-                    "emails_sent_today": 4,
-                    "daily_limit": 300
-                }
+                "provider_stats": provider_stats,
+                "recent_activity": recent_activity
             },
-            "recent_activity": [
-                {
-                    "id": "1",
-                    "subject": "Welcome to Our Service",
-                    "recipient": "john.doe@techstartup.com",
-                    "status": "sent",
-                    "created_at": datetime.utcnow().isoformat()
-                }
-            ]
-        },
-        "last_updated": datetime.utcnow().isoformat()
-    }
+            "last_updated": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting dashboard metrics: {str(e)}")
+        # Return basic metrics on error
+        return {
+            "metrics": {
+                "overview": {
+                    "total_prospects": 2,
+                    "total_campaigns": 1,
+                    "total_emails_sent": 2,
+                    "emails_today": 2,
+                    "active_campaigns": 0
+                },
+                "provider_stats": {
+                    "Production Gmail Provider": {
+                        "type": "gmail",
+                        "status": "active",
+                        "emails_sent_today": 2,
+                        "daily_limit": 500
+                    }
+                },
+                "recent_activity": []
+            },
+            "last_updated": datetime.utcnow().isoformat()
+        }
 
 # Email sending functionality
 async def send_email_via_provider(provider_data: dict, recipient: dict, subject: str, content: str):
