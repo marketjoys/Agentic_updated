@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from app.models import Campaign, EmailMessage
 from app.services.database import db_service
-from app.utils.helpers import generate_id, send_email, personalize_template
+from app.services.email_provider_service import email_provider_service
+from app.utils.helpers import generate_id, personalize_template
 from datetime import datetime
 import asyncio
 from typing import List
@@ -68,7 +69,7 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
             personalized_subject = personalize_template(template["subject"], prospect)
             
             # Send email
-            success = await send_email(
+            success = await email_provider_service.send_email(
                 prospect["email"],
                 personalized_subject,
                 personalized_content
