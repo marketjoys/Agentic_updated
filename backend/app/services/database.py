@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from bson import ObjectId
 from typing import Any, Dict, List, Union
+from app.utils.helpers import generate_id
 
 def clean_document(doc: Union[Dict, List, Any]) -> Union[Dict, List, Any]:
     """
