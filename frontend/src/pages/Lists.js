@@ -653,7 +653,10 @@ const AddProspectsToListModal = ({ list, prospects, onClose, onSubmit }) => {
                         <input
                           type="checkbox"
                           checked={selectedProspects.includes(prospect.id)}
-                          onChange={() => handleProspectToggle(prospect.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleProspectToggle(prospect.id);
+                          }}
                           className="h-4 w-4 text-blue-600 rounded"
                         />
                         <div>
