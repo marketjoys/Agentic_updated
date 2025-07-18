@@ -677,5 +677,161 @@ class DatabaseService:
         prospects = await self.db.prospects.find({"list_ids": list_id}).to_list(length=1000)
         return clean_document(prospects)
 
+    # Enhanced Follow-up Tracking Methods
+    async def mark_prospect_as_responded(self, prospect_id: str, response_type: str = "manual"):
+        """Mark a prospect as having responded and stop follow-ups"""
+        await self.connect()
+        result = await self.db.prospects.update_one(
+            {"id": prospect_id},
+            {
+                "$set": {
+                    "responded_at": datetime.utcnow(),
+                    "response_type": response_type,
+                    "follow_up_status": "stopped",
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        return result.modified_count > 0
+
+    async def get_prospects_needing_follow_up(self, campaign_id: str = None):
+        """Get prospects that need follow-up emails"""
+        await self.connect()
+        query = {
+            "follow_up_status": "active",
+            "status": {"$ne": "unsubscribed"}
+        }
+        if campaign_id:
+            query["campaign_id"] = campaign_id
+        
+        prospects = await self.db.prospects.find(query).to_list(length=1000)
+        return clean_document(prospects)
+
+    async def get_prospect_follow_up_history(self, prospect_id: str):
+        """Get follow-up history for a prospect"""
+        await self.connect()
+        emails = await self.db.emails.find({
+            "prospect_id": prospect_id,
+            "is_follow_up": True
+        }).sort("sent_at", 1).to_list(length=100)
+        return clean_document(emails)
+
+    async def mark_email_as_sent_by_us(self, email_id: str, thread_id: str):
+        """Mark an email as sent by our system in a thread"""
+        await self.connect()
+        result = await self.db.emails.update_one(
+            {"id": email_id},
+            {
+                "$set": {
+                    "sent_by_us": True,
+                    "thread_id": thread_id,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        return result.modified_count > 0
+
+    async def get_sent_emails_in_thread(self, thread_id: str):
+        """Get all emails sent by us in a thread"""
+        await self.connect()
+        emails = await self.db.emails.find({
+            "thread_id": thread_id,
+            "sent_by_us": True
+        }).sort("sent_at", 1).to_list(length=100)
+        return clean_document(emails)
+
+    async def check_prospect_response_after_our_email(self, prospect_id: str, our_email_sent_at: datetime):
+        """Check if prospect responded after our email was sent"""
+        await self.connect()
+        thread = await self.db.threads.find_one({"prospect_id": prospect_id})
+        if not thread:
+            return False
+        
+        # Check if there are any received messages after our email was sent
+        messages = thread.get("messages", [])
+        for message in messages:
+            if (message.get("type") == "received" and 
+                message.get("timestamp") > our_email_sent_at and
+                not message.get("is_auto_reply", False)):
+                return True
+        return False
+
+    async def update_thread_with_sent_flag(self, thread_id: str, message_data: dict):
+        """Add message to thread with sent flag"""
+        await self.connect()
+        message_data["sent_by_us"] = True
+        message_data["message_id"] = f"msg_{generate_id()}"
+        
+        result = await self.db.threads.update_one(
+            {"id": thread_id},
+            {
+                "$push": {"messages": message_data},
+                "$set": {"last_activity": datetime.utcnow()}
+            }
+        )
+        return result.modified_count > 0
+
+    async def get_active_follow_up_campaigns(self):
+        """Get campaigns with active follow-up tracking"""
+        await self.connect()
+        campaigns = await self.db.campaigns.find({
+            "follow_up_enabled": True,
+            "status": {"$in": ["active", "running"]}
+        }).to_list(length=100)
+        return clean_document(campaigns)
+
+    async def get_imap_monitoring_stats(self):
+        """Get IMAP monitoring statistics"""
+        await self.connect()
+        
+        # Get last 24 hours of email processing
+        from datetime import timedelta
+        yesterday = datetime.utcnow() - timedelta(days=1)
+        
+        emails_processed = await self.db.emails.count_documents({
+            "created_at": {"$gte": yesterday}
+        })
+        
+        threads_active = await self.db.threads.count_documents({
+            "last_activity": {"$gte": yesterday}
+        })
+        
+        prospects_responded = await self.db.prospects.count_documents({
+            "responded_at": {"$gte": yesterday}
+        })
+        
+        return {
+            "emails_processed_24h": emails_processed,
+            "threads_active_24h": threads_active,
+            "prospects_responded_24h": prospects_responded,
+            "last_updated": datetime.utcnow()
+        }
+
+    async def log_imap_scan_activity(self, scan_result: dict):
+        """Log IMAP scan activity for monitoring"""
+        await self.connect()
+        scan_log = {
+            "id": generate_id(),
+            "timestamp": datetime.utcnow(),
+            "new_emails_found": scan_result.get("new_emails_found", 0),
+            "emails_processed": scan_result.get("emails_processed", 0),
+            "errors": scan_result.get("errors", []),
+            "scan_duration_seconds": scan_result.get("scan_duration_seconds", 0)
+        }
+        
+        result = await self.db.imap_scan_logs.insert_one(scan_log)
+        return result.acknowledged
+
+    async def cleanup_old_scan_logs(self, days_to_keep: int = 7):
+        """Clean up old IMAP scan logs"""
+        await self.connect()
+        from datetime import timedelta
+        cutoff_date = datetime.utcnow() - timedelta(days=days_to_keep)
+        
+        result = await self.db.imap_scan_logs.delete_many({
+            "timestamp": {"$lt": cutoff_date}
+        })
+        return result.deleted_count
+
 # Create global database service instance
 db_service = DatabaseService()
