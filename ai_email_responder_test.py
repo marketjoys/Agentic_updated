@@ -334,7 +334,7 @@ class AIEmailResponderTester:
             matched_intent = None
             
             for classified_intent in classification_result.get('classified_intents', []):
-                intent_name = classified_intent.get('name', '')
+                intent_name = classified_intent.get('intent_name', '')  # Fixed: use 'intent_name' not 'name'
                 confidence = classified_intent.get('confidence', 0)
                 
                 # Find matching auto-response intent
