@@ -561,6 +561,36 @@ async def get_list_by_id(list_id: str):
         logging.error(f"Error fetching list: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching list: {str(e)}")
 
+@app.get("/api/lists/{list_id}/prospects")
+async def get_list_prospects(list_id: str):
+    """Get prospects for a specific list"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Check if list exists
+        list_data = await db_service.get_list_by_id(list_id)
+        if not list_data:
+            raise HTTPException(status_code=404, detail="List not found")
+        
+        # Get prospects for this list
+        prospects = await db_service.get_prospects_by_list_id(list_id)
+        
+        return {
+            "list_id": list_id,
+            "list_name": list_data.get("name", "Unknown"),
+            "prospects": prospects,
+            "total_count": len(prospects)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching list prospects: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching list prospects: {str(e)}")
+
 @app.get("/api/templates")
 async def get_templates():
     """Get all templates from database"""
