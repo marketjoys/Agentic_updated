@@ -450,5 +450,37 @@ class GroqService:
                 "reasoning": f"Error in sentiment analysis: {str(e)}"
             }
     
+    async def generate_response_with_context(self, system_prompt: str, user_prompt: str, conversation_history: List[Dict] = None) -> str:
+        """
+        Generate response with conversation context using Groq API
+        """
+        try:
+            messages = [
+                {"role": "system", "content": system_prompt}
+            ]
+            
+            # Add conversation history if provided
+            if conversation_history:
+                for msg in conversation_history[-5:]:  # Last 5 messages for context
+                    role = "user" if msg.get('type') == 'user' else "assistant"
+                    content = msg.get('content', '')
+                    messages.append({"role": role, "content": content})
+            
+            # Add current user prompt
+            messages.append({"role": "user", "content": user_prompt})
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(f"Error generating response with context: {str(e)}")
+            return f"Error: {str(e)}"
+    
 # Create global Groq service instance
 groq_service = GroqService()
