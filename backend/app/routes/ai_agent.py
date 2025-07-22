@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import json
 import asyncio
+from bson import ObjectId
 from app.services.ai_agent_service import ai_agent_service
 from app.services.conversation_context_service import conversation_context_service
 from app.utils.helpers import generate_id
@@ -13,6 +14,20 @@ from app.utils.helpers import generate_id
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+# Helper function to convert ObjectId to string
+def convert_objectid_to_str(data):
+    """Convert MongoDB ObjectIds to strings for JSON serialization"""
+    if isinstance(data, dict):
+        return {key: convert_objectid_to_str(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_objectid_to_str(item) for item in data]
+    elif isinstance(data, ObjectId):
+        return str(data)
+    else:
+        return data
 
 router = APIRouter()
 
