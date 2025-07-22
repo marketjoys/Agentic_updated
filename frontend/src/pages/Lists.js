@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Users, Tag, Edit, Trash2, FolderPlus, UserPlus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Users, Tag, Edit, Trash2, FolderPlus, UserPlus, X, Eye } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
