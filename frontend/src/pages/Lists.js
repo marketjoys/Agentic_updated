@@ -191,6 +191,13 @@ const Lists = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
+                    onClick={() => navigate(`/lists/${list.id}`)}
+                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                    title="View List Details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleShowAddProspects(list)}
                     className="p-1 text-gray-400 hover:text-green-600 transition-colors"
                     title="Add Prospects"
