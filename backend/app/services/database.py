@@ -881,7 +881,7 @@ class DatabaseService:
     async def get_list_by_name(self, list_name: str):
         """Get list by name"""
         await self.connect()
-        list_data = await self.db.lists.find_one({"name": {"$regex": f"^{list_name}$", "$options": "i"}})
+        list_data = await self.db.prospect_lists.find_one({"name": {"$regex": f"^{list_name}$", "$options": "i"}})
         return clean_document(list_data) if list_data else None
 
     # AI Prospecting Search History
