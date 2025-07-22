@@ -147,15 +147,25 @@ const AIAgentChat = () => {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      console.error('Detailed error sending message:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error message:', error.message);
+      
+      toast.error(`Failed to send message: ${error.message}`);
       setIsLoading(false);
       
-      // Add error message
+      // Add detailed error message for debugging
       const errorMessage = {
         id: `error_${Date.now()}`,
         type: 'agent',
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again or ask for help.",
+        content: `I apologize, but I'm having trouble processing your request right now. 
+        
+Error details: ${error.message}
+Status: ${error.response?.status || 'Unknown'}
+Response: ${JSON.stringify(error.response?.data) || 'No response data'}
+
+Please try again or ask for help.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
