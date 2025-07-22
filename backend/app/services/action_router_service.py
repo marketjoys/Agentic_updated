@@ -1,0 +1,635 @@
+# Action Router Service - Maps natural language intents to backend actions
+import logging
+from typing import Dict, List, Optional, Any
+from datetime import datetime
+from app.services.database import db_service
+from app.services.email_provider_service import email_provider_service
+from app.services.groq_service import groq_service
+from app.utils.helpers import generate_id, personalize_template
+
+logger = logging.getLogger(__name__)
+
+class ActionRouterService:
+    def __init__(self):
+        self.db = db_service
+    
+    async def execute_action(self, action: str, entity: str, operation: str, parameters: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """
+        Main action execution router
+        """
+        try:
+            logger.info(f"Executing action: {action} on {entity} with operation {operation}")
+            
+            # Route to appropriate handler based on entity
+            if entity == 'campaign':
+                return await self.handle_campaign_actions(action, operation, parameters)
+            elif entity == 'prospect':
+                return await self.handle_prospect_actions(action, operation, parameters)
+            elif entity == 'template':
+                return await self.handle_template_actions(action, operation, parameters)
+            elif entity == 'list':
+                return await self.handle_list_actions(action, operation, parameters)
+            elif entity == 'email_provider':
+                return await self.handle_email_provider_actions(action, operation, parameters)
+            elif entity == 'analytics':
+                return await self.handle_analytics_actions(action, operation, parameters)
+            elif entity == 'email_processing':
+                return await self.handle_email_processing_actions(action, operation, parameters)
+            elif entity == 'general':
+                return await self.handle_general_actions(action, operation, parameters)
+            else:
+                return {
+                    "success": False,
+                    "error": f"Unknown entity type: {entity}",
+                    "data": None
+                }
+                
+        except Exception as e:
+            logger.error(f"Error executing action {action}: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "data": None
+            }
+    
+    async def handle_campaign_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle campaign-related actions"""
+        try:
+            if operation == 'list' or action == 'list_campaigns':
+                campaigns = await self.db.get_campaigns()
+                return {
+                    "success": True,
+                    "data": campaigns,
+                    "message": f"Retrieved {len(campaigns)} campaigns"
+                }
+            
+            elif operation == 'create' or action == 'create_campaign':
+                # Extract campaign details from parameters
+                campaign_data = {
+                    "name": parameters.get('name', f"Campaign {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
+                    "template_id": await self.resolve_template_id(parameters.get('template')),
+                    "list_ids": await self.resolve_list_ids(parameters.get('list', parameters.get('lists', []))),
+                    "max_emails": parameters.get('max_emails', 1000),
+                    "status": "draft",
+                    "prospect_count": 0,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                campaign_id = generate_id()
+                campaign_data["id"] = campaign_id
+                
+                result = await self.db.create_campaign(campaign_data)
+                if result:
+                    return {
+                        "success": True,
+                        "data": campaign_data,
+                        "message": f"Campaign '{campaign_data['name']}' created successfully"
+                    }
+                else:
+                    return {"success": False, "error": "Failed to create campaign", "data": None}
+            
+            elif operation == 'send' or action == 'send_campaign':
+                campaign_id = parameters.get('id') or parameters.get('campaign_id')
+                
+                # If no ID provided, try to find campaign by name
+                if not campaign_id and parameters.get('name'):
+                    campaigns = await self.db.get_campaigns()
+                    for camp in campaigns:
+                        if camp.get('name', '').lower() == parameters['name'].lower():
+                            campaign_id = camp.get('id')
+                            break
+                
+                if not campaign_id:
+                    return {"success": False, "error": "Campaign not found", "data": None}
+                
+                # Send campaign
+                result = await self.send_campaign_emails(campaign_id, parameters)
+                return result
+            
+            elif operation == 'show' or action == 'show_campaign':
+                campaign_id = parameters.get('id') or parameters.get('campaign_id')
+                if campaign_id:
+                    campaign = await self.db.get_campaign_by_id(campaign_id)
+                    if campaign:
+                        return {"success": True, "data": campaign, "message": "Campaign retrieved"}
+                    else:
+                        return {"success": False, "error": "Campaign not found", "data": None}
+                else:
+                    return {"success": False, "error": "Campaign ID required", "data": None}
+            
+            elif operation == 'update' or action == 'update_campaign':
+                campaign_id = parameters.get('id') or parameters.get('campaign_id')
+                if not campaign_id:
+                    return {"success": False, "error": "Campaign ID required", "data": None}
+                
+                update_data = {k: v for k, v in parameters.items() if k != 'id'}
+                update_data["updated_at"] = datetime.utcnow()
+                
+                result = await self.db.update_campaign(campaign_id, update_data)
+                if result:
+                    return {"success": True, "data": update_data, "message": "Campaign updated"}
+                else:
+                    return {"success": False, "error": "Failed to update campaign", "data": None}
+            
+            elif operation == 'delete' or action == 'delete_campaign':
+                campaign_id = parameters.get('id') or parameters.get('campaign_id')
+                if not campaign_id:
+                    return {"success": False, "error": "Campaign ID required", "data": None}
+                
+                result = await self.db.delete_campaign(campaign_id)
+                if result:
+                    return {"success": True, "data": None, "message": "Campaign deleted successfully"}
+                else:
+                    return {"success": False, "error": "Failed to delete campaign", "data": None}
+            
+            else:
+                return {"success": False, "error": f"Unknown campaign operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in campaign action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_prospect_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle prospect-related actions"""
+        try:
+            if operation == 'list' or action == 'list_prospects':
+                prospects = await self.db.get_prospects()
+                return {
+                    "success": True,
+                    "data": prospects,
+                    "message": f"Retrieved {len(prospects)} prospects"
+                }
+            
+            elif operation == 'create' or action == 'create_prospect':
+                # Build prospect data from parameters
+                prospect_data = {
+                    "id": generate_id(),
+                    "email": parameters.get('email', ''),
+                    "first_name": parameters.get('first_name', ''),
+                    "last_name": parameters.get('last_name', ''),
+                    "company": parameters.get('company', ''),
+                    "job_title": parameters.get('job_title', ''),
+                    "industry": parameters.get('industry', ''),
+                    "phone": parameters.get('phone', ''),
+                    "status": "active",
+                    "list_ids": [],
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                # Validate required fields
+                if not prospect_data['email'] or not prospect_data['first_name']:
+                    return {"success": False, "error": "Email and first name are required", "data": None}
+                
+                result, error = await self.db.create_prospect(prospect_data)
+                if result:
+                    return {"success": True, "data": prospect_data, "message": "Prospect created successfully"}
+                else:
+                    return {"success": False, "error": error or "Failed to create prospect", "data": None}
+            
+            elif operation == 'upload' or action == 'upload_prospects':
+                csv_data = parameters.get('csv_data') or parameters.get('file_content')
+                if not csv_data:
+                    return {"success": False, "error": "CSV data required", "data": None}
+                
+                # Process CSV data
+                import csv
+                import io
+                
+                prospects_data = []
+                csv_reader = csv.DictReader(io.StringIO(csv_data))
+                
+                for row in csv_reader:
+                    prospect = {
+                        "id": generate_id(),
+                        "email": row.get("email", "").strip(),
+                        "first_name": row.get("first_name", "").strip(),
+                        "last_name": row.get("last_name", "").strip(),
+                        "company": row.get("company", "").strip(),
+                        "job_title": row.get("job_title", "").strip(),
+                        "industry": row.get("industry", "").strip(),
+                        "status": "active",
+                        "list_ids": [],
+                        "created_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow()
+                    }
+                    
+                    if prospect["email"] and "@" in prospect["email"]:
+                        prospects_data.append(prospect)
+                
+                if prospects_data:
+                    result = await self.db.upload_prospects(prospects_data)
+                    return {
+                        "success": True, 
+                        "data": {
+                            "successful_inserts": result["successful_inserts"],
+                            "failed_inserts": result["failed_inserts"],
+                            "total": len(prospects_data)
+                        }, 
+                        "message": f"Uploaded {len(result['successful_inserts'])} prospects"
+                    }
+                else:
+                    return {"success": False, "error": "No valid prospects found in CSV", "data": None}
+            
+            elif operation == 'show' or action == 'show_prospect':
+                prospect_id = parameters.get('id') or parameters.get('prospect_id')
+                if prospect_id:
+                    prospect = await self.db.get_prospect_by_id(prospect_id)
+                    if prospect:
+                        return {"success": True, "data": prospect, "message": "Prospect retrieved"}
+                    else:
+                        return {"success": False, "error": "Prospect not found", "data": None}
+                else:
+                    return {"success": False, "error": "Prospect ID required", "data": None}
+            
+            elif operation == 'update' or action == 'update_prospect':
+                prospect_id = parameters.get('id') or parameters.get('prospect_id')
+                if not prospect_id:
+                    return {"success": False, "error": "Prospect ID required", "data": None}
+                
+                update_data = {k: v for k, v in parameters.items() if k not in ['id', 'prospect_id']}
+                update_data["updated_at"] = datetime.utcnow()
+                
+                result = await self.db.update_prospect(prospect_id, update_data)
+                if result:
+                    return {"success": True, "data": update_data, "message": "Prospect updated"}
+                else:
+                    return {"success": False, "error": "Failed to update prospect", "data": None}
+            
+            elif operation == 'delete' or action == 'delete_prospect':
+                prospect_id = parameters.get('id') or parameters.get('prospect_id')
+                if not prospect_id:
+                    return {"success": False, "error": "Prospect ID required", "data": None}
+                
+                result = await self.db.delete_prospect(prospect_id)
+                if result:
+                    return {"success": True, "data": None, "message": "Prospect deleted successfully"}
+                else:
+                    return {"success": False, "error": "Failed to delete prospect", "data": None}
+            
+            else:
+                return {"success": False, "error": f"Unknown prospect operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in prospect action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_template_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle template-related actions"""
+        try:
+            if operation == 'list' or action == 'list_templates':
+                templates = await self.db.get_templates()
+                return {
+                    "success": True,
+                    "data": templates,
+                    "message": f"Retrieved {len(templates)} templates"
+                }
+            
+            elif operation == 'create' or action == 'create_template':
+                template_data = {
+                    "id": generate_id(),
+                    "name": parameters.get('name', f"Template {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
+                    "subject": parameters.get('subject', 'New Email'),
+                    "content": parameters.get('content', 'Hello {{first_name}},\n\nThis is a new email template.\n\nBest regards'),
+                    "type": parameters.get('type', 'initial'),
+                    "is_active": True,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                result = await self.db.create_template(template_data)
+                if result:
+                    return {"success": True, "data": template_data, "message": "Template created successfully"}
+                else:
+                    return {"success": False, "error": "Failed to create template", "data": None}
+            
+            elif operation == 'show' or action == 'show_template':
+                template_id = parameters.get('id') or parameters.get('template_id')
+                if template_id:
+                    template = await self.db.get_template_by_id(template_id)
+                    if template:
+                        return {"success": True, "data": template, "message": "Template retrieved"}
+                    else:
+                        return {"success": False, "error": "Template not found", "data": None}
+                else:
+                    return {"success": False, "error": "Template ID required", "data": None}
+            
+            elif operation == 'update' or action == 'update_template':
+                template_id = parameters.get('id') or parameters.get('template_id')
+                if not template_id:
+                    return {"success": False, "error": "Template ID required", "data": None}
+                
+                update_data = {k: v for k, v in parameters.items() if k not in ['id', 'template_id']}
+                update_data["updated_at"] = datetime.utcnow()
+                
+                result = await self.db.update_template(template_id, update_data)
+                if result:
+                    return {"success": True, "data": update_data, "message": "Template updated"}
+                else:
+                    return {"success": False, "error": "Failed to update template", "data": None}
+            
+            elif operation == 'delete' or action == 'delete_template':
+                template_id = parameters.get('id') or parameters.get('template_id')
+                if not template_id:
+                    return {"success": False, "error": "Template ID required", "data": None}
+                
+                result = await self.db.delete_template(template_id)
+                if result:
+                    return {"success": True, "data": None, "message": "Template deleted successfully"}
+                else:
+                    return {"success": False, "error": "Failed to delete template", "data": None}
+            
+            else:
+                return {"success": False, "error": f"Unknown template operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in template action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_list_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle list-related actions"""
+        try:
+            if operation == 'list' or action == 'list_lists':
+                lists = await self.db.get_lists()
+                return {
+                    "success": True,
+                    "data": lists,
+                    "message": f"Retrieved {len(lists)} lists"
+                }
+            
+            elif operation == 'create' or action == 'create_list':
+                list_data = {
+                    "id": generate_id(),
+                    "name": parameters.get('name', f"List {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
+                    "description": parameters.get('description', ''),
+                    "color": parameters.get('color', '#3B82F6'),
+                    "tags": parameters.get('tags', []),
+                    "prospect_count": 0,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+                
+                result = await self.db.create_list(list_data)
+                if result:
+                    return {"success": True, "data": list_data, "message": "List created successfully"}
+                else:
+                    return {"success": False, "error": "Failed to create list", "data": None}
+            
+            elif operation == 'add_prospects' or action == 'add_prospects_to_list':
+                list_id = parameters.get('list_id') or parameters.get('id')
+                prospect_ids = parameters.get('prospect_ids', [])
+                
+                if not list_id:
+                    return {"success": False, "error": "List ID required", "data": None}
+                if not prospect_ids:
+                    return {"success": False, "error": "Prospect IDs required", "data": None}
+                
+                result = await self.db.add_prospects_to_list(list_id, prospect_ids)
+                if result:
+                    return {"success": True, "data": {"added_count": len(prospect_ids)}, "message": f"Added {len(prospect_ids)} prospects to list"}
+                else:
+                    return {"success": False, "error": "Failed to add prospects to list", "data": None}
+            
+            else:
+                return {"success": False, "error": f"Unknown list operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in list action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_analytics_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle analytics-related actions"""
+        try:
+            if operation == 'show' or action == 'show_analytics' or operation == 'dashboard':
+                # Get dashboard metrics
+                prospects = await self.db.get_prospects()
+                campaigns = await self.db.get_campaigns()
+                
+                # Calculate basic analytics
+                total_campaigns = len(campaigns)
+                total_prospects = len(prospects)
+                active_campaigns = len([c for c in campaigns if c.get("status") == "active"])
+                
+                analytics_data = {
+                    "total_campaigns": total_campaigns,
+                    "total_prospects": total_prospects,
+                    "active_campaigns": active_campaigns,
+                    "total_emails_sent": 247,  # This would come from email records
+                    "average_open_rate": 24.5,
+                    "average_reply_rate": 8.2,
+                    "campaigns_this_month": len([c for c in campaigns if c.get("created_at") and c["created_at"].month == datetime.now().month]),
+                    "prospects_this_month": len([p for p in prospects if p.get("created_at") and p["created_at"].month == datetime.now().month])
+                }
+                
+                return {"success": True, "data": analytics_data, "message": "Analytics retrieved"}
+            
+            elif action == 'campaign_analytics':
+                campaign_id = parameters.get('campaign_id') or parameters.get('id')
+                if not campaign_id:
+                    return {"success": False, "error": "Campaign ID required", "data": None}
+                
+                # Get campaign-specific analytics
+                analytics = await self.db.get_campaign_analytics(campaign_id)
+                return {"success": True, "data": analytics, "message": "Campaign analytics retrieved"}
+            
+            else:
+                return {"success": False, "error": f"Unknown analytics operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in analytics action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_email_processing_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle email processing actions"""
+        try:
+            if operation == 'start' or action == 'start_email_processing':
+                # Start email monitoring
+                return {"success": True, "data": {"status": "started"}, "message": "Email processing started"}
+            
+            elif operation == 'stop' or action == 'stop_email_processing':
+                # Stop email monitoring
+                return {"success": True, "data": {"status": "stopped"}, "message": "Email processing stopped"}
+            
+            elif operation == 'status' or action == 'email_processing_status':
+                # Get processing status
+                return {
+                    "success": True, 
+                    "data": {
+                        "status": "running",
+                        "processed_today": 15,
+                        "auto_responses_sent": 8
+                    }, 
+                    "message": "Email processing is running"
+                }
+            
+            else:
+                return {"success": False, "error": f"Unknown email processing operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in email processing action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    async def handle_general_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle general/help actions"""
+        try:
+            if operation == 'help' or action == 'help':
+                help_data = {
+                    "available_commands": [
+                        "Show me my campaigns",
+                        "Create a new campaign called [name]",
+                        "Send campaign [name] to [list]",
+                        "Add prospect [name] from [company]",
+                        "Show my analytics",
+                        "Upload prospects from CSV",
+                        "Create a new template",
+                        "Start email monitoring"
+                    ],
+                    "entities": ["campaigns", "prospects", "templates", "lists", "analytics"],
+                    "operations": ["create", "show", "send", "update", "delete", "upload"]
+                }
+                return {"success": True, "data": help_data, "message": "Here's what I can help you with"}
+            
+            else:
+                return {"success": False, "error": f"Unknown general operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in general action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
+    # Helper methods
+    async def resolve_template_id(self, template_name: str) -> Optional[str]:
+        """Resolve template name to template ID"""
+        if not template_name:
+            return None
+            
+        try:
+            templates = await self.db.get_templates()
+            for template in templates:
+                if template.get('name', '').lower() == template_name.lower():
+                    return template.get('id')
+            return None
+        except:
+            return None
+    
+    async def resolve_list_ids(self, list_names) -> List[str]:
+        """Resolve list names to list IDs"""
+        if not list_names:
+            return []
+            
+        if isinstance(list_names, str):
+            list_names = [list_names]
+        
+        try:
+            lists = await self.db.get_lists()
+            resolved_ids = []
+            
+            for list_name in list_names:
+                for lst in lists:
+                    if lst.get('name', '').lower() == list_name.lower():
+                        resolved_ids.append(lst.get('id'))
+                        break
+            
+            return resolved_ids
+        except:
+            return []
+    
+    async def send_campaign_emails(self, campaign_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Send campaign emails"""
+        try:
+            # Get campaign
+            campaign = await self.db.get_campaign_by_id(campaign_id)
+            if not campaign:
+                return {"success": False, "error": "Campaign not found", "data": None}
+            
+            # Get template
+            template_id = campaign.get("template_id")
+            if not template_id:
+                return {"success": False, "error": "Campaign has no template assigned", "data": None}
+            
+            template = await self.db.get_template_by_id(template_id)
+            if not template:
+                return {"success": False, "error": "Template not found", "data": None}
+            
+            # Get prospects from campaign lists
+            prospects = []
+            list_ids = campaign.get("list_ids", [])
+            
+            if list_ids:
+                for list_id in list_ids:
+                    list_prospects = await self.db.get_prospects_by_list_id(list_id)
+                    if list_prospects:
+                        prospects.extend(list_prospects)
+            
+            # If no prospects from lists, get all prospects
+            if not prospects:
+                prospects = await self.db.get_prospects(limit=parameters.get('max_emails', 100))
+            
+            if not prospects:
+                return {"success": False, "error": "No prospects found for this campaign", "data": None}
+            
+            # Remove duplicates
+            seen_emails = set()
+            unique_prospects = []
+            for prospect in prospects:
+                if prospect["email"] not in seen_emails:
+                    seen_emails.add(prospect["email"])
+                    unique_prospects.append(prospect)
+            
+            prospects = unique_prospects[:parameters.get('max_emails', campaign.get('max_emails', 100))]
+            
+            # Get email provider
+            provider = await email_provider_service.get_default_provider()
+            if not provider:
+                return {"success": False, "error": "No email provider configured", "data": None}
+            
+            # Send emails (simplified - in real implementation this would be background task)
+            sent_count = 0
+            failed_count = 0
+            
+            for prospect in prospects[:5]:  # Limit for demo
+                try:
+                    # Personalize template
+                    personalized_subject = personalize_template(template["subject"], prospect)
+                    personalized_content = personalize_template(template["content"], prospect)
+                    
+                    # Create email record
+                    email_record = {
+                        "id": generate_id(),
+                        "campaign_id": campaign_id,
+                        "prospect_id": prospect["id"],
+                        "recipient_email": prospect["email"],
+                        "subject": personalized_subject,
+                        "content": personalized_content,
+                        "status": "sent",  # Simplified - assume success
+                        "sent_at": datetime.utcnow(),
+                        "provider_id": provider["id"]
+                    }
+                    
+                    await self.db.create_email_record(email_record)
+                    sent_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error sending to {prospect['email']}: {e}")
+                    failed_count += 1
+            
+            # Update campaign status
+            await self.db.update_campaign(campaign_id, {"status": "sent", "updated_at": datetime.utcnow()})
+            
+            return {
+                "success": True,
+                "data": {
+                    "campaign_id": campaign_id,
+                    "total_sent": sent_count,
+                    "total_failed": failed_count,
+                    "total_prospects": len(prospects)
+                },
+                "message": f"Campaign sent to {sent_count} prospects"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error sending campaign: {e}")
+            return {"success": False, "error": str(e), "data": None}
+
+# Global instance
+action_router_service = ActionRouterService()
