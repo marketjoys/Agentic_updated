@@ -1,4 +1,4 @@
-# Voice/Chat Interface for AI Agent - React Component
+// Voice/Chat Interface for AI Agent - React Component
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, MicOff, MessageCircle, Headphones, Volume2, VolumeX, Settings } from 'lucide-react';
 import { toast } from 'react-hot-toast';
