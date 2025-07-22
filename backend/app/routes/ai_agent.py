@@ -95,13 +95,13 @@ async def chat_with_agent(request: ConversationRequest):
             user_message=request.message,
             agent_response=result['response'],
             action_taken=result.get('action_taken'),
-            data=result.get('data')
+            data=convert_objectid_to_str(result.get('data'))
         )
         
         return ConversationResponse(
             response=result['response'],
             action_taken=result.get('action_taken'),
-            data=result.get('data'),
+            data=convert_objectid_to_str(result.get('data')),
             suggestions=result.get('suggestions', []),
             session_id=request.session_id,
             timestamp=datetime.utcnow().isoformat()
