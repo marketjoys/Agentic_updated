@@ -18,6 +18,7 @@ import EmailProviders from './pages/EmailProviders';
 import KnowledgeBase from './pages/KnowledgeBase';
 import SystemPrompts from './pages/SystemPrompts';
 import ResponseVerification from './pages/ResponseVerification';
+import AIAgentChat from './components/AIAgentChat';
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
