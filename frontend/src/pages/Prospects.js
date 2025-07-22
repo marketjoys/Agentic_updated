@@ -83,6 +83,12 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
     }
   };
 
+  const handleAIProspectsAdded = (count) => {
+    // Refresh prospects list after AI prospecting
+    loadProspects();
+    toast.success(`${count} prospects added via AI prospecting!`);
+  };
+
   const filteredProspects = prospects.filter(prospect =>
     prospect.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     prospect.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
