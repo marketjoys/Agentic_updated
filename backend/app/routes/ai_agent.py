@@ -41,7 +41,7 @@ class ConversationRequest(BaseModel):
 class ConversationResponse(BaseModel):
     response: str
     action_taken: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[Union[Dict[str, Any], List[Any]]] = None
     suggestions: Optional[List[str]] = []
     session_id: str
     timestamp: str
