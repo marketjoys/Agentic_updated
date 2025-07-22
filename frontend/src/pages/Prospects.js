@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle, X } from 'lucide-react';
+import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle, X, Sparkles } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
+import AIProspectorModal from '../components/AIProspectorModal';
 
 const Prospects = () => {
   const [prospects, setProspects] = useState([]);
