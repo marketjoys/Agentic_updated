@@ -46,6 +46,7 @@ const ProtectedRoutes = () => {
         <Route path="/campaigns" element={<Campaigns />} />
         <Route path="/prospects" element={<Prospects />} />
         <Route path="/lists" element={<Lists />} />
+        <Route path="/lists/:listId" element={<ListsDetail />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/intents" element={<Intents />} />
         <Route path="/analytics" element={<Analytics />} />
