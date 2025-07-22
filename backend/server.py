@@ -26,6 +26,7 @@ try:
     from app.routes.email_processing import router as email_processing_router
     from app.routes.follow_up_monitoring import router as follow_up_monitoring_router
     from app.routes.intents import router as intents_router
+    from app.routes.ai_prospecting import router as ai_prospecting_router
     
     # Include the routers
     app.include_router(knowledge_base_router, prefix="/api", tags=["knowledge-base"])
@@ -35,8 +36,9 @@ try:
     app.include_router(email_processing_router, prefix="/api", tags=["email-processing"])
     app.include_router(follow_up_monitoring_router, prefix="/api", tags=["follow-up-monitoring"])
     app.include_router(intents_router, prefix="/api", tags=["intents"])
+    app.include_router(ai_prospecting_router, prefix="/api", tags=["ai-prospecting"])
     
-    logging.info("Successfully imported and included all routes including intents")
+    logging.info("Successfully imported and included all routes including AI prospecting")
 except ImportError as e:
     logging.warning(f"Could not import additional routes: {e}")
     logging.warning("Running with basic functionality only")
