@@ -20,7 +20,8 @@ import {
   Server,
   Activity,
   LogOut,
-  User
+  User,
+  Bot
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
