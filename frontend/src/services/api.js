@@ -132,8 +132,8 @@ export const apiService = {
   getList: (id) => api.get(`/api/lists/${id}`),
   updateList: (id, list) => api.put(`/api/lists/${id}`, list),
   deleteList: (id) => api.delete(`/api/lists/${id}`),
-  addProspectsToList: (listId, prospectIds) => api.post(`/api/lists/${listId}/prospects`, prospectIds),
-  removeProspectsFromList: (listId, prospectIds) => api.delete(`/api/lists/${listId}/prospects`, { data: prospectIds }),
+  addProspectsToList: (listId, prospectIds) => api.post(`/api/lists/${listId}/prospects`, { prospect_ids: prospectIds }),
+  removeProspectsFromList: (listId, prospectIds) => api.delete(`/api/lists/${listId}/prospects`, { data: { prospect_ids: prospectIds } }),
 
   // Email Processing
   startEmailProcessing: () => api.post('/api/email-processing/start'),
