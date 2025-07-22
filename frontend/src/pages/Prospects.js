@@ -377,6 +377,13 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
           onSubmit={handleAddProspect}
         />
       )}
+
+      {/* AI Prospector Modal */}
+      <AIProspectorModal
+        isOpen={showAIProspector}
+        onClose={() => setShowAIProspector(false)}
+        onProspectsAdded={handleAIProspectsAdded}
+      />
     </div>
   );
 };
