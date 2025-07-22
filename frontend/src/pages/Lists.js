@@ -5,6 +5,7 @@ import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
 const Lists = () => {
+  const navigate = useNavigate();
   const [lists, setLists] = useState([]);
   const [prospects, setProspects] = useState([]);
   const [loading, setLoading] = useState(true);
