@@ -15,7 +15,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://cda5cfc6-5d4b-4d8f-8077-00935fe44136.preview.emergentagent.com"
+BACKEND_URL = "https://b7724676-6cb7-4f06-8e82-fddba4cfe025.preview.emergentagent.com"
 
 class CampaignFunctionalityTester:
     def __init__(self):
