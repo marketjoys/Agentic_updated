@@ -837,5 +837,72 @@ class DatabaseService:
         })
         return result.deleted_count
 
+    # Industry Tags operations for AI Prospecting
+    async def create_industry_tag(self, tag_data: dict):
+        """Create a new industry tag"""
+        await self.connect()
+        result = await self.db.industry_tags.insert_one(tag_data)
+        return result
+
+    async def get_industry_tags(self):
+        """Get all industry tags"""
+        await self.connect()
+        tags = await self.db.industry_tags.find().to_list(length=1000)
+        return clean_document(tags)
+
+    async def get_industry_tag_by_name(self, industry_name: str):
+        """Get industry tag by name"""
+        await self.connect()
+        tag = await self.db.industry_tags.find_one({"industry": {"$regex": f"^{industry_name}$", "$options": "i"}})
+        return clean_document(tag) if tag else None
+
+    async def update_industry_tag(self, tag_id: str, tag_data: dict):
+        """Update an industry tag"""
+        await self.connect()
+        result = await self.db.industry_tags.update_one(
+            {"id": tag_id},
+            {"$set": tag_data}
+        )
+        return result
+
+    async def delete_industry_tag(self, tag_id: str):
+        """Delete an industry tag"""
+        await self.connect()
+        result = await self.db.industry_tags.delete_one({"id": tag_id})
+        return result
+
+    async def bulk_insert_industry_tags(self, tags: List[dict]):
+        """Bulk insert industry tags"""
+        await self.connect()
+        result = await self.db.industry_tags.insert_many(tags)
+        return result
+
+    # Enhanced List operations for AI Prospecting
+    async def get_list_by_name(self, list_name: str):
+        """Get list by name"""
+        await self.connect()
+        list_data = await self.db.lists.find_one({"name": {"$regex": f"^{list_name}$", "$options": "i"}})
+        return clean_document(list_data) if list_data else None
+
+    # AI Prospecting Search History
+    async def save_ai_search(self, search_data: dict):
+        """Save AI prospecting search for history/analytics"""
+        await self.connect()
+        search_data["created_at"] = datetime.utcnow()
+        result = await self.db.ai_searches.insert_one(search_data)
+        return result
+
+    async def get_ai_search_history(self, limit: int = 50):
+        """Get AI prospecting search history"""
+        await self.connect()
+        searches = await self.db.ai_searches.find().sort("created_at", -1).limit(limit).to_list(length=limit)
+        return clean_document(searches)
+
+    async def get_ai_search_by_id(self, search_id: str):
+        """Get AI search by ID"""
+        await self.connect()
+        search = await self.db.ai_searches.find_one({"id": search_id})
+        return clean_document(search) if search else None
+
 # Create global database service instance
 db_service = DatabaseService()
