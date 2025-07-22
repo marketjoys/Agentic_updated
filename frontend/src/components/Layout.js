@@ -35,6 +35,7 @@ const Layout = ({ children }) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, color: 'from-blue-500 to-blue-600' },
+    { name: 'AI Agent', href: '/ai-agent', icon: Bot, color: 'from-violet-500 to-violet-600' },
     { name: 'Real-Time', href: '/real-time', icon: Activity, color: 'from-red-500 to-red-600' },
     
     // Core Features
