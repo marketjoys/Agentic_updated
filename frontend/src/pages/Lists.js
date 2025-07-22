@@ -70,13 +70,28 @@ const Lists = () => {
 
   const handleAddProspectsToList = async (listId, prospectIds) => {
     try {
-      await apiService.addProspectsToList(listId, prospectIds);
-      toast.success('Prospects added to list successfully');
-      loadData();
+      console.log('🎯 Adding prospects to list:', listId, prospectIds);
+      const result = await apiService.addProspectsToList(listId, prospectIds);
+      console.log('✅ Add prospects result:', result);
+      
+      // Show success toast with more specific message
+      toast.success(`Successfully added ${prospectIds.length} prospect(s) to list!`, {
+        duration: 4000,
+        position: 'top-right',
+      });
+      
+      // Reload data and close modal
+      await loadData();
       setShowAddProspectsModal(false);
       setSelectedList(null);
+      
+      console.log('✅ Modal closed and data reloaded');
     } catch (error) {
-      toast.error('Failed to add prospects to list');
+      console.error('❌ Error adding prospects:', error);
+      toast.error(`Failed to add prospects to list: ${error.message || error}`, {
+        duration: 4000,
+        position: 'top-right',
+      });
     }
   };
 
