@@ -117,6 +117,13 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
         </div>
         <div className="flex space-x-3">
           <button
+            onClick={() => setShowAIProspector(true)}
+            className="btn btn-gradient flex items-center space-x-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>AI Prospector</span>
+          </button>
+          <button
             onClick={downloadSampleCSV}
             className="btn btn-secondary flex items-center space-x-2"
           >
