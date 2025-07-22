@@ -1,7 +1,7 @@
 # AI Agent Conversational Interface
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 import logging
 from datetime import datetime
 import json
