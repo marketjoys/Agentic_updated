@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for AI Email Responder
-Focus on List Management, Campaign Sending, Template/Prospect CRUD, and Edge Cases
+List and Prospect Management Testing - December 2024
+Testing the specific functionality requested in the review:
+- Authentication and token management
+- Get Lists endpoint
+- Get Prospects endpoint  
+- Get List Details for Technology Companies list
+- Add Prospects to List functionality
+- Verify Addition and data structure
 """
 
 import requests
@@ -13,7 +19,7 @@ import os
 
 # Get backend URL from frontend .env file
 BACKEND_URL = "https://7efcdf99-1b9c-4b88-a82a-59e4c6a1742d.preview.emergentagent.com"
-AUTH_TOKEN = "test_token_12345"
+AUTH_TOKEN = None  # Will be obtained from login
 
 class BackendTester:
     def __init__(self):
