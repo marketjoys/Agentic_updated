@@ -153,15 +153,41 @@ Best regards,
             }
         ]
         
-        # Sample intents
+        # Sample intents with auto-response capability
         intents = [
             {
                 "id": generate_id(),
-                "name": "Positive Response",
+                "name": "Interested - Auto Respond",
                 "description": "Prospect is interested and wants to learn more",
-                "keywords": ["interested", "yes", "tell me more", "sounds good", "let's talk"],
+                "keywords": ["interested", "yes", "tell me more", "sounds good", "let's talk", "want to know more", "please share", "can you send"],
                 "response_template": "Thank you for your interest! I'll reach out to schedule a call.",
                 "confidence_threshold": 0.7,
+                "auto_respond": True,
+                "primary_template_id": None,  # Will be set after templates are created
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Question - Auto Respond", 
+                "description": "Prospect has questions about our services or offerings",
+                "keywords": ["question", "how does", "what is", "can you explain", "tell me about", "more information", "details", "pricing"],
+                "response_template": "Great question! I'd be happy to provide more details. Let me send you some information and we can schedule a brief call to discuss further.",
+                "confidence_threshold": 0.6,
+                "auto_respond": True,
+                "primary_template_id": None,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Pricing Request - Auto Respond",
+                "description": "Prospect is asking about pricing or costs",
+                "keywords": ["price", "pricing", "cost", "how much", "budget", "quote", "estimate", "fees"],
+                "response_template": "Thanks for your interest in our pricing! I'll send you our pricing information and would love to discuss how we can customize a solution for your specific needs.",
+                "confidence_threshold": 0.8,
+                "auto_respond": True,
+                "primary_template_id": None,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow()
             },
@@ -169,9 +195,21 @@ Best regards,
                 "id": generate_id(),
                 "name": "Not Interested",
                 "description": "Prospect is not interested at this time",
-                "keywords": ["not interested", "no thanks", "remove me", "unsubscribe"],
+                "keywords": ["not interested", "no thanks", "remove me", "unsubscribe", "stop", "don't contact"],
                 "response_template": "Thank you for your time. I'll remove you from our outreach list.",
                 "confidence_threshold": 0.8,
+                "auto_respond": False,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Out of Office",
+                "description": "Automatic out of office or vacation reply",
+                "keywords": ["out of office", "vacation", "away", "automatic reply", "auto-reply", "currently unavailable"],
+                "response_template": "",  # No response needed for auto-replies
+                "confidence_threshold": 0.9,
+                "auto_respond": False,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow()
             }
