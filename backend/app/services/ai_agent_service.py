@@ -146,6 +146,57 @@ Analyze this message and extract the intent and parameters.
                 "requires_clarification": False
             }
         
+        # Search/Find patterns - HIGH PRIORITY for AI prospecting
+        elif any(word in message_lower for word in ['search', 'find', 'look for', 'locate']):
+            if any(word in message_lower for word in ['prospect', 'prospects', 'contact', 'contacts', 'lead', 'leads']):
+                search_params = {}
+                
+                # Extract search criteria
+                if 'named' in message_lower or 'called' in message_lower:
+                    name_patterns = [
+                        r'(?:named|called) ([A-Z][A-Za-z\s]+)',
+                        r'find (?:prospects? )?(?:named |called )?([A-Z][A-Za-z\s]+)'
+                    ]
+                    for pattern in name_patterns:
+                        match = re.search(pattern, message, re.IGNORECASE)
+                        if match:
+                            search_params['search_term'] = match.group(1).strip()
+                            break
+                
+                # Extract company search
+                if 'from' in message_lower or 'at' in message_lower:
+                    company_patterns = [
+                        r'(?:from|at) ([A-Z][A-Za-z\s&\.]+)',
+                        r'find prospects from ([A-Z][A-Za-z\s&\.]+)'
+                    ]
+                    for pattern in company_patterns:
+                        match = re.search(pattern, message, re.IGNORECASE)
+                        if match:
+                            search_params['company'] = match.group(1).strip()
+                            break
+                
+                # Extract industry search
+                if 'industry' in message_lower or 'in technology' in message_lower or 'in finance' in message_lower:
+                    industry_patterns = [
+                        r'in (?:the )?([A-Za-z\s]+) industry',
+                        r'(?:in|from) ([A-Za-z]+) (?:sector|field)',
+                        r'in (technology|finance|healthcare|marketing|sales|consulting|software|retail)'
+                    ]
+                    for pattern in industry_patterns:
+                        match = re.search(pattern, message, re.IGNORECASE)
+                        if match:
+                            search_params['industry'] = match.group(1).strip()
+                            break
+                
+                return {
+                    "action": "search_prospects",
+                    "entity": "prospect",
+                    "operation": "search",
+                    "parameters": search_params,
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+        
         # List keywords - HIGH PRIORITY for user's issue
         elif any(word in message_lower for word in ['list', 'lists']):
             if any(word in message_lower for word in ['create', 'new', 'make', 'add']) and not any(phrase in message_lower for phrase in ['add to', 'to list', 'to the']):
@@ -172,13 +223,14 @@ Analyze this message and extract the intent and parameters.
         # Prospect keywords - HIGH PRIORITY for user's issue
         elif any(word in message_lower for word in ['prospect', 'contact', 'lead', 'person']):
             if any(word in message_lower for word in ['add', 'create', 'new', 'make']):
+                prospect_params = self.extract_prospect_params(message)
                 return {
                     "action": "create_prospect",
                     "entity": "prospect",
                     "operation": "create", 
-                    "parameters": self.extract_prospect_params(message),
+                    "parameters": prospect_params,
                     "confidence": 0.8,
-                    "requires_clarification": False
+                    "requires_clarification": len(prospect_params) < 2  # Require clarification if we have less than 2 parameters
                 }
             elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
                 return {
@@ -281,6 +333,17 @@ Analyze this message and extract the intent and parameters.
                     "confidence": 0.8,
                     "requires_clarification": False
                 }
+        
+        # AI Prospecting/Suggestions - NEW FUNCTIONALITY
+        elif any(phrase in message_lower for phrase in ['suggest prospects', 'recommend prospects', 'ai prospects', 'find similar']):
+            return {
+                "action": "ai_suggest_prospects",
+                "entity": "prospect",
+                "operation": "ai_suggest",
+                "parameters": {"criteria": message},
+                "confidence": 0.8,
+                "requires_clarification": False
+            }
         
         # Default fallback
         else:
