@@ -119,9 +119,22 @@ Analyze this message and extract the intent and parameters.
         """
         message_lower = message.lower()
         
+        # Check for specific "add to list" patterns first - HIGH PRIORITY
+        if any(phrase in message_lower for phrase in ['add to list', 'add to the list', 'to list', 'to the list']):
+            prospect_params = self.extract_prospect_params(message)
+            list_params = self.extract_list_params(message)
+            return {
+                "action": "add_prospects_to_list",
+                "entity": "list", 
+                "operation": "add_prospects",
+                "parameters": {**prospect_params, **list_params},
+                "confidence": 0.9,
+                "requires_clarification": False
+            }
+        
         # List keywords - HIGH PRIORITY for user's issue
-        if any(word in message_lower for word in ['list', 'lists']):
-            if any(word in message_lower for word in ['create', 'new', 'make', 'add']):
+        elif any(word in message_lower for word in ['list', 'lists']):
+            if any(word in message_lower for word in ['create', 'new', 'make', 'add']) and not any(phrase in message_lower for phrase in ['add to', 'to list', 'to the']):
                 # Extract list name
                 list_params = self.extract_list_params(message)
                 return {
@@ -145,27 +158,14 @@ Analyze this message and extract the intent and parameters.
         # Prospect keywords - HIGH PRIORITY for user's issue
         elif any(word in message_lower for word in ['prospect', 'contact', 'lead', 'person']):
             if any(word in message_lower for word in ['add', 'create', 'new', 'make']):
-                # Check if this is adding to a list
-                if any(word in message_lower for word in ['to list', 'to the list', 'list']):
-                    prospect_params = self.extract_prospect_params(message)
-                    list_params = self.extract_list_params(message)
-                    return {
-                        "action": "add_prospects_to_list",
-                        "entity": "list", 
-                        "operation": "add_prospects",
-                        "parameters": {**prospect_params, **list_params},
-                        "confidence": 0.9,
-                        "requires_clarification": False
-                    }
-                else:
-                    return {
-                        "action": "create_prospect",
-                        "entity": "prospect",
-                        "operation": "create", 
-                        "parameters": self.extract_prospect_params(message),
-                        "confidence": 0.8,
-                        "requires_clarification": False
-                    }
+                return {
+                    "action": "create_prospect",
+                    "entity": "prospect",
+                    "operation": "create", 
+                    "parameters": self.extract_prospect_params(message),
+                    "confidence": 0.8,
+                    "requires_clarification": False
+                }
             elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
                 return {
                     "action": "list_prospects",
