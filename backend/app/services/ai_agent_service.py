@@ -343,6 +343,10 @@ Analyze this message and extract the intent and parameters.
         
         # Extract list name patterns - CRITICAL for user's issue
         name_patterns = [
+            # Patterns for "add to list" operations
+            r'to (?:the )?([A-Z][A-Za-z\s]+?) list',  # "to VIP Customers list"
+            r'to (?:the )?([A-Z][A-Za-z\s]+?)(?:\s|$)',  # "to VIP Customers"
+            # Patterns for list creation
             r'list (?:called|named) ["\']([^"\']+)["\']',  # "list called 'Test Marketing List'"
             r'list (?:called|named) ([A-Z][A-Za-z\s]+)',  # "list called Test Marketing List" - fixed greedy matching
             r'create (?:a|the) ([A-Z][A-Za-z\s]+) list',  # "create a Test Marketing list"
