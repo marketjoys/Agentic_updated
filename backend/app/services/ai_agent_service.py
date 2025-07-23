@@ -684,15 +684,25 @@ Analyze this message and extract the intent and parameters.
             success = action_result.get('success', False)
             data = action_result.get('data')
             error = action_result.get('error')
+            requires_clarification = action_result.get('requires_clarification', False)
+            
+            # Handle clarification requirements with follow-up questions
+            if requires_clarification and not success:
+                follow_up_questions = action_result.get('data', {}).get('follow_up_questions', [])
+                if follow_up_questions:
+                    return f"{error}\n\nTo help you complete this, please let me know:\n" + "\n".join([f"• {q}" for q in follow_up_questions])
+                else:
+                    return f"{error} Could you provide more details?"
             
             if not success:
-                return f"I wasn't able to complete that action. {error or 'Please try again or ask for help.'}"
+                suggestion = action_result.get('suggestion', '')
+                return f"I wasn't able to complete that action. {error or 'Please try again or ask for help.'} {suggestion}"
             
             # Generate contextual responses based on action type
             if action == 'list_campaigns':
                 campaigns = data or []
                 if not campaigns:
-                    return "You don't have any campaigns yet. Would you like to create one?"
+                    return "You don't have any campaigns yet. Would you like to create one? Just say 'Create a new campaign' and I'll help you set it up!"
                 return f"Here are your campaigns:\n" + "\n".join([
                     f"• {c.get('name', 'Unnamed')} - Status: {c.get('status', 'unknown')}"
                     for c in campaigns[:5]
@@ -709,26 +719,80 @@ Analyze this message and extract the intent and parameters.
             elif action == 'list_prospects':
                 prospects = data or []
                 if not prospects:
-                    return "Your prospect database is empty. Would you like to add some prospects or upload a CSV file?"
+                    return "Your prospect database is empty. Would you like to add some prospects or upload a CSV file? Just say 'Add a prospect named [Name] from [Company]' or 'Upload prospects from CSV'."
                 return f"You have {len(prospects)} prospects in your database. Here are the most recent ones:\n" + "\n".join([
-                    f"• {p.get('first_name', '')} {p.get('last_name', '')} - {p.get('company', 'No company')}"
-                    for p in prospects[:3]
-                ])
+                    f"• {p.get('first_name', '')} {p.get('last_name', '')} - {p.get('company', 'No company')} ({p.get('email', 'no email')})"
+                    for p in prospects[:5]
+                ]) + (f"\n...and {len(prospects) - 5} more" if len(prospects) > 5 else "")
             
             elif action == 'create_prospect':
-                prospect_name = f"{data.get('first_name', '')} {data.get('last_name', '')}" if data else 'New prospect'
-                return f"Excellent! I've added {prospect_name.strip()} to your prospect database. They're ready to be added to campaigns."
+                if data:
+                    prospect_name = f"{data.get('first_name', '')} {data.get('last_name', '')}"
+                    company = data.get('company', '')
+                    email = data.get('email', '')
+                    company_text = f" from {company}" if company else ""
+                    return f"Excellent! I've successfully added {prospect_name.strip()}{company_text} to your prospect database with email {email}. They're ready to be added to campaigns or lists!"
+                else:
+                    return "I've added the new prospect to your database!"
+            
+            elif action == 'search_prospects':
+                prospects = data or []
+                if not prospects:
+                    return "I couldn't find any prospects matching your search criteria. Would you like to try a different search term or add new prospects to your database?"
+                
+                search_summary = "Here's what I found:\n" + "\n".join([
+                    f"• {p.get('first_name', '')} {p.get('last_name', '')} - {p.get('company', 'No company')} ({p.get('email', 'no email')})"
+                    for p in prospects[:5]
+                ]) + (f"\n...and {len(prospects) - 5} more matches" if len(prospects) > 5 else "")
+                
+                return f"{search_summary}\n\nWould you like me to add any of these to a specific list or create a campaign for them?"
+            
+            elif action == 'create_list':
+                list_name = data.get('name', 'New List') if data else 'New List'
+                return f"Perfect! I've created the '{list_name}' list for you. You can now add prospects to this list by saying 'Add [prospect name] to {list_name} list'."
+            
+            elif action == 'list_lists':
+                lists = data or []
+                if not lists:
+                    return "You don't have any prospect lists yet. Would you like to create one? Just say 'Create a new list called [Name]'."
+                return f"Here are your prospect lists:\n" + "\n".join([
+                    f"• {lst.get('name', 'Unnamed')} - {lst.get('prospect_count', 0)} prospects"
+                    for lst in lists[:5]
+                ]) + (f"\n...and {len(lists) - 5} more" if len(lists) > 5 else "")
+            
+            elif action == 'add_prospects_to_list':
+                added_count = data.get('added_count', 0) if data else 0
+                return f"Great! I've successfully added {added_count} prospect(s) to the list. They're now ready for your next campaign!"
+            
+            elif action == 'list_templates':
+                templates = data or []
+                if not templates:
+                    return "You don't have any email templates yet. Would you like to create one? Just say 'Create a new template' and I'll help you!"
+                return f"Here are your email templates:\n" + "\n".join([
+                    f"• {t.get('name', 'Unnamed')} - Type: {t.get('type', 'unknown')}"
+                    for t in templates[:5]
+                ]) + (f"\n...and {len(templates) - 5} more" if len(templates) > 5 else "")
             
             elif action == 'show_analytics':
                 if data:
-                    return f"Here's your performance overview:\n• Total Campaigns: {data.get('total_campaigns', 0)}\n• Total Prospects: {data.get('total_prospects', 0)}\n• Emails Sent: {data.get('total_emails_sent', 0)}\n• Average Open Rate: {data.get('average_open_rate', 0)}%"
+                    return f"Here's your performance overview:\n• Total Campaigns: {data.get('total_campaigns', 0)}\n• Total Prospects: {data.get('total_prospects', 0)}\n• Active Campaigns: {data.get('active_campaigns', 0)}\n• Emails Sent: {data.get('total_emails_sent', 0)}\n• Average Open Rate: {data.get('average_open_rate', 0)}%"
                 return "Here are your current analytics and performance metrics."
             
+            elif action == 'upload_prospects':
+                if data:
+                    successful = data.get('successful_inserts', [])
+                    failed = data.get('failed_inserts', [])
+                    return f"CSV upload completed! Successfully added {len(successful)} prospects to your database." + (f" {len(failed)} entries had issues and were skipped." if failed else "")
+                return "Your prospects have been uploaded successfully!"
+            
+            elif action == 'ai_suggest_prospects':
+                return "I'm analyzing your existing prospects to suggest similar ones. This feature is coming soon! For now, you can search existing prospects or add new ones manually."
+            
             elif action == 'help':
-                return "I'm here to help you manage your email marketing! I can help you with:\n• Creating and sending campaigns\n• Managing prospects and templates\n• Viewing analytics and performance\n• Processing emails automatically\n\nJust tell me what you'd like to do in natural language!"
+                return "I'm here to help you manage your email marketing! I can help you with:\n\n• **Prospects**: 'Add John Smith from TechCorp', 'Search prospects in technology', 'Show all prospects'\n• **Lists**: 'Create a VIP list', 'Add John to VIP list', 'Show my lists'\n• **Campaigns**: 'Create a campaign', 'Send campaign to VIP list', 'Show campaigns'\n• **Templates**: 'Create a template', 'Show templates'\n• **Analytics**: 'Show my analytics', 'Dashboard performance'\n\nJust tell me what you'd like to do in natural language!"
             
             else:
-                return f"I've completed the {action.replace('_', ' ')} action successfully!"
+                return f"I've completed the {action.replace('_', ' ')} action successfully! Is there anything else I can help you with?"
                 
         except Exception as e:
             logger.error(f"Error generating response: {e}")
