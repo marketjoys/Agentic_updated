@@ -323,7 +323,93 @@ Analyze this message and extract the intent and parameters.
         
         return params
     
-    def extract_prospect_params(self, message: str) -> Dict[str, Any]:
+    def extract_list_params(self, message: str) -> Dict[str, Any]:
+        """Enhanced list parameter extraction from message"""
+        params = {}
+        
+        # Extract list name patterns - CRITICAL for user's issue
+        name_patterns = [
+            r'list (?:called|named) ["\']([^"\']+)["\']',  # "list called 'Test Marketing List'"
+            r'list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.)',  # "list called Test Marketing List"
+            r'create (?:a|the) ([A-Z][A-Za-z\s]+?) list',  # "create a Test Marketing list"
+            r'new list ["\']([^"\']+)["\']',  # "new list 'Test Marketing List'"
+            r'new list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.)',  # "new list called Test Marketing List"
+            r'(?:create|make|add) (?:a )?(?:new )?list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.|for|with)',
+        ]
+        
+        for pattern in name_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['name'] = match.group(1).strip()
+                break
+        
+        # Extract description if present
+        desc_patterns = [
+            r'description ["\']([^"\']+)["\']',
+            r'for ([A-Z][A-Za-z\s]+?) purposes?',
+            r'to (?:track|manage|organize) ([A-Za-z\s]+)'
+        ]
+        
+        for pattern in desc_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['description'] = match.group(1).strip()
+                break
+        
+        # Extract color if mentioned
+        colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'gray', 'black']
+        for color in colors:
+            if color in message.lower():
+                params['color'] = f'#{color}'
+                break
+        
+        # If no name found, use generic name
+        if 'name' not in params:
+            params['name'] = f"New List {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        return params
+    
+    def extract_template_params(self, message: str) -> Dict[str, Any]:
+        """Extract template parameters from message"""
+        params = {}
+        
+        # Extract template name
+        name_patterns = [
+            r'template (?:called|named) ["\']([^"\']+)["\']',
+            r'template (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.)',
+            r'create (?:a|the) ([A-Z][A-Za-z\s]+?) template',
+            r'new template ["\']([^"\']+)["\']'
+        ]
+        
+        for pattern in name_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['name'] = match.group(1).strip()
+                break
+        
+        # Extract template type
+        if any(word in message.lower() for word in ['welcome', 'greeting', 'initial']):
+            params['type'] = 'initial'
+        elif any(word in message.lower() for word in ['follow', 'followup', 'follow-up']):
+            params['type'] = 'follow_up'
+        elif any(word in message.lower() for word in ['auto', 'automatic', 'response']):
+            params['type'] = 'auto_response'
+        else:
+            params['type'] = 'initial'
+        
+        # Extract subject if present
+        subject_patterns = [
+            r'subject ["\']([^"\']+)["\']',
+            r'with subject ([A-Za-z\s]+?)(?:\s|$|\.)'
+        ]
+        
+        for pattern in subject_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['subject'] = match.group(1).strip()
+                break
+        
+        return params
         """Extract prospect parameters from message"""
         params = {}
         
