@@ -46,14 +46,28 @@ class EmailProcessor:
         return {"status": "stopped"}
     
     async def _monitor_emails(self):
-        """Monitor IMAP for new emails"""
+        """Monitor IMAP for new emails with improved polling"""
+        consecutive_errors = 0
         while self.processing:
             try:
-                await self._check_for_new_emails()
-                await asyncio.sleep(30)  # Check every 30 seconds
+                scan_result = await self._check_for_new_emails()
+                consecutive_errors = 0  # Reset error count on successful scan
+                
+                # If we found emails, scan again sooner to catch any others
+                if scan_result.get("new_emails_found", 0) > 0:
+                    logger.info("Found new emails, scanning again in 10 seconds...")
+                    await asyncio.sleep(10)
+                else:
+                    # Normal interval when no emails found
+                    await asyncio.sleep(30)
+                    
             except Exception as e:
-                logger.error(f"Error in email monitoring: {str(e)}")
-                await asyncio.sleep(60)  # Wait longer on error
+                consecutive_errors += 1
+                logger.error(f"Error in email monitoring (consecutive errors: {consecutive_errors}): {str(e)}")
+                
+                # Exponential backoff on errors, but cap at 5 minutes
+                wait_time = min(60 * consecutive_errors, 300)
+                await asyncio.sleep(wait_time)
     
     async def _check_for_new_emails(self):
         """Check for new emails via IMAP with enhanced monitoring"""
