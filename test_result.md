@@ -450,8 +450,7 @@ metadata:
 test_plan:
   current_focus:
     - "AI Agent Natural Language Processing"
-  stuck_tasks:
-    - "AI Agent Natural Language Processing"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
