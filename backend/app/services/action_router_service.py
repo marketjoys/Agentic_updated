@@ -544,6 +544,54 @@ class ActionRouterService:
         except:
             return []
     
+    async def resolve_list_id_by_name(self, list_name: str) -> Optional[str]:
+        """Resolve list name to list ID"""
+        if not list_name:
+            return None
+            
+        try:
+            lists = await self.db.get_lists()
+            for lst in lists:
+                if lst.get('name', '').lower() == list_name.lower():
+                    return lst.get('id')
+            return None
+        except:
+            return None
+    
+    async def resolve_prospect_id_by_details(self, prospect_details: Dict[str, Any]) -> Optional[str]:
+        """Resolve prospect details to prospect ID"""
+        try:
+            prospects = await self.db.get_prospects()
+            
+            first_name = prospect_details.get('first_name', '').lower()
+            last_name = prospect_details.get('last_name', '').lower()
+            email = prospect_details.get('email', '').lower()
+            company = prospect_details.get('company', '').lower()
+            
+            for prospect in prospects:
+                # Try to match by email first (most specific)
+                if email and prospect.get('email', '').lower() == email:
+                    return prospect.get('id')
+                
+                # Try to match by full name and company
+                prospect_first = prospect.get('first_name', '').lower()
+                prospect_last = prospect.get('last_name', '').lower()
+                prospect_company = prospect.get('company', '').lower()
+                
+                if (first_name and prospect_first == first_name and 
+                    last_name and prospect_last == last_name and
+                    company and prospect_company == company):
+                    return prospect.get('id')
+                
+                # Try to match by full name only
+                if (first_name and prospect_first == first_name and 
+                    last_name and prospect_last == last_name):
+                    return prospect.get('id')
+            
+            return None
+        except:
+            return None
+    
     async def send_campaign_emails(self, campaign_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Send campaign emails"""
         try:
