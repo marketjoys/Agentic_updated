@@ -435,65 +435,92 @@ Analyze this message and extract the intent and parameters.
         return params
     
     def extract_prospect_params(self, message: str) -> Dict[str, Any]:
-        """Enhanced prospect parameter extraction from message - CRITICAL for user's issue"""
+        """Enhanced prospect parameter extraction from message - FIXED for complex name formats"""
         params = {}
         
-        # Enhanced name extraction patterns - FIXED for complex name formats
+        # Enhanced name extraction patterns - COMPREHENSIVE for all name formats
         name_patterns = [
-            r'(?:prospect|contact|person|lead) (?:named|called) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "prospect named John Smith"
-            r'add (?:a )?(?:prospect|contact|person|lead)? (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "add John Smith" or "add a prospect John Smith"
-            r'create (?:a )?(?:prospect|contact) (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "create prospect John Smith"
-            r'new (?:prospect|contact) (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "new prospect John Smith"
-            r'([A-Z][a-z]+ [A-Z][a-z]+) (?:from|at|to|with|of)',  # "John Smith from TechCorp"
-            r'(?:add|create) (?:a )?(?:prospect|contact)?(?:\s+named|\s+called)?\s+([A-Z][a-z]+ [A-Z][a-z]+)',  # More flexible patterns
-            r'([A-Z][a-z]+ [A-Z][a-z]+\d*) (?:from|at|to|with)',  # Handle names with numbers from test
+            # Basic name patterns
+            r'(?:prospect|contact|person|lead) (?:named|called) ([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*)',  # "prospect named John Smith" or "John O'Connor"
+            r'(?:add|create) (?:a )?(?:prospect|contact|person|lead)? (?:named|called)? ([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*)',  # "add John Smith" or "create prospect Mike O'Connor"
+            r'new (?:prospect|contact) (?:named|called)? ([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*)',  # "new prospect John Smith"
+            
+            # Context-based name extraction (before company)
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*) (?:from|at|with|of|works?\s+(?:at|for|with))',  # "John Smith from TechCorp"
+            
+            # Advanced patterns for test cases
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*\d*) (?:from|at)',  # Handle names with numbers like "Mike Davis1753266483"
+            
+            # Flexible patterns
+            r'(?:add|create)(?:\s+a)?(?:\s+prospect)?(?:\s+named|\s+called)?\s+([A-Z][a-z]+(?:\s+[A-Z][a-z\']+)*)',
         ]
         
+        extracted_name = None
         for pattern in name_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                full_name = match.group(1).strip()
-                name_parts = full_name.split()
-                if len(name_parts) >= 2:
-                    params['first_name'] = name_parts[0]
-                    params['last_name'] = ' '.join(name_parts[1:])
+                extracted_name = match.group(1).strip()
+                # Clean up any trailing numbers or artifacts
+                extracted_name = re.sub(r'\d+$', '', extracted_name).strip()
                 break
         
-        # Enhanced company extraction patterns - FIXED for complex company names
+        if extracted_name:
+            name_parts = extracted_name.split()
+            if len(name_parts) >= 1:
+                params['first_name'] = name_parts[0]
+                if len(name_parts) >= 2:
+                    params['last_name'] = ' '.join(name_parts[1:])
+                else:
+                    # If only one name part, use it as first name and generate a last name
+                    params['last_name'] = 'Unknown'
+        
+        # Enhanced company extraction patterns - COMPREHENSIVE for all company formats
         company_patterns = [
-            r'from ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "from DataScience AI" or "from Global Tech Solutions"
-            r'at ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "at Global Tech Solutions"
-            r'(?:works )?(?:with|for) ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "works with TechCorp"
-            r'company (?:called|named)? ([A-Z][A-Za-z\s&\.\-0-9]+)',  # "company TechCorp"
-            r'(?:of|with) ([A-Z][A-Za-z\s&\.\-0-9]+) (?:company|corp|inc|ltd)',  # "of TechCorp company"
+            # Standard patterns with common company suffixes
+            r'from ([A-Z][A-Za-z\s&\.\-0-9\']+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI|Software|Services|Consulting|International|Global|Enterprises))?)',
+            r'at ([A-Z][A-Za-z\s&\.\-0-9\']+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI|Software|Services|Consulting|International|Global|Enterprises))?)',
+            
+            # Work-related patterns
+            r'(?:works?|employed) (?:at|for|with) ([A-Z][A-Za-z\s&\.\-0-9\']+)',
+            
+            # Explicit company mentions
+            r'company (?:called|named)? ([A-Z][A-Za-z\s&\.\-0-9\']+)',
+            r'(?:of|with) ([A-Z][A-Za-z\s&\.\-0-9\']+) (?:company|corp|inc|ltd)',
+            
+            # Advanced patterns for complex names
+            r'from ([A-Z][A-Za-z\s&\.\-0-9\']+(?:\s+AI|\s+Solutions)?)(?:\s|$)',  # Special handling for "AI" and "Solutions"
         ]
         
         for pattern in company_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
                 company_name = match.group(1).strip()
-                # Clean up trailing words that might be context, not company name
-                company_name = re.sub(r'\s+(email|with|and|the|of|for|at|in|on|to)(?:\s|$)', '', company_name, flags=re.IGNORECASE)
-                params['company'] = company_name.strip()
-                break
+                # Clean up trailing context words
+                company_name = re.sub(r'\s+(email|with|and|the|of|for|at|in|on|to|who|that|which)(?:\s|$)', '', company_name, flags=re.IGNORECASE)
+                # Remove any trailing periods or commas
+                company_name = re.sub(r'[,\.]+$', '', company_name).strip()
+                if company_name:
+                    params['company'] = company_name
+                    break
         
-        # Extract email if present
+        # Extract email if explicitly mentioned
         email_patterns = [
-            r'(\w+@\w+\.\w+)',  # Basic email pattern
-            r'email (\w+@\w+\.\w+)',  # "email john@techcorp.com"
+            r'email\s+(?:is\s+|address\s+is\s+)?(\w+(?:[\.\-_]\w+)*@\w+(?:[\.\-]\w+)*\.\w+)',  # "email is john@techcorp.com"
+            r'(\w+(?:[\.\-_]\w+)*@\w+(?:[\.\-]\w+)*\.\w+)',  # Direct email pattern
         ]
         
         for pattern in email_patterns:
-            match = re.search(pattern, message)
+            match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['email'] = match.group(1)
+                params['email'] = match.group(1).lower()
                 break
         
         # Extract job title if present
         title_patterns = [
-            r'(?:title|position|role) ([A-Za-z\s]+?)(?:\s|$|\.|,)',
-            r'(?:as|is) (?:a |an )?([A-Za-z\s]+?)(?:\s|$|\.|,|at)',
-            r'([A-Za-z\s]+?) at [A-Z]',  # "Marketing Manager at TechCorp"
+            r'(?:title|position|role|job)\s+(?:is\s+)?([A-Za-z\s]+?)(?:\s+at|\s+with|\s|$|\.|,)',
+            r'(?:as|is)\s+(?:a\s+|an\s+)?([A-Za-z\s]+?)(?:\s+at|\s+with|\s|$|\.|,)',
+            r'([A-Za-z\s]+?)\s+at\s+[A-Z]',  # "Marketing Manager at TechCorp"
+            r'(?:works?\s+as|employed\s+as)\s+(?:a\s+|an\s+)?([A-Za-z\s]+)',
         ]
         
         for pattern in title_patterns:
@@ -501,27 +528,58 @@ Analyze this message and extract the intent and parameters.
             if match:
                 title = match.group(1).strip()
                 # Filter out common words that aren't job titles
-                if not any(word in title.lower() for word in ['from', 'with', 'the', 'and', 'company']):
+                if not any(word in title.lower() for word in ['from', 'with', 'the', 'and', 'company', 'prospect', 'contact', 'person']):
                     params['job_title'] = title
                     break
         
         # Extract phone if present
         phone_patterns = [
-            r'phone (\+?[\d\s\-\(\)]+)',
-            r'(\+?[\d\s\-\(\)]{10,})'  # Basic phone pattern
+            r'phone\s+(?:number\s+)?(?:is\s+)?(\+?[\d\s\-\(\)\.]+)',
+            r'(?:call|contact)\s+(?:at\s+)?(\+?[\d\s\-\(\)\.]{10,})',
+            r'(\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})'  # US phone pattern
         ]
         
         for pattern in phone_patterns:
-            match = re.search(pattern, message)
+            match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['phone'] = match.group(1).strip()
-                break
+                phone = re.sub(r'[^\d\+\-\(\)\s\.]', '', match.group(1)).strip()
+                if len(phone.replace('-', '').replace('(', '').replace(')', '').replace(' ', '').replace('.', '')) >= 10:
+                    params['phone'] = phone
+                    break
         
-        # Generate email if not provided but we have name and company
-        if 'email' not in params and 'first_name' in params and 'company' in params:
+        # Enhanced email generation if not provided but we have name and company
+        if 'email' not in params and 'first_name' in params:
             first_name = params['first_name'].lower()
-            company = params['company'].lower().replace(' ', '').replace('&', '').replace('.', '')
-            params['email'] = f"{first_name}@{company}.com"
+            
+            if 'company' in params:
+                # Generate email based on company
+                company = params['company'].lower()
+                # Clean up company name for email domain
+                company_clean = re.sub(r'[^a-z0-9]', '', company.replace(' ', '').replace('&', 'and'))
+                # Remove common company suffixes for cleaner domain
+                company_clean = re.sub(r'(inc|corp|llc|ltd|company|solutions|technologies|systems|group|software|services)$', '', company_clean)
+                
+                if company_clean:
+                    params['email'] = f"{first_name}@{company_clean}.com"
+                else:
+                    params['email'] = f"{first_name}@company.com"
+            else:
+                # Generate generic email if no company
+                params['email'] = f"{first_name}@example.com"
+        
+        # Extract industry if mentioned
+        industry_patterns = [
+            r'(?:in|from)\s+(?:the\s+)?([A-Za-z\s]+?)\s+(?:industry|sector|field)',
+            r'(?:works?\s+in|specializes?\s+in)\s+([A-Za-z\s]+)',
+        ]
+        
+        for pattern in industry_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                industry = match.group(1).strip()
+                if not any(word in industry.lower() for word in ['prospect', 'contact', 'person']):
+                    params['industry'] = industry.title()
+                    break
         
         return params
     
