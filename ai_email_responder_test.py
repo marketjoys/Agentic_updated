@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 
 # Backend URL from environment
-BACKEND_URL = "https://048bdf56-8dfc-4337-81a3-c5fdd6da2b41.preview.emergentagent.com"
+BACKEND_URL = "https://89a22164-504d-4345-95e9-3304050e8990.preview.emergentagent.com"
 AUTH_TOKEN = "test_token_12345"
 
 class AIEmailResponderTester:

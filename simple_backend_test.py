@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://048bdf56-8dfc-4337-81a3-c5fdd6da2b41.preview.emergentagent.com"
+BACKEND_URL = "https://89a22164-504d-4345-95e9-3304050e8990.preview.emergentagent.com"
 
 class SimpleBackendTester:
     def __init__(self):
