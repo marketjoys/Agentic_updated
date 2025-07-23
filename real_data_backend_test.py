@@ -11,7 +11,7 @@ import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://89a22164-504d-4345-95e9-3304050e8990.preview.emergentagent.com"
+BACKEND_URL = "https://883de0b2-e989-4b94-aaf3-40db3c4a63b5.preview.emergentagent.com"
 AUTH_TOKEN = "test_token_12345"
 
 class RealDataTester:
