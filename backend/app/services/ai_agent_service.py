@@ -330,23 +330,28 @@ Analyze this message and extract the intent and parameters.
         # Extract list name patterns - CRITICAL for user's issue
         name_patterns = [
             r'list (?:called|named) ["\']([^"\']+)["\']',  # "list called 'Test Marketing List'"
-            r'list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.)',  # "list called Test Marketing List"
-            r'create (?:a|the) ([A-Z][A-Za-z\s]+?) list',  # "create a Test Marketing list"
+            r'list (?:called|named) ([A-Z][A-Za-z\s]+)',  # "list called Test Marketing List" - fixed greedy matching
+            r'create (?:a|the) ([A-Z][A-Za-z\s]+) list',  # "create a Test Marketing list"
             r'new list ["\']([^"\']+)["\']',  # "new list 'Test Marketing List'"
-            r'new list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.)',  # "new list called Test Marketing List"
-            r'(?:create|make|add) (?:a )?(?:new )?list (?:called|named) ([A-Z][A-Za-z\s]+?)(?:\s|$|\.|for|with)',
+            r'new list (?:called|named) ([A-Z][A-Za-z\s]+)',  # "new list called Test Marketing List" - fixed greedy matching
+            r'(?:create|make|add) (?:a )?(?:new )?list (?:called|named) ([A-Z][A-Za-z\s]+)',  # Fixed greedy matching
+            r'(?:make|create) (?:a|the) (?:new )?list (?:named|called) ([A-Z][A-Za-z\s]+)',  # "make a new list named VIP Customers"
+            r'(?:add|create) a list called ([A-Z][A-Za-z\s]+)',  # "add a list called Technology Companies"
         ]
         
         for pattern in name_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['name'] = match.group(1).strip()
+                extracted_name = match.group(1).strip()
+                # Clean up trailing words that might be captured incorrectly
+                extracted_name = re.sub(r'\s+(for|with|to|at|in|on).*$', '', extracted_name, flags=re.IGNORECASE)
+                params['name'] = extracted_name
                 break
         
         # Extract description if present
         desc_patterns = [
             r'description ["\']([^"\']+)["\']',
-            r'for ([A-Z][A-Za-z\s]+?) purposes?',
+            r'for ([A-Z][A-Za-z\s]+) purposes?',
             r'to (?:track|manage|organize) ([A-Za-z\s]+)'
         ]
         
