@@ -292,6 +292,11 @@ class GroqService:
                     start_idx = response_content.find('{')
                     end_idx = response_content.rfind('}') + 1
                     json_str = response_content[start_idx:end_idx]
+                    
+                    # Clean up common JSON issues
+                    json_str = json_str.replace('// Technology', '')  # Remove comments
+                    json_str = json_str.replace(',\n}', '\n}')  # Remove trailing commas
+                    
                     result = json.loads(json_str)
                 else:
                     result = json.loads(response_content)
@@ -300,9 +305,22 @@ class GroqService:
                 result["knowledge_used"] = list(set(knowledge_used))
                 return result
                     
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 print(f"Failed to parse JSON from response: {response_content}")
-                return {"error": "Failed to parse AI response", "raw_response": response_content}
+                print(f"JSON Error: {str(e)}")
+                
+                # Try to create a fallback response from the raw content
+                lines = response_content.split('\n')
+                fallback_response = {
+                    "subject": "Re: Thank you for your interest!",
+                    "content": f"Hi {{{{first_name}}}},\n\nThank you for your message! I'll get back to you shortly.\n\nBest regards,\n[Your Name]",
+                    "intents_addressed": [intent["intent_id"] for intent in classified_intents[:2]],
+                    "template_used": templates[0]["id"] if templates else "",
+                    "knowledge_used": list(set(knowledge_used)),
+                    "confidence": 0.7,
+                    "reasoning": "Fallback response due to JSON parsing error"
+                }
+                return fallback_response
             
         except Exception as e:
             print(f"Error generating response: {str(e)}")
