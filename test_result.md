@@ -440,9 +440,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Campaign Creation Process"
-    - "Database Data Population"
-  stuck_tasks: []
+    - "AI Agent Natural Language Processing"
+  stuck_tasks:
+    - "AI Agent Natural Language Processing"
   test_all: false
   test_priority: "high_first"
 
