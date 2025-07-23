@@ -146,6 +146,36 @@ Analyze this message and extract the intent and parameters.
                 "requires_clarification": False
             }
         
+        # Campaign keywords - MOVED TO HIGH PRIORITY to prevent misinterpretation as list creation
+        elif any(word in message_lower for word in ['campaign', 'send email', 'email campaign']):
+            if any(word in message_lower for word in ['create', 'new', 'make']):
+                return {
+                    "action": "create_campaign",
+                    "entity": "campaign",
+                    "operation": "create",
+                    "parameters": self.extract_campaign_params(message),
+                    "confidence": 0.9,  # Increased confidence
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['send', 'launch', 'start']):
+                return {
+                    "action": "send_campaign",
+                    "entity": "campaign", 
+                    "operation": "send",
+                    "parameters": self.extract_campaign_params(message),
+                    "confidence": 0.8,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
+                return {
+                    "action": "list_campaigns",
+                    "entity": "campaign",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+        
         # Search/Find patterns - HIGH PRIORITY for AI prospecting
         elif any(word in message_lower for word in ['search', 'find', 'look for', 'locate']):
             if any(word in message_lower for word in ['prospect', 'prospects', 'contact', 'contacts', 'lead', 'leads']):
@@ -197,29 +227,6 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
         
-        # List keywords - HIGH PRIORITY for user's issue
-        elif any(word in message_lower for word in ['list', 'lists']):
-            if any(word in message_lower for word in ['create', 'new', 'make', 'add']) and not any(phrase in message_lower for phrase in ['add to', 'to list', 'to the']):
-                # Extract list name
-                list_params = self.extract_list_params(message)
-                return {
-                    "action": "create_list",
-                    "entity": "list",
-                    "operation": "create",
-                    "parameters": list_params,
-                    "confidence": 0.9,
-                    "requires_clarification": False
-                }
-            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
-                return {
-                    "action": "list_lists",
-                    "entity": "list",
-                    "operation": "list",
-                    "parameters": {},
-                    "confidence": 0.9,
-                    "requires_clarification": False
-                }
-        
         # Prospect keywords - HIGH PRIORITY for user's issue
         elif any(word in message_lower for word in ['prospect', 'contact', 'lead', 'person']):
             if any(word in message_lower for word in ['add', 'create', 'new', 'make']):
@@ -242,35 +249,30 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
         
-        # Campaign keywords
-        elif any(word in message_lower for word in ['campaign', 'send email', 'email campaign']):
-            if any(word in message_lower for word in ['create', 'new', 'make']):
-                return {
-                    "action": "create_campaign",
-                    "entity": "campaign",
-                    "operation": "create",
-                    "parameters": self.extract_campaign_params(message),
-                    "confidence": 0.7,
-                    "requires_clarification": False
-                }
-            elif any(word in message_lower for word in ['send', 'launch', 'start']):
-                return {
-                    "action": "send_campaign",
-                    "entity": "campaign", 
-                    "operation": "send",
-                    "parameters": self.extract_campaign_params(message),
-                    "confidence": 0.8,
-                    "requires_clarification": False
-                }
-            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
-                return {
-                    "action": "list_campaigns",
-                    "entity": "campaign",
-                    "operation": "list",
-                    "parameters": {},
-                    "confidence": 0.9,
-                    "requires_clarification": False
-                }
+        # List keywords - MOVED AFTER CAMPAIGN to prevent conflicts
+        elif any(word in message_lower for word in ['list', 'lists']):
+            # Exclude campaign-related phrases that might contain "list"
+            if not any(phrase in message_lower for phrase in ['campaign', 'email campaign']):
+                if any(word in message_lower for word in ['create', 'new', 'make', 'add']) and not any(phrase in message_lower for phrase in ['add to', 'to list', 'to the']):
+                    # Extract list name
+                    list_params = self.extract_list_params(message)
+                    return {
+                        "action": "create_list",
+                        "entity": "list",
+                        "operation": "create",
+                        "parameters": list_params,
+                        "confidence": 0.9,
+                        "requires_clarification": False
+                    }
+                elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
+                    return {
+                        "action": "list_lists",
+                        "entity": "list",
+                        "operation": "list",
+                        "parameters": {},
+                        "confidence": 0.9,
+                        "requires_clarification": False
+                    }
         
         # Template keywords
         elif any(word in message_lower for word in ['template', 'templates']):
