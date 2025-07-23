@@ -297,6 +297,27 @@ Best regards,
         else:
             print("✅ Intents already exist, skipping intent creation")
         
+        # Link auto-response templates to intents
+        current_templates = await db_service.get_templates()
+        current_intents = await db_service.get_intents()
+        
+        # Find templates by name and link them to appropriate intents
+        template_mapping = {
+            "Auto Response - Interest": "Interested - Auto Respond",
+            "Auto Response - Questions": "Question - Auto Respond", 
+            "Auto Response - Pricing": "Pricing Request - Auto Respond"
+        }
+        
+        for template_name, intent_name in template_mapping.items():
+            template = next((t for t in current_templates if t["name"] == template_name), None)
+            intent = next((i for i in current_intents if i["name"] == intent_name), None)
+            
+            if template and intent and not intent.get("primary_template_id"):
+                await db_service.update_intent(intent["id"], {
+                    "primary_template_id": template["id"]
+                })
+                print(f"✅ Linked template '{template_name}' to intent '{intent_name}'")
+        
         # Always create lists if they don't exist (this is the main fix)
         if not existing_lists:
             # Sample prospect lists
