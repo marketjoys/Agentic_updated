@@ -145,6 +145,117 @@ async def add_message_to_thread(thread_id: str, message_data: Dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/email-processing/simulate-email")
+async def simulate_email_processing(request: Dict):
+    """Simulate processing an email - for testing purposes"""
+    try:
+        sender_email = request.get("sender_email", "")
+        subject = request.get("subject", "")
+        content = request.get("content", "")
+        
+        if not all([sender_email, subject, content]):
+            raise HTTPException(status_code=400, detail="sender_email, subject, and content are required")
+        
+        # Find prospect by email
+        prospect = await db_service.get_prospect_by_email(sender_email)
+        if not prospect:
+            raise HTTPException(status_code=404, detail=f"No prospect found for email: {sender_email}")
+        
+        logger.info(f"Simulating email processing from: {sender_email}")
+        
+        # Create/update thread context
+        thread_context = await email_processor._get_or_create_thread_context(prospect["id"], sender_email)
+        
+        # Add message to thread
+        message_data = {
+            "type": "received",
+            "sender": sender_email,
+            "subject": subject,
+            "content": content,
+            "timestamp": datetime.utcnow(),
+            "is_simulation": True,
+            "message_id": f"msg_{generate_id()}"
+        }
+        
+        await email_processor._add_message_to_thread(thread_context["id"], message_data)
+        
+        # Update prospect last contact time
+        await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
+        
+        # Classify intents using Groq AI
+        classified_intents = await groq_service.classify_intents(content, subject)
+        
+        if not classified_intents:
+            return {
+                "status": "processed",
+                "message": "Email processed but no intents classified",
+                "prospect": prospect,
+                "classified_intents": [],
+                "auto_response_sent": False
+            }
+        
+        logger.info(f"Classified intents: {classified_intents}")
+        
+        # Get conversation context
+        conversation_context = await email_processor._get_conversation_context(thread_context["id"])
+        
+        # Generate response using Groq AI
+        response_data = await groq_service.generate_response(
+            content, 
+            subject, 
+            classified_intents, 
+            conversation_context, 
+            prospect
+        )
+        
+        if response_data.get("error"):
+            logger.error(f"Response generation failed: {response_data['error']}")
+            return {
+                "status": "processed",
+                "message": "Email processed but response generation failed",
+                "prospect": prospect,
+                "classified_intents": classified_intents,
+                "auto_response_sent": False,
+                "error": response_data["error"]
+            }
+        
+        # Check if any intent requires auto-response
+        should_auto_respond = await email_processor._should_auto_respond(classified_intents)
+        
+        if should_auto_respond:
+            # Send automatic response
+            await email_processor._send_automatic_response(
+                prospect, 
+                response_data, 
+                thread_context["id"]
+            )
+            
+            logger.info(f"Automatic response sent to: {sender_email}")
+            
+            return {
+                "status": "completed",
+                "message": f"Email processed and automatic response sent to {sender_email}",
+                "prospect": prospect,
+                "classified_intents": classified_intents,
+                "generated_response": response_data,
+                "auto_response_sent": True,
+                "thread_id": thread_context["id"]
+            }
+        else:
+            return {
+                "status": "processed", 
+                "message": "Email processed but no auto-response required",
+                "prospect": prospect,
+                "classified_intents": classified_intents,
+                "generated_response": response_data,
+                "auto_response_sent": False,
+                "thread_id": thread_context["id"]
+            }
+            
+    except Exception as e:
+        logger.error(f"Error simulating email processing: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/email-processing/analytics")
 async def get_processing_analytics():
     """Get email processing analytics"""
