@@ -111,7 +111,21 @@ Analyze this message and extract the intent and parameters.
             
         except Exception as e:
             logger.error(f"Error analyzing intent: {e}")
-            return await self.fallback_intent_extraction(message)
+            try:
+                fallback_result = await self.fallback_intent_extraction(message)
+                logger.info(f"Fallback intent analysis: {fallback_result}")
+                return fallback_result
+            except Exception as fallback_error:
+                logger.error(f"Error in fallback intent extraction: {fallback_error}")
+                return {
+                    "action": "help",
+                    "entity": "general",
+                    "operation": "help",
+                    "parameters": {},
+                    "confidence": 0.3,
+                    "requires_clarification": True,
+                    "clarification_questions": ["I'm having trouble understanding your request. What would you like to do?"]
+                }
     
     async def fallback_intent_extraction(self, message: str) -> Dict[str, Any]:
         """
