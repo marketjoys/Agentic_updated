@@ -443,22 +443,19 @@ Analyze this message and extract the intent and parameters.
         
         # Enhanced company extraction patterns - FIXED for complex company names
         company_patterns = [
-            r'from ([A-Z][A-Za-z\s&\.\-0-9]+?)(?:\s+(?:company|corp|inc|ltd|llc))?(?:\s|$|\.|,|with|email)',  # "from TechCorp" or "from DataScience AI"
-            r'at ([A-Z][A-Za-z\s&\.\-0-9]+?)(?:\s+(?:company|corp|inc|ltd|llc))?(?:\s|$|\.|,)',  # "at DataScience AI"
-            r'(?:works )?(?:with|for) ([A-Z][A-Za-z\s&\.\-0-9]+?)(?:\s+(?:company|corp|inc|ltd|llc))?(?:\s|$|\.|,)',  # "works with TechCorp"
-            r'company (?:called|named)? ([A-Z][A-Za-z\s&\.\-0-9]+?)(?:\s|$|\.|,)',  # "company TechCorp"
+            r'from ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "from DataScience AI" or "from Global Tech Solutions"
+            r'at ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "at Global Tech Solutions"
+            r'(?:works )?(?:with|for) ([A-Z][A-Za-z\s&\.\-0-9]+(?:\s+(?:Inc|Corp|LLC|Ltd|Company|Solutions|Technologies|Systems|Group|AI))?)',  # "works with TechCorp"
+            r'company (?:called|named)? ([A-Z][A-Za-z\s&\.\-0-9]+)',  # "company TechCorp"
             r'(?:of|with) ([A-Z][A-Za-z\s&\.\-0-9]+) (?:company|corp|inc|ltd)',  # "of TechCorp company"
-            r'([A-Z][A-Za-z\s&\.\-0-9]+?)(?:\s+(?:Inc|Corp|LLC|Ltd|Company))(?:\s|$|\.|,)',  # "DataScience AI Inc"
         ]
         
         for pattern in company_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
                 company_name = match.group(1).strip()
-                # Clean up common suffixes that might be captured
-                company_name = re.sub(r'\s+(company|corp|inc|ltd|llc)$', '', company_name, flags=re.IGNORECASE)
-                # Remove trailing words that might be captured incorrectly  
-                company_name = re.sub(r'\s+(email|with|and|the|of|for|at)$', '', company_name, flags=re.IGNORECASE)
+                # Clean up trailing words that might be context, not company name
+                company_name = re.sub(r'\s+(email|with|and|the|of|for|at|in|on|to)(?:\s|$)', '', company_name, flags=re.IGNORECASE)
                 params['company'] = company_name.strip()
                 break
         
