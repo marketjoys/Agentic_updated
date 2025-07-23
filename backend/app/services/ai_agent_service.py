@@ -115,12 +115,69 @@ Analyze this message and extract the intent and parameters.
     
     async def fallback_intent_extraction(self, message: str) -> Dict[str, Any]:
         """
-        Fallback intent extraction using keyword matching
+        Enhanced fallback intent extraction using improved keyword matching and pattern recognition
         """
         message_lower = message.lower()
         
+        # List keywords - HIGH PRIORITY for user's issue
+        if any(word in message_lower for word in ['list', 'lists']):
+            if any(word in message_lower for word in ['create', 'new', 'make', 'add']):
+                # Extract list name
+                list_params = self.extract_list_params(message)
+                return {
+                    "action": "create_list",
+                    "entity": "list",
+                    "operation": "create",
+                    "parameters": list_params,
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
+                return {
+                    "action": "list_lists",
+                    "entity": "list",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+        
+        # Prospect keywords - HIGH PRIORITY for user's issue
+        elif any(word in message_lower for word in ['prospect', 'contact', 'lead', 'person']):
+            if any(word in message_lower for word in ['add', 'create', 'new', 'make']):
+                # Check if this is adding to a list
+                if any(word in message_lower for word in ['to list', 'to the list', 'list']):
+                    prospect_params = self.extract_prospect_params(message)
+                    list_params = self.extract_list_params(message)
+                    return {
+                        "action": "add_prospects_to_list",
+                        "entity": "list", 
+                        "operation": "add_prospects",
+                        "parameters": {**prospect_params, **list_params},
+                        "confidence": 0.9,
+                        "requires_clarification": False
+                    }
+                else:
+                    return {
+                        "action": "create_prospect",
+                        "entity": "prospect",
+                        "operation": "create", 
+                        "parameters": self.extract_prospect_params(message),
+                        "confidence": 0.8,
+                        "requires_clarification": False
+                    }
+            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
+                return {
+                    "action": "list_prospects",
+                    "entity": "prospect",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+        
         # Campaign keywords
-        if any(word in message_lower for word in ['campaign', 'send email', 'email campaign']):
+        elif any(word in message_lower for word in ['campaign', 'send email', 'email campaign']):
             if any(word in message_lower for word in ['create', 'new', 'make']):
                 return {
                     "action": "create_campaign",
@@ -139,34 +196,34 @@ Analyze this message and extract the intent and parameters.
                     "confidence": 0.8,
                     "requires_clarification": False
                 }
-            else:
+            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
                 return {
                     "action": "list_campaigns",
                     "entity": "campaign",
                     "operation": "list",
                     "parameters": {},
-                    "confidence": 0.8,
+                    "confidence": 0.9,
                     "requires_clarification": False
                 }
         
-        # Prospect keywords
-        elif any(word in message_lower for word in ['prospect', 'contact', 'lead']):
-            if any(word in message_lower for word in ['add', 'create', 'new']):
+        # Template keywords
+        elif any(word in message_lower for word in ['template', 'templates']):
+            if any(word in message_lower for word in ['create', 'new', 'make']):
                 return {
-                    "action": "create_prospect",
-                    "entity": "prospect",
-                    "operation": "create", 
-                    "parameters": self.extract_prospect_params(message),
-                    "confidence": 0.7,
+                    "action": "create_template",
+                    "entity": "template",
+                    "operation": "create",
+                    "parameters": self.extract_template_params(message),
+                    "confidence": 0.8,
                     "requires_clarification": False
                 }
-            else:
+            elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
                 return {
-                    "action": "list_prospects",
-                    "entity": "prospect",
+                    "action": "list_templates",
+                    "entity": "template",
                     "operation": "list",
                     "parameters": {},
-                    "confidence": 0.8,
+                    "confidence": 0.9,
                     "requires_clarification": False
                 }
         
@@ -181,6 +238,36 @@ Analyze this message and extract the intent and parameters.
                 "requires_clarification": False
             }
         
+        # Show/Display commands without specific entity
+        elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
+            if 'campaign' in message_lower:
+                return {
+                    "action": "list_campaigns",
+                    "entity": "campaign",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.8,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['prospect', 'contact', 'lead']):
+                return {
+                    "action": "list_prospects",
+                    "entity": "prospect",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.8,
+                    "requires_clarification": False
+                }
+            elif 'list' in message_lower:
+                return {
+                    "action": "list_lists",
+                    "entity": "list",
+                    "operation": "list",
+                    "parameters": {},
+                    "confidence": 0.8,
+                    "requires_clarification": False
+                }
+        
         # Default fallback
         else:
             return {
@@ -190,7 +277,7 @@ Analyze this message and extract the intent and parameters.
                 "parameters": {},
                 "confidence": 0.3,
                 "requires_clarification": True,
-                "clarification_questions": ["What would you like to do? I can help with campaigns, prospects, templates, or analytics."]
+                "clarification_questions": ["What would you like to do? I can help with campaigns, prospects, templates, lists, or analytics."]
             }
     
     def extract_campaign_params(self, message: str) -> Dict[str, Any]:
