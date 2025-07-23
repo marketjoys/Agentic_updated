@@ -360,45 +360,84 @@ Analyze this message and extract the intent and parameters.
             }
     
     def extract_campaign_params(self, message: str) -> Dict[str, Any]:
-        """Extract campaign parameters from message"""
+        """Enhanced campaign parameter extraction from message"""
         params = {}
         
-        # Extract campaign name
+        # Extract campaign name - IMPROVED patterns for better extraction
         name_patterns = [
-            r'campaign (?:named|called) "([^"]+)"',
-            r'campaign (?:named|called) \'([^\']+)\'',
-            r'(?:create|make) (?:a|the) ([A-Z][^,\.]+) campaign'
+            r'campaign (?:named|called) ["\']([^"\']+)["\']',  # "campaign named 'Summer Sale'"
+            r'campaign (?:named|called) ([A-Z][A-Za-z\s]+?)(?:\s+using|\s+with|\s+for|$)',  # "campaign named Summer Sale using..."
+            r'(?:create|make|new) (?:a |the )?campaign (?:named|called) ([A-Z][A-Za-z\s]+?)(?:\s+using|\s+with|\s+for|$)',  # "create a campaign named Summer Sale"
+            r'(?:create|make|new) (?:a |the )?([A-Z][A-Za-z\s]+?) campaign',  # "create a Summer Sale campaign"
         ]
         
         for pattern in name_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['name'] = match.group(1).strip()
+                extracted_name = match.group(1).strip()
+                # Clean up extracted name
+                extracted_name = re.sub(r'\s+(using|with|for|to|at|in|on).*$', '', extracted_name, flags=re.IGNORECASE)
+                params['name'] = extracted_name
                 break
         
-        # Extract template
+        # Extract template - IMPROVED patterns
         template_patterns = [
-            r'using (?:the )?([A-Z][^,\.]+) template',
-            r'with (?:the )?([A-Z][^,\.]+) template'
+            r'using (?:the )?([A-Z][A-Za-z\s]+?) template',  # "using Welcome template"
+            r'with (?:the )?([A-Z][A-Za-z\s]+?) template',   # "with Welcome template"
+            r'template (?:named|called) ([A-Z][A-Za-z\s]+?)(?:\s+for|\s+to|$)',  # "template named Welcome"
         ]
         
         for pattern in template_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['template'] = match.group(1).strip()
+                template_name = match.group(1).strip()
+                # Clean up template name
+                template_name = re.sub(r'\s+(for|to|with|and|the|of|at|in|on).*$', '', template_name, flags=re.IGNORECASE)
+                params['template'] = template_name
                 break
         
-        # Extract list/audience
+        # Extract list/audience - IMPROVED patterns
         list_patterns = [
-            r'to (?:the )?([A-Z][^,\.]+) list',
-            r'for (?:the )?([A-Z][^,\.]+) (?:list|group|audience)'
+            r'(?:to|for) (?:the )?([A-Z][A-Za-z\s]+?) (?:list|customers|prospects|audience|group)',  # "for VIP Customers list"
+            r'(?:to|for) (?:the )?([A-Z][A-Za-z\s]+?)(?:\s+list|\s|$)',  # "to VIP Customers"
+            r'send (?:to|for) (?:the )?([A-Z][A-Za-z\s]+)',  # "send to VIP Customers"
         ]
         
         for pattern in list_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['list'] = match.group(1).strip()
+                list_name = match.group(1).strip()
+                # Clean up list name
+                list_name = re.sub(r'\s+(with|and|the|of|at|in|on|using).*$', '', list_name, flags=re.IGNORECASE)
+                params['list'] = list_name
                 break
+        
+        # Extract email provider if mentioned
+        provider_patterns = [
+            r'(?:via|using|through) (?:the )?([A-Z][A-Za-z\s]+?) (?:provider|email)',  # "via Gmail provider"
+            r'email provider ([A-Z][A-Za-z\s]+)',  # "email provider Gmail"
+        ]
+        
+        for pattern in provider_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                provider_name = match.group(1).strip()
+                params['email_provider'] = provider_name
+                break
+        
+        # Extract max emails if mentioned
+        max_email_patterns = [
+            r'(?:max|maximum|up to|limit) (\d+) emails?',  # "max 500 emails"
+            r'send (\d+) emails?',  # "send 1000 emails"
+        ]
+        
+        for pattern in max_email_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['max_emails'] = int(match.group(1))
+                break
+        
+        return params
         
         return params
     
