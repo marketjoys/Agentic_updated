@@ -17,7 +17,7 @@ async def initialize_seed_data(db_service):
         
         print("🌱 Initializing seed data...")
         
-        # Sample templates
+        # Sample templates including auto-response templates
         templates = [
             {
                 "id": generate_id(),
@@ -67,13 +67,55 @@ Best regards,
 
 Thank you for expressing interest in our collaboration proposal!
 
-I'm excited to learn more about {{company}} and explore how we can work together to achieve mutual success.
+I'm excited to learn more about {{company}} and explore how we can work together to achieve mutual success in the {{industry}} industry.
 
 I'll reach out within the next 24 hours to schedule a convenient time for our conversation.
 
 Best regards,
 [Your Name]""",
                 "type": "auto_response",
+                "is_active": True,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Auto Response - Questions",
+                "subject": "Re: Happy to answer your questions!",
+                "content": """Hi {{first_name}},
+
+Great question! I'd be happy to provide more details about our collaboration opportunities.
+
+Based on what I know about {{company}} and your work in {{industry}}, I believe there could be some excellent synergies between our organizations.
+
+Let me send you some additional information, and I'd love to schedule a brief 15-minute call to discuss your specific questions in detail.
+
+When would be a good time for you this week?
+
+Best regards,
+[Your Name]""",
+                "type": "auto_response",
+                "is_active": True,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": generate_id(),
+                "name": "Auto Response - Pricing",
+                "subject": "Re: Pricing Information for {{company}}",
+                "content": """Hi {{first_name}},
+
+Thanks for your interest in our pricing! 
+
+I'd love to provide you with detailed pricing information that's tailored specifically for {{company}} and your needs in the {{industry}} sector.
+
+Our pricing varies based on the scope and scale of collaboration, so I'd like to schedule a brief call to understand your specific requirements and provide you with the most accurate information.
+
+Would you have 10-15 minutes available this week for a quick discussion?
+
+Best regards,
+[Your Name]""",
+                "type": "auto_response", 
                 "is_active": True,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow()
