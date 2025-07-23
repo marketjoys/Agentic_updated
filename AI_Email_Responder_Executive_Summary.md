@@ -216,7 +216,226 @@ The **AI Email Responder** is a fully functional, production-ready email marketi
 
 ---
 
-## KEY APPLICATION FEATURES & WORKFLOWS
+## USER FLOW DIAGRAMS & APPLICATION WORKFLOWS
+
+### **1. User Authentication & Onboarding Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Landing Page  │───▶│   Login Form    │───▶│   Dashboard     │
+│                 │    │                 │    │                 │
+│ • App Overview  │    │ • Username      │    │ • Statistics    │
+│ • Features List │    │ • Password      │    │ • Quick Actions │
+│ • Login Button  │    │ • Remember Me   │    │ • Recent Data   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                       │
+                                ▼                       ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │ Authentication  │    │   Navigation    │
+                       │                 │    │                 │
+                       │ • JWT Token     │    │ • Sidebar Menu  │
+                       │ • Session Setup │    │ • Page Routing  │
+                       │ • User Context  │    │ • Active States │
+                       └─────────────────┘    └─────────────────┘
+```
+
+### **2. Prospect Management Workflow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Prospects Page │───▶│  Add Prospect   │───▶│ Prospect Created│
+│                 │    │                 │    │                 │
+│ • Search Bar    │    │ • Contact Form  │    │ • Success Toast │
+│ • Filter Options│    │ • Validation    │    │ • List Update   │
+│ • Prospect List │    │ • Save Action   │    │ • Statistics    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   CSV Upload    │    │  Manual Entry   │    │ List Assignment │
+│                 │    │                 │    │                 │
+│ • File Selection│    │ • Individual    │    │ • Select Lists  │
+│ • Preview Data  │    │ • Bulk Creation │    │ • Auto-assign   │
+│ • Import Action │    │ • Field Mapping │    │ • Segmentation  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **3. Campaign Creation & Sending Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Campaigns Page  │───▶│  New Campaign   │───▶│ Campaign Setup  │
+│                 │    │                 │    │                 │
+│ • Campaign List │    │ • Name/Subject  │    │ • Template      │
+│ • Status Filter │    │ • Description   │    │ • Prospect Lists│
+│ • Create Button │    │ • Campaign Type │    │ • Email Provider│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │                       │
+                                ▼                       ▼
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │ Preview & Test  │───▶│  Send Campaign  │
+                       │                 │    │                 │
+                       │ • Template View │    │ • Progress Bar  │
+                       │ • Recipient List│    │ • Email Sending │
+                       │ • Send Settings │    │ • Status Updates│
+                       └─────────────────┘    └─────────────────┘
+                                                       │
+                                                       ▼
+                                              ┌─────────────────┐
+                                              │ Campaign Results│
+                                              │                 │
+                                              │ • Sent Count    │
+                                              │ • Failed Count  │
+                                              │ • Analytics     │
+                                              └─────────────────┘
+```
+
+### **4. AI Agent Interaction Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  AI Agent Page  │───▶│ Natural Language│───▶│ Action Execution│
+│                 │    │     Input       │    │                 │
+│ • Chat Interface│    │                 │    │ • Intent Parse  │
+│ • Command Help  │    │ • Text Message  │    │ • Database Ops  │
+│ • Session List  │    │ • Voice Command │    │ • API Calls     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Example Commands│    │ Real-time Chat  │    │  Response Data  │
+│                 │    │                 │    │                 │
+│ • "Show lists"  │    │ • WebSocket     │    │ • Structured    │
+│ • "Create..."   │    │ • Instant Reply │    │ • Visual Cards  │
+│ • "Send campaign"│    │ • Context Aware │    │ • Action Result │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **5. Email Processing & Auto-Response Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│Email Processing │───▶│ Intent Analysis │───▶│ Response Logic  │
+│     Page        │    │                 │    │                 │
+│ • Monitor Status│    │ • Groq AI Call  │    │ • Template Match│
+│ • Start/Stop    │    │ • Classification│    │ • Personalize   │
+│ • Analytics     │    │ • Confidence    │    │ • Auto-send     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Incoming Email  │    │  Thread Context │    │ Outgoing Reply  │
+│                 │    │                 │    │                 │
+│ • IMAP Monitor  │    │ • Conversation  │    │ • SMTP Send     │
+│ • Prospect Match│    │ • History Track │    │ • Thread Update │
+│ • Content Parse │    │ • Context Build │    │ • Analytics Log │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **6. Template Management Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Templates Page  │───▶│ Template Editor │───▶│Template Preview │
+│                 │    │                 │    │                 │
+│ • Template Grid │    │ • Rich Text     │    │ • Personalized  │
+│ • Type Filter   │    │ • Placeholders  │    │ • Sample Data   │
+│ • Create New    │    │ • Subject Line  │    │ • Mobile View   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Template Types  │    │ Personalization │    │  Save & Use     │
+│                 │    │                 │    │                 │
+│ • Initial       │    │ • {{first_name}}│    │ • Campaign Link │
+│ • Follow-up     │    │ • {{company}}   │    │ • Template List │
+│ • Auto-response│    │ • {{job_title}} │    │ • Version Track │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **7. List Management & Segmentation Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Lists Page    │───▶│  Create List    │───▶│ List Management │
+│                 │    │                 │    │                 │
+│ • All Lists     │    │ • List Name     │    │ • Add Prospects │
+│ • Prospect Count│    │ • Description   │    │ • Remove Items  │
+│ • Quick Actions │    │ • Category      │    │ • List Analytics│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  List Details   │    │ Prospect Select │    │Campaign Targets │
+│                 │    │                 │    │                 │
+│ • Member List   │    │ • Multi-select  │    │ • List-based    │
+│ • Statistics    │    │ • Bulk Actions  │    │ • Segmentation  │
+│ • Export Data   │    │ • Filter/Search │    │ • Target Counts │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **8. Analytics & Reporting Flow**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Analytics Page  │───▶│  Select Metrics │───▶│  View Reports   │
+│                 │    │                 │    │                 │
+│ • Dashboard     │    │ • Campaign      │    │ • Charts/Graphs │
+│ • Quick Stats   │    │ • Time Range    │    │ • Performance   │
+│ • Report Types  │    │ • Data Points   │    │ • Insights      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Real-time Data │    │ Historical Data │    │  Export Options │
+│                 │    │                 │    │                 │
+│ • Live Updates  │    │ • Trends        │    │ • PDF Reports   │
+│ • Current Stats │    │ • Comparisons   │    │ • CSV Data      │
+│ • System Status │    │ • Growth Metrics│    │ • Scheduled     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### **9. Complete User Journey - End-to-End Campaign**
+```
+LOGIN ───▶ PROSPECT UPLOAD ───▶ LIST CREATION ───▶ TEMPLATE DESIGN
+  │              │                     │                    │
+  ▼              ▼                     ▼                    ▼
+┌─────┐    ┌──────────┐        ┌─────────────┐     ┌──────────────┐
+│Auth │    │CSV Import│        │Segmentation │     │Personalization│
+│Flow │    │Validation│        │& Targeting  │     │& Preview     │
+└─────┘    └──────────┘        └─────────────┘     └──────────────┘
+                                       │                    │
+                                       ▼                    ▼
+CAMPAIGN SETUP ◀───────────────── LIST ASSIGNMENT ◀─── TEMPLATE SELECT
+      │
+      ▼
+SEND CAMPAIGN ───▶ EMAIL DELIVERY ───▶ RESPONSE MONITORING ───▶ ANALYTICS
+      │                  │                       │                    │
+      ▼                  ▼                       ▼                    ▼
+┌───────────┐    ┌─────────────┐        ┌──────────────┐     ┌─────────────┐
+│Progress   │    │SMTP/Provider│        │AI Processing │     │Performance  │
+│Tracking   │    │Integration  │        │& Auto-Reply  │     │Metrics      │
+└───────────┘    └─────────────┘        └──────────────┘     └─────────────┘
+```
+
+### **10. AI Agent Command Examples Flow**
+```
+USER INPUT: "Create a new list called VIP Customers"
+     │
+     ▼
+┌─────────────────────────────────────────────────────────┐
+│ AI AGENT PROCESSING                                     │
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐│
+│ │Intent Parse ├─▶│Extract Params├─▶│Execute API Call    ││
+│ │"create_list"│ │name="VIP     │ │POST /api/lists     ││
+│ │             │ │Customers"    │ │{name: "VIP         ││
+│ └─────────────┘ └─────────────┘ │Customers"}         ││
+│                                 └─────────────────────┘│
+└─────────────────────────────────────────────────────────┘
+     │
+     ▼
+RESPONSE: "✅ Successfully created list 'VIP Customers' with ID: list_123"
+     │
+     ▼
+┌─────────────────────────────────────────────────────────┐
+│ FOLLOW-UP SUGGESTIONS                                   │
+│ • "Add prospects to VIP Customers list"                 │
+│ • "Show me all prospects in VIP Customers"              │
+│ • "Create a campaign for VIP Customers"                 │
+└─────────────────────────────────────────────────────────┘
+```
 
 ### **Prospect Management Workflow**
 1. **CSV Upload**: Import prospects with validation and duplicate prevention
