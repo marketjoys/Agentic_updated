@@ -377,13 +377,23 @@ class ActionRouterService:
                     return {"success": False, "error": "Failed to create list", "data": None}
             
             elif operation == 'add_prospects' or action == 'add_prospects_to_list':
+                # Resolve list name to ID if needed
                 list_id = parameters.get('list_id') or parameters.get('id')
+                if not list_id and parameters.get('name'):
+                    list_id = await self.resolve_list_id_by_name(parameters.get('name'))
+                
+                # Resolve prospect names to IDs if needed
                 prospect_ids = parameters.get('prospect_ids', [])
+                if not prospect_ids and (parameters.get('first_name') or parameters.get('email')):
+                    # Try to find prospect by name or email
+                    prospect_id = await self.resolve_prospect_id_by_details(parameters)
+                    if prospect_id:
+                        prospect_ids = [prospect_id]
                 
                 if not list_id:
-                    return {"success": False, "error": "List ID required", "data": None}
+                    return {"success": False, "error": "List not found. Please specify an existing list name.", "data": None}
                 if not prospect_ids:
-                    return {"success": False, "error": "Prospect IDs required", "data": None}
+                    return {"success": False, "error": "Prospect not found. Please create the prospect first or provide a valid prospect name.", "data": None}
                 
                 result = await self.db.add_prospects_to_list(list_id, prospect_ids)
                 if result:
