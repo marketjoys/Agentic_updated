@@ -138,21 +138,58 @@ The **AI Email Responder** is a fully functional, production-ready email marketi
 
 ---
 
-## TARGET MARKET & USE CASES
+## KEY APPLICATION FEATURES & WORKFLOWS
 
-### **Primary Markets:**
-- **B2B Service Companies** (Consulting, Software, Professional Services)
-- **Real Estate Professionals** (Agents, Brokers, Property Management)
-- **E-commerce & Retail** (Customer support, Order management, Abandoned cart recovery)
-- **Healthcare & Medical** (Appointment scheduling, Patient follow-up, Practice management)
-- **Financial Services** (Client onboarding, Portfolio updates, Compliance communication)
+### **Prospect Management Workflow**
+1. **CSV Upload**: Import prospects with validation and duplicate prevention
+2. **Manual Addition**: Add individual prospects through user-friendly forms
+3. **List Organization**: Assign prospects to custom lists for targeted campaigns
+4. **Search & Filter**: Find prospects by name, email, company, or industry
+5. **Contact Tracking**: Monitor email interactions and campaign participation
 
-### **Key Use Cases:**
-1. **Lead Nurturing**: Automated prospect education and relationship building
-2. **Customer Support**: Instant responses to common inquiries with escalation for complex issues
-3. **Sales Pipeline Management**: Automated follow-up sequences based on prospect behavior
-4. **Event Marketing**: Registration management, reminders, and post-event engagement
-5. **Product Launch Campaigns**: Coordinated multi-touch marketing sequences
+### **Campaign Creation & Execution**
+1. **Template Selection**: Choose from existing templates or create new ones
+2. **List Targeting**: Select specific prospect lists for campaign targeting
+3. **Provider Configuration**: Choose email provider (Gmail SMTP supported)
+4. **Campaign Launch**: Send emails immediately or schedule for later
+5. **Performance Monitoring**: Track delivery, open rates, and responses
+
+### **AI-Powered Email Processing**
+1. **Email Monitoring**: Automatic processing of incoming emails
+2. **Intent Classification**: AI categorizes emails by intent (interested, pricing, etc.)
+3. **Auto-Response**: Configurable automatic replies based on classified intents
+4. **Thread Management**: Maintains conversation context across email exchanges
+5. **Analytics Tracking**: Monitor AI processing performance and response rates
+
+### **AI Agent Interface Usage**
+1. **Natural Commands**: "Create a new list called VIP Customers"
+2. **Data Queries**: "Show me all prospects from technology companies"
+3. **Campaign Management**: "Send the Welcome Campaign to the VIP list"
+4. **Analytics Requests**: "What are my campaign statistics this month?"
+5. **Bulk Operations**: "Add all prospects with @tech.com emails to Tech List"
+
+---
+
+## SAMPLE DATA & TESTING ENVIRONMENT
+
+### **Pre-loaded Sample Data**
+- **5 Sample Prospects**: Realistic contact data with various industries
+- **6 Email Templates**: Initial, follow-up, and auto-response templates
+- **3 Prospect Lists**: Technology Companies, VIP Customers, Software Development
+- **2 Sample Campaigns**: Test campaigns with different statuses
+- **5 Intent Configurations**: Common email intent classifications
+
+### **Test Credentials**
+- **Username**: testuser
+- **Password**: testpass123
+- **Test Environment**: Fully functional with sample data
+
+### **Demo Capabilities**
+- Complete CRUD operations on all entities
+- Real email sending through Gmail provider
+- AI intent classification with Groq integration
+- Natural language AI agent interactions
+- Campaign analytics and performance tracking
 
 ---
 
