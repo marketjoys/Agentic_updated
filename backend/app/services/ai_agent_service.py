@@ -420,13 +420,15 @@ Analyze this message and extract the intent and parameters.
         """Enhanced prospect parameter extraction from message - CRITICAL for user's issue"""
         params = {}
         
-        # Enhanced name extraction patterns
+        # Enhanced name extraction patterns - FIXED for complex name formats
         name_patterns = [
             r'(?:prospect|contact|person|lead) (?:named|called) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "prospect named John Smith"
-            r'add ([A-Z][a-z]+ [A-Z][a-z]+)',  # "add John Smith"
-            r'create (?:a )?(?:prospect|contact) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "create prospect John Smith"
-            r'new (?:prospect|contact) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "new prospect John Smith"
-            r'([A-Z][a-z]+ [A-Z][a-z]+) (?:from|at|to)',  # "John Smith from TechCorp"
+            r'add (?:a )?(?:prospect|contact|person|lead)? (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "add John Smith" or "add a prospect John Smith"
+            r'create (?:a )?(?:prospect|contact) (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "create prospect John Smith"
+            r'new (?:prospect|contact) (?:named|called)? ([A-Z][a-z]+ [A-Z][a-z]+)',  # "new prospect John Smith"
+            r'([A-Z][a-z]+ [A-Z][a-z]+) (?:from|at|to|with|of)',  # "John Smith from TechCorp"
+            r'(?:add|create) (?:a )?(?:prospect|contact)?(?:\s+named|\s+called)?\s+([A-Z][a-z]+ [A-Z][a-z]+)',  # More flexible patterns
+            r'([A-Z][a-z]+ [A-Z][a-z]+\d*) (?:from|at|to|with)',  # Handle names with numbers from test
         ]
         
         for pattern in name_patterns:
