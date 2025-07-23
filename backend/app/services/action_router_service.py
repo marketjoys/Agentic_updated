@@ -151,7 +151,7 @@ class ActionRouterService:
             return {"success": False, "error": str(e), "data": None}
     
     async def handle_prospect_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle prospect-related actions"""
+        """Handle prospect-related actions with enhanced parameter validation and follow-up questions"""
         try:
             if operation == 'list' or action == 'list_prospects':
                 prospects = await self.db.get_prospects()
@@ -178,20 +178,115 @@ class ActionRouterService:
                     "updated_at": datetime.utcnow()
                 }
                 
-                # Validate required fields
-                if not prospect_data['email'] or not prospect_data['first_name']:
-                    return {"success": False, "error": "Email and first name are required", "data": None}
+                # Enhanced validation with specific error messages for missing fields
+                missing_fields = []
+                if not prospect_data['first_name']:
+                    missing_fields.append("first name")
+                if not prospect_data['email']:
+                    missing_fields.append("email address")
                 
+                if missing_fields:
+                    # Generate helpful follow-up questions based on what we have
+                    follow_up_questions = []
+                    if prospect_data.get('company'):
+                        if not prospect_data['first_name']:
+                            follow_up_questions.append(f"What is the person's name at {prospect_data['company']}?")
+                        if not prospect_data['email']:
+                            follow_up_questions.append(f"What is their email address at {prospect_data['company']}?")
+                    else:
+                        if not prospect_data['first_name']:
+                            follow_up_questions.append("What is the prospect's name?")
+                        if not prospect_data['email']:
+                            follow_up_questions.append("What is their email address?")
+                        follow_up_questions.append("Which company do they work for?")
+                    
+                    return {
+                        "success": False, 
+                        "error": f"I need some additional information to create this prospect. I'm missing: {', '.join(missing_fields)}.",
+                        "data": {
+                            "partial_prospect": prospect_data,
+                            "missing_fields": missing_fields,
+                            "follow_up_questions": follow_up_questions
+                        },
+                        "requires_clarification": True
+                    }
+                
+                # Attempt to create the prospect
                 result, error = await self.db.create_prospect(prospect_data)
                 if result:
-                    return {"success": True, "data": prospect_data, "message": "Prospect created successfully"}
+                    return {
+                        "success": True, 
+                        "data": prospect_data, 
+                        "message": f"Great! I've successfully created the prospect {prospect_data['first_name']} {prospect_data['last_name']} from {prospect_data.get('company', 'Unknown Company')}. They're now in your database and ready to be added to campaigns."
+                    }
                 else:
-                    return {"success": False, "error": error or "Failed to create prospect", "data": None}
+                    return {
+                        "success": False, 
+                        "error": error or "Failed to create prospect. This might be due to a duplicate email address.",
+                        "data": None,
+                        "suggestion": "Try using a different email address or check if this prospect already exists."
+                    }
+            
+            elif operation == 'search' or action == 'search_prospects':
+                # Enhanced prospect search functionality
+                search_term = parameters.get('search_term') or parameters.get('query') or parameters.get('name') or parameters.get('company')
+                industry_filter = parameters.get('industry')
+                company_filter = parameters.get('company')
+                
+                if not search_term and not industry_filter and not company_filter:
+                    return {
+                        "success": False,
+                        "error": "Please specify what you'd like to search for. You can search by name, company, or industry.",
+                        "data": None,
+                        "follow_up_questions": [
+                            "Search by name: 'Find prospects named John'",
+                            "Search by company: 'Find prospects from TechCorp'",
+                            "Search by industry: 'Find prospects in technology'"
+                        ]
+                    }
+                
+                # Get all prospects for filtering
+                all_prospects = await self.db.get_prospects()
+                filtered_prospects = []
+                
+                for prospect in all_prospects:
+                    match = False
+                    
+                    # Search by name
+                    if search_term:
+                        full_name = f"{prospect.get('first_name', '')} {prospect.get('last_name', '')}".lower()
+                        if search_term.lower() in full_name or search_term.lower() in prospect.get('company', '').lower():
+                            match = True
+                    
+                    # Filter by industry
+                    if industry_filter and prospect.get('industry', '').lower() == industry_filter.lower():
+                        match = True
+                    
+                    # Filter by company
+                    if company_filter and company_filter.lower() in prospect.get('company', '').lower():
+                        match = True
+                    
+                    if match:
+                        filtered_prospects.append(prospect)
+                
+                return {
+                    "success": True,
+                    "data": filtered_prospects,
+                    "message": f"Found {len(filtered_prospects)} prospects matching your search criteria."
+                }
             
             elif operation == 'upload' or action == 'upload_prospects':
                 csv_data = parameters.get('csv_data') or parameters.get('file_content')
                 if not csv_data:
-                    return {"success": False, "error": "CSV data required", "data": None}
+                    return {
+                        "success": False, 
+                        "error": "I need CSV data to upload prospects. Please provide the CSV content or upload a file.",
+                        "data": None,
+                        "follow_up_questions": [
+                            "Do you have a CSV file you'd like to upload?",
+                            "Would you like me to show you the expected CSV format?"
+                        ]
+                    }
                 
                 # Process CSV data
                 import csv
@@ -227,10 +322,14 @@ class ActionRouterService:
                             "failed_inserts": result["failed_inserts"],
                             "total": len(prospects_data)
                         }, 
-                        "message": f"Uploaded {len(result['successful_inserts'])} prospects"
+                        "message": f"Successfully uploaded {len(result['successful_inserts'])} prospects from your CSV file!"
                     }
                 else:
-                    return {"success": False, "error": "No valid prospects found in CSV", "data": None}
+                    return {
+                        "success": False, 
+                        "error": "No valid prospects found in the CSV data. Please make sure your CSV includes at least email and first_name columns.",
+                        "data": None
+                    }
             
             elif operation == 'show' or action == 'show_prospect':
                 prospect_id = parameters.get('id') or parameters.get('prospect_id')
