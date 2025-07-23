@@ -410,14 +410,18 @@ Analyze this message and extract the intent and parameters.
                 break
         
         return params
-        """Extract prospect parameters from message"""
+    
+    def extract_prospect_params(self, message: str) -> Dict[str, Any]:
+        """Enhanced prospect parameter extraction from message - CRITICAL for user's issue"""
         params = {}
         
-        # Extract name
+        # Enhanced name extraction patterns
         name_patterns = [
-            r'(?:prospect|contact) (?:named|called) ([A-Z][a-z]+ [A-Z][a-z]+)',
-            r'add ([A-Z][a-z]+ [A-Z][a-z]+)',
-            r'create (?:a )?(?:prospect|contact) ([A-Z][a-z]+ [A-Z][a-z]+)'
+            r'(?:prospect|contact|person|lead) (?:named|called) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "prospect named John Smith"
+            r'add ([A-Z][a-z]+ [A-Z][a-z]+)',  # "add John Smith"
+            r'create (?:a )?(?:prospect|contact) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "create prospect John Smith"
+            r'new (?:prospect|contact) ([A-Z][a-z]+ [A-Z][a-z]+)',  # "new prospect John Smith"
+            r'([A-Z][a-z]+ [A-Z][a-z]+) (?:from|at|to)',  # "John Smith from TechCorp"
         ]
         
         for pattern in name_patterns:
@@ -430,24 +434,69 @@ Analyze this message and extract the intent and parameters.
                     params['last_name'] = ' '.join(name_parts[1:])
                 break
         
-        # Extract company
+        # Enhanced company extraction patterns
         company_patterns = [
-            r'from ([A-Z][^,\.]+)',
-            r'at ([A-Z][^,\.]+)',
-            r'company ([A-Z][^,\.]+)'
+            r'from ([A-Z][A-Za-z\s&\.]+?)(?:\s|$|\.|,|with)',  # "from TechCorp"
+            r'at ([A-Z][A-Za-z\s&\.]+?)(?:\s|$|\.|,)',  # "at TechCorp"
+            r'company ([A-Z][A-Za-z\s&\.]+?)(?:\s|$|\.|,)',  # "company TechCorp"
+            r'works at ([A-Z][A-Za-z\s&\.]+?)(?:\s|$|\.|,)',  # "works at TechCorp"
+            r'(?:of|with) ([A-Z][A-Za-z\s&\.]+) (?:company|corp|inc|ltd)',  # "of TechCorp company"
         ]
         
         for pattern in company_patterns:
             match = re.search(pattern, message, re.IGNORECASE)
             if match:
-                params['company'] = match.group(1).strip()
+                company_name = match.group(1).strip()
+                # Clean up common suffixes
+                company_name = re.sub(r'\s+(company|corp|inc|ltd)$', '', company_name, flags=re.IGNORECASE)
+                params['company'] = company_name
                 break
         
-        # Extract email
-        email_pattern = r'(\w+@\w+\.\w+)'
-        match = re.search(email_pattern, message)
-        if match:
-            params['email'] = match.group(1)
+        # Extract email if present
+        email_patterns = [
+            r'(\w+@\w+\.\w+)',  # Basic email pattern
+            r'email (\w+@\w+\.\w+)',  # "email john@techcorp.com"
+        ]
+        
+        for pattern in email_patterns:
+            match = re.search(pattern, message)
+            if match:
+                params['email'] = match.group(1)
+                break
+        
+        # Extract job title if present
+        title_patterns = [
+            r'(?:title|position|role) ([A-Za-z\s]+?)(?:\s|$|\.|,)',
+            r'(?:as|is) (?:a |an )?([A-Za-z\s]+?)(?:\s|$|\.|,|at)',
+            r'([A-Za-z\s]+?) at [A-Z]',  # "Marketing Manager at TechCorp"
+        ]
+        
+        for pattern in title_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                title = match.group(1).strip()
+                # Filter out common words that aren't job titles
+                if not any(word in title.lower() for word in ['from', 'with', 'the', 'and', 'company']):
+                    params['job_title'] = title
+                    break
+        
+        # Extract phone if present
+        phone_patterns = [
+            r'phone (\+?[\d\s\-\(\)]+)',
+            r'(\+?[\d\s\-\(\)]{10,})'  # Basic phone pattern
+        ]
+        
+        for pattern in phone_patterns:
+            match = re.search(pattern, message)
+            if match:
+                params['phone'] = match.group(1).strip()
+                break
+        
+        # Generate email if not provided but we have name and company
+        if 'email' not in params and 'first_name' in params and 'company' in params:
+            first_name = params['first_name'].lower()
+            company = params['company'].lower().replace(' ', '').replace('&', '').replace('.', '')
+            params['email'] = f"{first_name}@{company}.com"
         
         return params
     
