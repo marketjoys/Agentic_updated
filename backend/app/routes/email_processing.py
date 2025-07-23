@@ -6,6 +6,9 @@ from app.models import ThreadContext
 from app.utils.helpers import generate_id
 from typing import Dict, List
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
