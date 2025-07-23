@@ -15,7 +15,7 @@ sys.path.append('/app/backend')
 
 from app.services.database import db_service
 
-BACKEND_URL = "https://28bb97d6-96dc-4e39-8c4c-1e7aeb76901d.preview.emergentagent.com"
+BACKEND_URL = "https://59d8cc1a-c886-43c7-a8cc-86f182adaf98.preview.emergentagent.com"
 
 async def fix_email_providers():
     """Add test email providers to database"""
