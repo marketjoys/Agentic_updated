@@ -77,17 +77,95 @@ The **AI Email Responder** is a fully functional, production-ready email marketi
 - **Email Delivery**: SMTP integration with Gmail provider support
 - **Authentication**: JWT-based secure authentication system
 
-### **Core Backend Endpoints (39 API Routes)**
-- **Authentication**: `/api/auth/*` - Login, register, token management
-- **Campaigns**: `/api/campaigns/*` - CRUD operations, email sending
-- **Prospects**: `/api/prospects/*` - CRUD operations, CSV upload
-- **Templates**: `/api/templates/*` - CRUD operations with personalization
-- **Lists**: `/api/lists/*` - List management, prospect associations
-- **Email Providers**: `/api/email-providers/*` - SMTP configuration
-- **Analytics**: `/api/analytics/*` - Performance metrics and reporting
-- **AI Agent**: `/api/ai-agent/*` - Natural language interface
-- **Email Processing**: `/api/email-processing/*` - AI monitoring and auto-response
-- **Intents**: `/api/intents/*` - AI intent configuration
+### **Core Backend Endpoints (50+ API Routes)**
+
+#### **System & Health**
+- `GET /api/health` - API health check endpoint for monitoring system status
+
+#### **Authentication & User Management**
+- `POST /api/auth/login` - User authentication with username/password credentials
+- `POST /api/auth/register` - New user registration with account creation
+- `GET /api/auth/me` - Get current authenticated user profile information
+- `POST /api/auth/refresh` - Refresh JWT authentication tokens for session management
+- `POST /api/auth/logout` - User logout and session termination
+
+#### **Campaign Management**
+- `GET /api/campaigns` - Retrieve all campaigns with filtering and pagination
+- `POST /api/campaigns` - Create new email campaigns with template and list selection
+- `PUT /api/campaigns/{campaign_id}` - Update existing campaign settings and configurations
+- `DELETE /api/campaigns/{campaign_id}` - Delete campaigns and associated data
+- `POST /api/campaigns/{campaign_id}/send` - Execute campaign email sending to prospect lists
+- `GET /api/campaigns/{campaign_id}/status` - Monitor campaign sending progress and completion status
+
+#### **Prospect Management**
+- `GET /api/prospects` - List all prospects with search, filter, and pagination capabilities
+- `POST /api/prospects` - Create individual prospects with comprehensive contact information
+- `PUT /api/prospects/{prospect_id}` - Update prospect details and contact information
+- `DELETE /api/prospects/{prospect_id}` - Remove prospects from database
+- `POST /api/prospects/upload` - Bulk CSV upload with validation and duplicate detection
+
+#### **Email Template System**
+- `GET /api/templates` - Retrieve all email templates by type and category
+- `POST /api/templates` - Create new templates with personalization placeholders
+- `PUT /api/templates/{template_id}` - Update template content and settings
+- `DELETE /api/templates/{template_id}` - Delete email templates from system
+
+#### **List Management & Organization**
+- `GET /api/lists` - Get all prospect lists with statistics and prospect counts
+- `POST /api/lists` - Create new prospect lists for campaign targeting
+- `PUT /api/lists/{list_id}` - Update list names, descriptions, and metadata
+- `DELETE /api/lists/{list_id}` - Delete lists and prospect associations
+- `GET /api/lists/{list_id}` - Get detailed list information including prospect count
+- `GET /api/lists/{list_id}/prospects` - Retrieve all prospects assigned to specific list
+- `POST /api/lists/{list_id}/prospects` - Add prospects to lists for targeted campaigns
+- `DELETE /api/lists/{list_id}/prospects` - Remove prospects from specific lists
+
+#### **Email Provider Configuration**
+- `GET /api/email-providers` - List all configured SMTP email providers
+- `POST /api/email-providers` - Add new email providers with SMTP/IMAP settings
+- `PUT /api/email-providers/{provider_id}` - Update provider configurations and credentials
+- `DELETE /api/email-providers/{provider_id}` - Remove email providers from system
+- `POST /api/email-providers/{provider_id}/test` - Test email provider connectivity and authentication
+- `POST /api/email-providers/{provider_id}/set-default` - Set default provider for campaign sending
+
+#### **AI Agent Natural Language Interface**
+- `POST /api/ai-agent/chat` - Main conversational endpoint for natural language commands
+- `POST /api/ai-agent/voice` - Voice-based interaction with speech-to-text processing
+- `GET /api/ai-agent/capabilities` - List available AI agent actions and command examples
+- `GET /api/ai-agent/help` - Comprehensive help documentation for AI agent usage
+- `POST /api/ai-agent/test` - Test AI agent functionality with sample commands
+- `GET /api/ai-agent/analytics` - AI agent usage statistics and performance metrics
+- `GET /api/ai-agent/sessions` - List active conversation sessions for user
+- `GET /api/ai-agent/sessions/{session_id}/context` - Retrieve conversation history and context
+- `DELETE /api/ai-agent/sessions/{session_id}` - Clear conversation session and history
+- `WS /api/ai-agent/ws/{session_id}` - WebSocket endpoint for real-time conversation
+
+#### **Email Processing & Auto-Response**
+- `POST /api/email-processing/start` - Start automated email monitoring service
+- `POST /api/email-processing/stop` - Stop email monitoring and processing
+- `GET /api/email-processing/status` - Check current email processing service status
+- `POST /api/email-processing/test-classification` - Test AI intent classification with sample emails
+- `POST /api/email-processing/test-response` - Test AI response generation with prospect data
+- `POST /api/email-processing/simulate-email` - Simulate email processing workflow for testing
+- `GET /api/email-processing/analytics` - Email processing statistics and auto-response metrics
+
+#### **Intent Classification & Configuration**
+- `GET /api/intents` - List all configured AI intent classifications
+- `POST /api/intents` - Create new intent configurations with keywords and responses
+- `GET /api/intents/{intent_id}` - Get specific intent configuration details
+- `PUT /api/intents/{intent_id}` - Update intent settings and auto-response rules
+- `DELETE /api/intents/{intent_id}` - Remove intent configurations from system
+
+#### **Conversation Thread Management**
+- `GET /api/threads` - List all email conversation threads
+- `GET /api/threads/{thread_id}` - Get specific conversation thread with message history
+- `GET /api/threads/prospect/{prospect_id}` - Find conversation thread by prospect
+- `POST /api/threads/{thread_id}/messages` - Add messages to existing conversation threads
+
+#### **Analytics & Reporting**
+- `GET /api/analytics` - Overall system analytics dashboard with key performance metrics
+- `GET /api/analytics/campaign/{campaign_id}` - Detailed campaign performance analytics
+- `GET /api/real-time/dashboard-metrics` - Real-time dashboard statistics and system status
 
 ### **Frontend Application Pages**
 - **Dashboard**: System overview with real-time statistics
