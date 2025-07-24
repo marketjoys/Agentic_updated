@@ -169,6 +169,13 @@ async def create_campaign(campaign: Campaign):
         # Connect to database
         await db_service.connect()
         
+        # Calculate prospect count from lists
+        prospect_count = 0
+        if campaign.list_ids:
+            for list_id in campaign.list_ids:
+                prospects = await db_service.get_prospects_by_list_id(list_id)
+                prospect_count += len(prospects)
+        
         # Generate ID and add timestamps
         campaign_id = generate_id()
         campaign_data = {
@@ -179,7 +186,7 @@ async def create_campaign(campaign: Campaign):
             "max_emails": campaign.max_emails,
             "schedule": campaign.schedule,
             "status": "draft",
-            "prospect_count": 0,
+            "prospect_count": prospect_count,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -192,7 +199,7 @@ async def create_campaign(campaign: Campaign):
                 "id": campaign_id,
                 "name": campaign.name,
                 "status": "draft",
-                "prospect_count": 0,
+                "prospect_count": prospect_count,
                 "max_emails": campaign.max_emails,
                 "created_at": datetime.utcnow(),
                 "message": "Campaign created successfully"
