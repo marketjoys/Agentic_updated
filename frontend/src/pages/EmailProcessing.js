@@ -215,62 +215,151 @@ const EmailProcessing = () => {
         </div>
       </div>
 
-      {/* System Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Email Processing Status */}
-        <div className="card">
+      {/* Enhanced Auto Responder Status Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Auto Responder Status Card */}
+        <div className="col-span-2 card">
+          <div className="card-header">
+            <h3 className="text-xl font-bold text-secondary-900 flex items-center">
+              <Brain className="h-6 w-6 mr-2 text-blue-600" />
+              Auto Responder Status
+            </h3>
+            <p className="text-sm text-secondary-600 mt-1">
+              Real-time monitoring of automatic email response system
+            </p>
+          </div>
           <div className="card-body">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-full ${
+                <div className={`p-3 rounded-full ${
                   processingStatus === 'running' 
                     ? 'bg-green-100 text-green-600' 
                     : 'bg-red-100 text-red-600'
                 }`}>
                   {processingStatus === 'running' ? 
-                    <CheckCircle className="h-5 w-5" /> : 
-                    <AlertCircle className="h-5 w-5" />
+                    <CheckCircle className="h-6 w-6" /> : 
+                    <AlertCircle className="h-6 w-6" />
                   }
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-secondary-900">
-                    Email Processing
-                  </h3>
+                  <h4 className="text-lg font-semibold text-secondary-900">
+                    Email Processing Engine
+                  </h4>
                   <p className="text-sm text-secondary-600">
                     {processingStatus === 'running' 
-                      ? 'Monitoring emails and generating responses'
-                      : 'Email processing is stopped'
+                      ? 'Monitoring IMAP and generating automatic responses'
+                      : 'Auto responder is currently stopped'
                     }
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                <div className={`px-4 py-2 rounded-full text-sm font-medium ${
                   processingStatus === 'running' 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {processingStatus.toUpperCase()}
+                  {processingStatus === 'running' ? 'ACTIVE' : 'STOPPED'}
                 </div>
                 {processingStatus === 'running' ? (
                   <button
                     onClick={handleStopProcessing}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg border"
+                    title="Stop Auto Responder"
                   >
-                    <Pause className="h-4 w-4" />
+                    <Pause className="h-5 w-5" />
                   </button>
                 ) : (
                   <button
                     onClick={handleStartProcessing}
-                    className="p-2 text-green-600 hover:bg-green-50 rounded"
+                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg border"
+                    title="Start Auto Responder"
                   >
-                    <Play className="h-4 w-4" />
+                    <Play className="h-5 w-5" />
                   </button>
                 )}
               </div>
             </div>
+            
+            {/* IMAP Scan Information */}
+            <div className="border-t pt-4">
+              <h5 className="text-sm font-semibold text-secondary-700 mb-3">Last IMAP Scan Activity</h5>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-secondary-900">
+                    {followUpDashboard.imap_monitoring?.emails_processed_24h || 0}
+                  </div>
+                  <div className="text-secondary-600">Emails Scanned (24h)</div>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-secondary-900">
+                    {followUpDashboard.imap_monitoring?.threads_active_24h || 0}
+                  </div>
+                  <div className="text-secondary-600">Active Threads (24h)</div>
+                </div>
+                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className="text-lg font-bold text-secondary-900">
+                    {analytics.auto_responses_sent || 0}
+                  </div>
+                  <div className="text-secondary-600">Auto Responses Sent</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* IMAP Connection Status */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-bold text-secondary-900 flex items-center">
+              <Mail className="h-5 w-5 mr-2 text-purple-600" />
+              IMAP Monitor
+            </h3>
+          </div>
+          <div className="card-body">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Connection Status</span>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  processingStatus === 'running' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {processingStatus === 'running' ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Last Scan</span>
+                <span className="text-sm font-medium text-secondary-900">
+                  {followUpDashboard.system_status?.last_updated 
+                    ? new Date(followUpDashboard.system_status.last_updated).toLocaleTimeString()
+                    : 'Never'
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Scan Frequency</span>
+                <span className="text-sm font-medium text-secondary-900">
+                  {processingStatus === 'running' ? '30 seconds' : 'Stopped'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <button
+                onClick={handleShowImapLogs}
+                className="w-full btn btn-secondary text-sm"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                View IMAP Logs
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* System Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Follow-up Engine Status */}
         <div className="card">
