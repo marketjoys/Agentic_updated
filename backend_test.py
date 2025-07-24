@@ -1,5 +1,378 @@
 #!/usr/bin/env python3
 """
+Enhanced AI Agent Backend Testing - December 25, 2025
+Testing the Enhanced AI Agent functionality comprehensively as requested in review.
+
+Focus Areas:
+1. Enhanced AI Agent Chat Endpoint (use_enhanced_flow=true)
+2. Legacy AI Agent Chat Endpoint (use_enhanced_flow=false)  
+3. Turn Limit Configuration (POST /api/ai-agent/set-turn-limit)
+4. Enhanced Capabilities (GET /api/ai-agent/enhanced-capabilities)
+5. Conversation Context (GET /api/ai-agent/conversation-context/{session_id})
+6. Multi-turn Conversation Flow
+"""
+
+import requests
+import json
+import sys
+from datetime import datetime
+
+# Configuration
+BASE_URL = "https://c1c634a8-0d17-4c07-b0a8-c7a5f7ffaa06.preview.emergentagent.com/api"
+USERNAME = "testuser"
+PASSWORD = "testpass123"
+
+class EnhancedAIAgentTester:
+    def __init__(self):
+        self.session = requests.Session()
+        self.token = None
+        self.session_id = "test_session_12345"
+        
+    def authenticate(self):
+        """Authenticate and get access token"""
+        try:
+            response = self.session.post(f"{BASE_URL}/auth/login", json={
+                "username": USERNAME,
+                "password": PASSWORD
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.token = data.get("access_token")
+                self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+                print("✅ Authentication successful")
+                return True
+            else:
+                print(f"❌ Authentication failed: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Authentication error: {str(e)}")
+            return False
+    
+    def test_enhanced_ai_agent_chat_endpoint(self):
+        """Test Enhanced AI Agent Chat Endpoint (use_enhanced_flow=true)"""
+        print("\n🧪 Testing Enhanced AI Agent Chat Endpoint (use_enhanced_flow=true)")
+        
+        try:
+            # Test enhanced flow chat endpoint
+            payload = {
+                "message": "Create campaign Summer Sale",
+                "session_id": self.session_id,
+                "use_enhanced_flow": True
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/chat", json=payload)
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Enhanced AI Agent Chat endpoint returns 404 - NOT IMPLEMENTED")
+                return False
+            elif response.status_code == 200:
+                data = response.json()
+                
+                # Check for required enhanced flow fields
+                required_fields = ["conversation_state", "pending_action", "context_info"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    print(f"❌ Enhanced flow missing required fields: {missing_fields}")
+                    return False
+                else:
+                    print("✅ Enhanced AI Agent Chat endpoint working with required fields")
+                    return True
+            else:
+                print(f"❌ Enhanced AI Agent Chat endpoint error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Enhanced AI Agent Chat endpoint test error: {str(e)}")
+            return False
+    
+    def test_legacy_ai_agent_chat_endpoint(self):
+        """Test Legacy AI Agent Chat Endpoint (use_enhanced_flow=false)"""
+        print("\n🧪 Testing Legacy AI Agent Chat Endpoint (use_enhanced_flow=false)")
+        
+        try:
+            # Test legacy flow chat endpoint
+            payload = {
+                "message": "Create campaign Summer Sale",
+                "session_id": self.session_id,
+                "use_enhanced_flow": False
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/chat", json=payload)
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Legacy AI Agent Chat endpoint returns 404 - NOT IMPLEMENTED")
+                return False
+            elif response.status_code == 200:
+                data = response.json()
+                
+                # Legacy mode should execute directly, not ask for confirmation
+                if "conversation_state" in data or "pending_action" in data:
+                    print("❌ Legacy mode incorrectly using enhanced flow features")
+                    return False
+                else:
+                    print("✅ Legacy AI Agent Chat endpoint working in direct execution mode")
+                    return True
+            else:
+                print(f"❌ Legacy AI Agent Chat endpoint error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Legacy AI Agent Chat endpoint test error: {str(e)}")
+            return False
+    
+    def test_turn_limit_configuration(self):
+        """Test Turn Limit Configuration (POST /api/ai-agent/set-turn-limit)"""
+        print("\n🧪 Testing Turn Limit Configuration")
+        
+        try:
+            # Test setting turn limit to 25
+            payload = {
+                "session_id": self.session_id,
+                "turn_limit": 25
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/set-turn-limit", json=payload)
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Turn Limit Configuration endpoint returns 404 - NOT IMPLEMENTED")
+                return False
+            elif response.status_code == 200:
+                data = response.json()
+                
+                if data.get("turn_limit") == 25:
+                    print("✅ Turn Limit Configuration working correctly")
+                    return True
+                else:
+                    print(f"❌ Turn limit not set correctly: {data}")
+                    return False
+            else:
+                print(f"❌ Turn Limit Configuration error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Turn Limit Configuration test error: {str(e)}")
+            return False
+    
+    def test_enhanced_capabilities(self):
+        """Test Enhanced Capabilities (GET /api/ai-agent/enhanced-capabilities)"""
+        print("\n🧪 Testing Enhanced Capabilities")
+        
+        try:
+            response = self.session.get(f"{BASE_URL}/ai-agent/enhanced-capabilities")
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Enhanced Capabilities endpoint returns 404 - NOT IMPLEMENTED")
+                return False
+            elif response.status_code == 200:
+                data = response.json()
+                
+                # Check for conversation flow steps and enhanced features
+                required_fields = ["conversation_flow_steps", "enhanced_features"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    print(f"❌ Enhanced capabilities missing required fields: {missing_fields}")
+                    return False
+                else:
+                    print("✅ Enhanced Capabilities endpoint working with required fields")
+                    return True
+            else:
+                print(f"❌ Enhanced Capabilities error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Enhanced Capabilities test error: {str(e)}")
+            return False
+    
+    def test_conversation_context(self):
+        """Test Conversation Context (GET /api/ai-agent/conversation-context/{session_id})"""
+        print("\n🧪 Testing Conversation Context")
+        
+        try:
+            response = self.session.get(f"{BASE_URL}/ai-agent/conversation-context/{self.session_id}")
+            
+            print(f"Status Code: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Conversation Context endpoint returns 404 - NOT IMPLEMENTED")
+                return False
+            elif response.status_code == 200:
+                data = response.json()
+                
+                # Check for current state, extracted params, missing params
+                required_fields = ["current_state", "extracted_params", "missing_params"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if missing_fields:
+                    print(f"❌ Conversation context missing required fields: {missing_fields}")
+                    return False
+                else:
+                    print("✅ Conversation Context endpoint working with required fields")
+                    return True
+            else:
+                print(f"❌ Conversation Context error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Conversation Context test error: {str(e)}")
+            return False
+    
+    def test_multi_turn_conversation_flow(self):
+        """Test Multi-turn Conversation Flow"""
+        print("\n🧪 Testing Multi-turn Conversation Flow")
+        
+        try:
+            # Step 1: Start with 'Create campaign Summer Sale'
+            print("Step 1: Starting conversation with 'Create campaign Summer Sale'")
+            payload = {
+                "message": "Create campaign Summer Sale",
+                "session_id": self.session_id,
+                "use_enhanced_flow": True
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/chat", json=payload)
+            
+            if response.status_code == 404:
+                print("❌ CRITICAL: Multi-turn conversation flow not available - endpoint returns 404")
+                return False
+            
+            print(f"Step 1 Response: {response.status_code} - {response.text}")
+            
+            if response.status_code != 200:
+                print("❌ Step 1 failed - cannot proceed with multi-turn flow")
+                return False
+            
+            # Step 2: Provide missing information
+            print("Step 2: Providing missing information")
+            payload = {
+                "message": "Use template Welcome Email, target list VIP Customers, send to 100 prospects",
+                "session_id": self.session_id,
+                "use_enhanced_flow": True
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/chat", json=payload)
+            print(f"Step 2 Response: {response.status_code} - {response.text}")
+            
+            # Step 3: Confirm execution
+            print("Step 3: Confirming execution")
+            payload = {
+                "message": "Yes, confirm and execute",
+                "session_id": self.session_id,
+                "use_enhanced_flow": True
+            }
+            
+            response = self.session.post(f"{BASE_URL}/ai-agent/chat", json=payload)
+            print(f"Step 3 Response: {response.status_code} - {response.text}")
+            
+            if response.status_code == 200:
+                print("✅ Multi-turn conversation flow completed successfully")
+                return True
+            else:
+                print("❌ Multi-turn conversation flow failed")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Multi-turn conversation flow test error: {str(e)}")
+            return False
+    
+    def check_backend_logs_for_errors(self):
+        """Check if we can identify the root cause from available information"""
+        print("\n🔍 Analyzing Backend Import Issues")
+        
+        # Based on test_result.md, we know the issue is:
+        # "Backend logs show: 'Could not import additional routes: No module named app.models.conversation_models'"
+        
+        print("Known Issue from Backend Logs:")
+        print("❌ 'Could not import additional routes: No module named app.models.conversation_models'")
+        print("❌ 'app.models is not a package'")
+        print("❌ Enhanced AI Agent routes (ai_agent.py) are not being imported due to missing dependencies")
+        
+        return False
+    
+    def run_comprehensive_test(self):
+        """Run all Enhanced AI Agent tests"""
+        print("🚀 ENHANCED AI AGENT COMPREHENSIVE TESTING - DECEMBER 25, 2025")
+        print("=" * 80)
+        print("Testing Enhanced AI Agent functionality as requested in review:")
+        print("1. Enhanced AI Agent Chat Endpoint (use_enhanced_flow=true)")
+        print("2. Legacy AI Agent Chat Endpoint (use_enhanced_flow=false)")
+        print("3. Turn Limit Configuration (POST /api/ai-agent/set-turn-limit)")
+        print("4. Enhanced Capabilities (GET /api/ai-agent/enhanced-capabilities)")
+        print("5. Conversation Context (GET /api/ai-agent/conversation-context/{session_id})")
+        print("6. Multi-turn Conversation Flow")
+        print("=" * 80)
+        
+        # Authenticate first
+        if not self.authenticate():
+            print("❌ CRITICAL: Authentication failed - cannot proceed with testing")
+            return False
+        
+        # Run all tests
+        test_results = {
+            "enhanced_chat_endpoint": self.test_enhanced_ai_agent_chat_endpoint(),
+            "legacy_chat_endpoint": self.test_legacy_ai_agent_chat_endpoint(),
+            "turn_limit_configuration": self.test_turn_limit_configuration(),
+            "enhanced_capabilities": self.test_enhanced_capabilities(),
+            "conversation_context": self.test_conversation_context(),
+            "multi_turn_conversation": self.test_multi_turn_conversation_flow()
+        }
+        
+        # Check backend logs for root cause
+        self.check_backend_logs_for_errors()
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("🎯 ENHANCED AI AGENT TEST RESULTS SUMMARY")
+        print("=" * 80)
+        
+        passed_tests = sum(test_results.values())
+        total_tests = len(test_results)
+        
+        for test_name, result in test_results.items():
+            status = "✅ PASSED" if result else "❌ FAILED"
+            print(f"{test_name.replace('_', ' ').title()}: {status}")
+        
+        print(f"\nOverall Results: {passed_tests}/{total_tests} tests passed ({(passed_tests/total_tests)*100:.1f}%)")
+        
+        if passed_tests == 0:
+            print("\n🚨 CRITICAL FINDING: ALL ENHANCED AI AGENT TESTS FAILED")
+            print("ROOT CAUSE: Enhanced AI Agent functionality is NOT IMPLEMENTED")
+            print("IMPACT: All 6 requested test scenarios from review failed")
+            print("RECOMMENDATION: Fix missing dependencies and implement enhanced AI Agent routes")
+        elif passed_tests < total_tests:
+            print(f"\n⚠️ PARTIAL FUNCTIONALITY: {total_tests - passed_tests} tests failed")
+            print("RECOMMENDATION: Address failing test scenarios")
+        else:
+            print("\n🎉 ALL ENHANCED AI AGENT TESTS PASSED")
+            print("Enhanced AI Agent functionality is fully operational")
+        
+        return passed_tests == total_tests
+
+if __name__ == "__main__":
+    tester = EnhancedAIAgentTester()
+    success = tester.run_comprehensive_test()
+    
+    if not success:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+"""
 List and Prospect Management Testing - December 2024
 Testing the specific functionality requested in the review:
 - Authentication and token management
