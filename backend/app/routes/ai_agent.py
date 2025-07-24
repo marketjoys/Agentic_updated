@@ -1,4 +1,4 @@
-# AI Agent Conversational Interface
+# Enhanced AI Agent Conversational Interface with Confirmation Flow
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any, Union
@@ -7,8 +7,10 @@ from datetime import datetime
 import json
 import asyncio
 from bson import ObjectId
-from app.services.ai_agent_service import ai_agent_service
-from app.services.conversation_context_service import conversation_context_service
+from app.services.enhanced_ai_agent_service import enhanced_ai_agent_service
+from app.services.enhanced_conversation_service import enhanced_conversation_service
+from app.services.ai_agent_service import ai_agent_service  # Keep for backward compatibility
+from app.services.conversation_context_service import conversation_context_service  # Keep for backward compatibility
 from app.utils.helpers import generate_id
 
 # Configure logging
