@@ -318,10 +318,27 @@ class EnhancedAIAgentService:
                 await self.conversation_service.update_conversation_state(conv_context.session_id, ConversationState.EXECUTING)
                 
                 # Execute the action
+                # Extract entity and operation from action
+                if '_' in action:
+                    operation, entity_raw = action.split('_', 1)
+                    # Convert plural entities to singular for routing
+                    entity_mapping = {
+                        'campaigns': 'campaign',
+                        'prospects': 'prospect', 
+                        'templates': 'template',
+                        'lists': 'list',
+                        'email_providers': 'email_provider',
+                        'providers': 'email_provider'
+                    }
+                    entity = entity_mapping.get(entity_raw, entity_raw)
+                else:
+                    operation = action
+                    entity = 'general'
+                
                 result = await self.action_router.execute_action(
                     action=action,
-                    entity=action.split('_')[1] if '_' in action else 'unknown',
-                    operation=action.split('_')[0] if '_' in action else action,
+                    entity=entity,
+                    operation=operation,
                     parameters=parameters,
                     user_id=conv_context.user_id
                 )
