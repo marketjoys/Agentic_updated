@@ -934,14 +934,27 @@ def personalize_template(template_content: str, recipient: dict) -> str:
 
 @app.post("/api/campaigns/{campaign_id}/send")
 async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest):
-    """Send emails for a specific campaign"""
+    """Send emails for a specific campaign with auto-start follow-up and auto-response services"""
     try:
         from app.services.database import db_service
         from app.services.email_provider_service import email_provider_service
+        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.email_processor import email_processor
         from app.utils.helpers import generate_id, personalize_template
         
         # Connect to database
         await db_service.connect()
+        
+        # Auto-start Follow-up and Auto-Response Services
+        logging.info("Auto-starting follow-up and auto-response services...")
+        
+        if not smart_follow_up_engine.processing:
+            await smart_follow_up_engine.start_follow_up_engine()
+            logging.info("Smart Follow-up Engine started automatically")
+        
+        if not email_processor.processing:
+            await email_processor.start_monitoring()
+            logging.info("Email Processor (Auto-Responder) started automatically")
         
         # Get campaign data
         campaign = await db_service.get_campaign_by_id(campaign_id)
