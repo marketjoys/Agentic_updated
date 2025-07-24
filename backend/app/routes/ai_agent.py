@@ -39,6 +39,22 @@ class ConversationRequest(BaseModel):
     user_id: Optional[str] = "default"
     session_id: Optional[str] = None
     context: Optional[Dict[str, Any]] = {}
+    use_enhanced_flow: Optional[bool] = True  # Use enhanced confirmation flow by default
+
+class ConversationResponse(BaseModel):
+    response: str
+    action_taken: Optional[str] = None
+    data: Optional[Union[Dict[str, Any], List[Any]]] = None
+    suggestions: Optional[List[str]] = []
+    session_id: str
+    timestamp: str
+    conversation_state: Optional[str] = None  # Current conversation state
+    pending_action: Optional[Dict[str, Any]] = None  # Action waiting for confirmation
+    context_info: Optional[Dict[str, Any]] = None  # Additional context information
+
+class SetTurnLimitRequest(BaseModel):
+    session_id: str
+    max_turns: int  # Number of turns to keep in context (10-100)
 
 class ConversationResponse(BaseModel):
     response: str
