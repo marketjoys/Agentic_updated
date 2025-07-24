@@ -853,5 +853,44 @@ class ActionRouterService:
             logger.error(f"Error sending campaign: {e}")
             return {"success": False, "error": str(e), "data": None}
 
+    
+    async def _schedule_prospect_follow_ups(self, prospect_id: str, campaign_id: str, 
+                                           follow_up_intervals: List[int], follow_up_templates: List[str]):
+        """Schedule follow-up emails for a prospect"""
+        try:
+            # Update prospect with follow-up settings
+            await self.db.update_prospect(prospect_id, {
+                "follow_up_status": "active",
+                "follow_up_count": 0,
+                "follow_up_intervals": follow_up_intervals,
+                "follow_up_templates": follow_up_templates,
+                "campaign_id": campaign_id,
+                "last_contact": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            
+            logger.info(f"Follow-up sequence scheduled for prospect {prospect_id}")
+            
+        except Exception as e:
+            logger.error(f"Error scheduling follow-ups for prospect {prospect_id}: {e}")
+    
+    async def _ensure_background_services_running(self):
+        """Ensure email monitoring and follow-up services are running"""
+        try:
+            # Import and start email processor
+            from app.services.email_processor import email_processor
+            if not email_processor.processing:
+                await email_processor.start_monitoring()
+                logger.info("Email processor started")
+            
+            # Import and start follow-up engine
+            from app.services.smart_follow_up_engine import smart_follow_up_engine
+            if not smart_follow_up_engine.processing:
+                await smart_follow_up_engine.start_follow_up_engine()
+                logger.info("Follow-up engine started")
+                
+        except Exception as e:
+            logger.error(f"Error starting background services: {e}")
+
 # Global instance
 action_router_service = ActionRouterService()
