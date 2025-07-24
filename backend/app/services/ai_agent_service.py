@@ -835,11 +835,11 @@ Analyze this message and extract the intent and parameters.
             elif action == 'schedule_campaign':
                 if action_result.get('requires_confirmation') and data:
                     details = data.get('confirmation_details', {})
-                    campaign_name = details.get('campaign_name', 'your campaign')
-                    send_time = details.get('send_time', 'Not specified')
-                    send_date = details.get('send_date', 'Not specified')
-                    follow_up_enabled = details.get('follow_up_enabled', False)
-                    follow_up_intervals = details.get('follow_up_intervals', [])
+                    campaign_name = details.get('campaign_name', data.get('name', 'your campaign'))
+                    send_time = details.get('send_time', data.get('send_time', 'Not specified'))
+                    send_date = details.get('send_date', data.get('send_date', 'Not specified'))
+                    follow_up_enabled = details.get('follow_up_enabled', data.get('enable_follow_up', False))
+                    follow_up_intervals = details.get('follow_up_intervals', data.get('follow_up_intervals', []))
                     
                     response = f"I've scheduled '{campaign_name}' for you! Here are the details:\n"
                     response += f"• Send Date: {send_date}\n"
