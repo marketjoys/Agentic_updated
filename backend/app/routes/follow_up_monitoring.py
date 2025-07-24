@@ -44,6 +44,74 @@ async def get_follow_up_dashboard():
         logger.error(f"Error getting follow-up dashboard: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/follow-up-monitoring/imap-scan-status")
+async def get_last_imap_scan_status():
+    """Get the status of the last IMAP scan with detailed information"""
+    try:
+        # Get the most recent IMAP scan log
+        recent_logs = await db_service.db.imap_scan_logs.find().sort("timestamp", -1).limit(1).to_list(1)
+        last_scan = recent_logs[0] if recent_logs else None
+        
+        # Get overall IMAP statistics
+        cutoff_24h = datetime.utcnow() - timedelta(hours=24)
+        logs_24h = await db_service.db.imap_scan_logs.find({
+            "timestamp": {"$gte": cutoff_24h}
+        }).to_list(100)
+        
+        # Calculate statistics
+        total_scans_24h = len(logs_24h)
+        total_emails_found_24h = sum(log.get("new_emails_found", 0) for log in logs_24h)
+        total_emails_processed_24h = sum(log.get("emails_processed", 0) for log in logs_24h)
+        total_errors_24h = sum(len(log.get("errors", [])) for log in logs_24h)
+        
+        # Get email processor status
+        from app.services.email_processor import email_processor
+        processor_running = email_processor.processing
+        
+        return {
+            "last_scan": {
+                "timestamp": last_scan["timestamp"] if last_scan else None,
+                "new_emails_found": last_scan.get("new_emails_found", 0) if last_scan else 0,
+                "emails_processed": last_scan.get("emails_processed", 0) if last_scan else 0,
+                "scan_duration_seconds": last_scan.get("scan_duration_seconds", 0) if last_scan else 0,
+                "errors": last_scan.get("errors", []) if last_scan else [],
+                "success": len(last_scan.get("errors", [])) == 0 if last_scan else False
+            },
+            "statistics_24h": {
+                "total_scans": total_scans_24h,
+                "total_emails_found": total_emails_found_24h,
+                "total_emails_processed": total_emails_processed_24h,
+                "total_errors": total_errors_24h,
+                "avg_emails_per_scan": round(total_emails_found_24h / max(total_scans_24h, 1), 2),
+                "success_rate": round((total_scans_24h - total_errors_24h) / max(total_scans_24h, 1) * 100, 2) if total_scans_24h > 0 else 100
+            },
+            "processor_status": {
+                "running": processor_running,
+                "last_check": datetime.utcnow(),
+                "next_scan_in_seconds": 30 if processor_running else None
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting IMAP scan status: {str(e)}")
+        return {
+            "last_scan": None,
+            "statistics_24h": {
+                "total_scans": 0,
+                "total_emails_found": 0,
+                "total_emails_processed": 0,
+                "total_errors": 0,
+                "avg_emails_per_scan": 0,
+                "success_rate": 100
+            },
+            "processor_status": {
+                "running": False,
+                "last_check": datetime.utcnow(),
+                "next_scan_in_seconds": None,
+                "error": str(e)
+            }
+        }
+
 @router.get("/follow-up-monitoring/imap-logs")
 async def get_imap_scan_logs(hours: int = 24):
     """Get IMAP scan logs for the last N hours"""
