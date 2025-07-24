@@ -132,6 +132,46 @@ class ActionRouterService:
                 else:
                     return {"success": False, "error": "Failed to update campaign", "data": None}
             
+            elif operation == 'schedule' or action == 'schedule_campaign':
+                # Enhanced campaign scheduling with confirmation
+                campaign_data = {
+                    "name": parameters.get('name', f"Scheduled Campaign {datetime.now().strftime('%Y-%m-%d %H:%M')}"),
+                    "template_id": await self.resolve_template_id(parameters.get('template')),
+                    "list_ids": await self.resolve_list_ids(parameters.get('list', parameters.get('lists', []))),
+                    "max_emails": parameters.get('max_emails', 1000),
+                    "status": "scheduled",
+                    "prospect_count": 0,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                    "send_time": parameters.get('send_time'),
+                    "send_date": parameters.get('send_date'),
+                    "enable_follow_up": parameters.get('enable_follow_up', True),
+                    "follow_up_intervals": parameters.get('follow_up_intervals', [3, 7, 14]),
+                    "follow_up_templates": parameters.get('follow_up_templates', [])
+                }
+                
+                campaign_id = generate_id()
+                campaign_data["id"] = campaign_id
+                
+                # Create scheduled campaign
+                result = await self.db.create_campaign(campaign_data)
+                if result:
+                    return {
+                        "success": True,
+                        "data": campaign_data,
+                        "message": f"Campaign '{campaign_data['name']}' scheduled successfully",
+                        "requires_confirmation": True,
+                        "confirmation_details": {
+                            "campaign_name": campaign_data['name'],
+                            "send_time": campaign_data.get('send_time', 'Not specified'),
+                            "send_date": campaign_data.get('send_date', 'Not specified'), 
+                            "follow_up_enabled": campaign_data['enable_follow_up'],
+                            "follow_up_intervals": campaign_data['follow_up_intervals']
+                        }
+                    }
+                else:
+                    return {"success": False, "error": "Failed to schedule campaign", "data": None}
+            
             elif operation == 'delete' or action == 'delete_campaign':
                 campaign_id = parameters.get('id') or parameters.get('campaign_id')
                 if not campaign_id:
