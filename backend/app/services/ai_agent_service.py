@@ -1078,6 +1078,98 @@ Analyze this message and extract the intent and parameters.
                 "description": "Conversational assistance and guidance"
             }
         }
+    
+    async def get_available_industries(self) -> List[Dict[str, Any]]:
+        """
+        Get available industries for AI Agent suggestions
+        """
+        try:
+            await self.db.connect()
+            industries = await self.db.get_industry_tags()
+            
+            # Return formatted industry data for AI Agent
+            industry_data = []
+            for industry in industries:
+                industry_data.append({
+                    "id": industry.get("id"),
+                    "external_id": industry.get("external_id"),
+                    "industry": industry.get("industry"),
+                    "description": industry.get("description", ""),
+                    "url": f"/api/industries/{industry.get('external_id')}"
+                })
+            
+            return industry_data
+            
+        except Exception as e:
+            logger.error(f"Error getting available industries: {e}")
+            return []
+    
+    async def suggest_industries_for_prospect(self, company_name: str = "", existing_industry: str = "") -> List[str]:
+        """
+        Suggest relevant industries based on company name or existing industry
+        """
+        try:
+            industries = await self.get_available_industries()
+            suggestions = []
+            
+            if company_name:
+                company_lower = company_name.lower()
+                
+                # Industry keywords mapping
+                tech_keywords = ['tech', 'software', 'app', 'digital', 'data', 'ai', 'cloud', 'cyber']
+                finance_keywords = ['bank', 'capital', 'invest', 'finance', 'fund', 'credit']
+                health_keywords = ['health', 'medical', 'pharma', 'bio', 'clinic', 'hospital']
+                
+                # Suggest based on company name
+                if any(keyword in company_lower for keyword in tech_keywords):
+                    tech_industries = [i for i in industries if any(term in i['industry'].lower() 
+                                     for term in ['technology', 'software', 'computer', 'internet'])]
+                    suggestions.extend([i['industry'] for i in tech_industries[:3]])
+                
+                elif any(keyword in company_lower for keyword in finance_keywords):
+                    finance_industries = [i for i in industries if any(term in i['industry'].lower() 
+                                        for term in ['financial', 'banking', 'investment', 'capital'])]
+                    suggestions.extend([i['industry'] for i in finance_industries[:3]])
+                
+                elif any(keyword in company_lower for keyword in health_keywords):
+                    health_industries = [i for i in industries if any(term in i['industry'].lower() 
+                                       for term in ['health', 'medical', 'pharmaceutical', 'biotechnology'])]
+                    suggestions.extend([i['industry'] for i in health_industries[:3]])
+            
+            # If no specific suggestions, return common industries
+            if not suggestions:
+                common_industries = ['Information Technology & Services', 'Marketing & Advertising', 
+                                   'Financial Services', 'Healthcare', 'Consulting']
+                suggestions = [i for i in common_industries if any(ind['industry'] == i for ind in industries)]
+            
+            return suggestions[:5]  # Return top 5 suggestions
+            
+        except Exception as e:
+            logger.error(f"Error suggesting industries: {e}")
+            return ['Technology', 'Services', 'Consulting', 'Marketing', 'Finance']
+    
+    async def get_industry_url(self, industry_name: str) -> str:
+        """
+        Get URL for a specific industry
+        """
+        try:
+            industries = await self.get_available_industries()
+            
+            # Find industry by name (case-insensitive)
+            for industry in industries:
+                if industry['industry'].lower() == industry_name.lower():
+                    return industry['url']
+            
+            # If not found, try partial match
+            for industry in industries:
+                if industry_name.lower() in industry['industry'].lower():
+                    return industry['url']
+            
+            return f"/api/industries/search/{industry_name}"
+            
+        except Exception as e:
+            logger.error(f"Error getting industry URL: {e}")
+            return f"/api/industries/search/{industry_name}"
 
 # Global instance
 ai_agent_service = AIAgentService()
