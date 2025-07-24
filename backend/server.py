@@ -229,10 +229,12 @@ async def get_campaigns():
 
 @app.post("/api/campaigns")
 async def create_campaign(campaign: Campaign):
-    """Create a new campaign"""
+    """Create a new campaign with enhanced follow-up configuration"""
     try:
         from app.services.database import db_service
         from app.utils.helpers import generate_id
+        from datetime import datetime
+        import pytz
         
         # Connect to database
         await db_service.connect()
@@ -246,6 +248,30 @@ async def create_campaign(campaign: Campaign):
         
         # Generate ID and add timestamps
         campaign_id = generate_id()
+        
+        # Process follow-up dates if using datetime scheduling
+        follow_up_dates_processed = []
+        if campaign.follow_up_schedule_type == "datetime" and campaign.follow_up_dates:
+            try:
+                # Validate timezone
+                tz = pytz.timezone(campaign.follow_up_timezone)
+                
+                for date_str in campaign.follow_up_dates:
+                    # Parse ISO datetime string
+                    follow_up_datetime = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    
+                    # Ensure timezone awareness
+                    if follow_up_datetime.tzinfo is None:
+                        follow_up_datetime = tz.localize(follow_up_datetime)
+                    
+                    follow_up_dates_processed.append(follow_up_datetime)
+                    
+                logging.info(f"Processed {len(follow_up_dates_processed)} follow-up dates for campaign {campaign.name}")
+                
+            except Exception as e:
+                logging.error(f"Error processing follow-up dates: {str(e)}")
+                raise HTTPException(status_code=400, detail=f"Invalid follow-up dates or timezone: {str(e)}")
+        
         campaign_data = {
             "id": campaign_id,
             "name": campaign.name,
@@ -255,6 +281,18 @@ async def create_campaign(campaign: Campaign):
             "schedule": campaign.schedule,
             "status": "draft",
             "prospect_count": prospect_count,
+            
+            # Enhanced Follow-up Configuration
+            "follow_up_enabled": campaign.follow_up_enabled,
+            "follow_up_schedule_type": campaign.follow_up_schedule_type,
+            "follow_up_intervals": campaign.follow_up_intervals,
+            "follow_up_dates": follow_up_dates_processed,
+            "follow_up_timezone": campaign.follow_up_timezone,
+            "follow_up_time_window_start": campaign.follow_up_time_window_start,
+            "follow_up_time_window_end": campaign.follow_up_time_window_end,
+            "follow_up_days_of_week": campaign.follow_up_days_of_week,
+            "follow_up_templates": campaign.follow_up_templates,
+            
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -263,15 +301,26 @@ async def create_campaign(campaign: Campaign):
         result = await db_service.create_campaign(campaign_data)
         
         if result:
-            return {
+            response_data = {
                 "id": campaign_id,
                 "name": campaign.name,
                 "status": "draft",
                 "prospect_count": prospect_count,
                 "max_emails": campaign.max_emails,
+                "follow_up_enabled": campaign.follow_up_enabled,
+                "follow_up_schedule_type": campaign.follow_up_schedule_type,
                 "created_at": datetime.utcnow(),
-                "message": "Campaign created successfully"
+                "message": "Campaign created successfully with enhanced follow-up configuration"
             }
+            
+            # Add follow-up details to response
+            if campaign.follow_up_schedule_type == "datetime":
+                response_data["follow_up_dates"] = [dt.isoformat() for dt in follow_up_dates_processed]
+                response_data["follow_up_timezone"] = campaign.follow_up_timezone
+            else:
+                response_data["follow_up_intervals"] = campaign.follow_up_intervals
+            
+            return response_data
         else:
             raise HTTPException(status_code=500, detail="Failed to create campaign")
             
