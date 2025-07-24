@@ -1302,6 +1302,97 @@ async def get_overall_analytics():
             ]
         }
 
+# WebSocket endpoint for real-time dashboard
+@app.websocket("/api/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            if message.get("type") == "get_current_metrics":
+                # Get current metrics and send to client
+                try:
+                    from app.services.database import db_service
+                    
+                    # Connect to database
+                    await db_service.connect()
+                    
+                    # Get actual data from database
+                    prospects = await db_service.get_prospects()
+                    campaigns = await db_service.get_campaigns()
+                    email_providers = await db_service.get_email_providers()
+                    
+                    # Count emails sent today
+                    today = datetime.utcnow().date()
+                    emails_today = await db_service.db.emails.count_documents({
+                        "sent_at": {
+                            "$gte": datetime.combine(today, datetime.min.time()),
+                            "$lt": datetime.combine(today, datetime.max.time())
+                        }
+                    })
+                    
+                    # Get total emails sent
+                    total_emails_sent = await db_service.db.emails.count_documents({})
+                    
+                    # Count active campaigns
+                    active_campaigns = len([c for c in campaigns if c.get("status") == "active"])
+                    
+                    # Get recent activity (last 5 sent emails)
+                    recent_emails = await db_service.db.emails.find(
+                        {"status": {"$in": ["sent", "failed"]}},
+                        sort=[("sent_at", -1)]
+                    ).limit(5).to_list(length=5)
+                    
+                    recent_activity = []
+                    for email in recent_emails:
+                        recent_activity.append({
+                            "id": email.get("id", ""),
+                            "subject": email.get("subject", ""),
+                            "recipient": email.get("recipient_email", ""),
+                            "status": email.get("status", ""),
+                            "created_at": email.get("sent_at", datetime.utcnow()).isoformat()
+                        })
+                    
+                    # Get provider stats
+                    provider_stats = {}
+                    for provider in email_providers:
+                        provider_stats[provider["name"]] = {
+                            "type": provider["provider_type"],
+                            "status": "active" if provider["is_active"] else "inactive",
+                            "emails_sent_today": provider.get("current_daily_count", 0),
+                            "daily_limit": provider.get("daily_send_limit", 500)
+                        }
+                    
+                    metrics_data = {
+                        "type": "current_metrics",
+                        "data": {
+                            "overview": {
+                                "total_prospects": len(prospects),
+                                "total_campaigns": len(campaigns),
+                                "total_emails_sent": total_emails_sent,
+                                "emails_today": emails_today,
+                                "active_campaigns": active_campaigns
+                            },
+                            "provider_stats": provider_stats,
+                            "recent_activity": recent_activity
+                        },
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    await websocket.send_text(json.dumps(metrics_data))
+                    
+                except Exception as e:
+                    error_message = {
+                        "type": "error",
+                        "message": f"Failed to get metrics: {str(e)}"
+                    }
+                    await websocket.send_text(json.dumps(error_message))
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
 # Initialize database and services on startup
 @app.on_event("startup")
 async def startup_event():
