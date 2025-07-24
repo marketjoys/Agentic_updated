@@ -11,7 +11,12 @@ from email.mime.multipart import MIMEMultipart
 import asyncio
 import re
 import json
-from app.models import EmailProviderType
+
+# Import EmailProviderType from the main models file
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
+from models import EmailProviderType
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
