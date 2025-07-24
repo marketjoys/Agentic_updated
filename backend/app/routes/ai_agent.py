@@ -31,8 +31,6 @@ def convert_objectid_to_str(data):
     else:
         return data
 
-router = APIRouter()
-
 # Request/Response Models
 class ConversationRequest(BaseModel):
     message: str
@@ -55,14 +53,6 @@ class ConversationResponse(BaseModel):
 class SetTurnLimitRequest(BaseModel):
     session_id: str
     max_turns: int  # Number of turns to keep in context (10-100)
-
-class ConversationResponse(BaseModel):
-    response: str
-    action_taken: Optional[str] = None
-    data: Optional[Union[Dict[str, Any], List[Any]]] = None
-    suggestions: Optional[List[str]] = []
-    session_id: str
-    timestamp: str
 
 class VoiceRequest(BaseModel):
     audio_data: str  # Base64 encoded audio
@@ -184,8 +174,8 @@ async def voice_interaction(request: VoiceRequest):
         # In production, you'd integrate with speech-to-text service
         text_message = "I want to see all my campaigns"  # Placeholder
         
-        # Process the conversation
-        result = await ai_agent_service.process_conversation(
+        # Process the conversation using enhanced service
+        result = await enhanced_ai_agent_service.process_conversation(
             message=text_message,
             user_id=request.user_id,
             session_id=request.session_id,
@@ -197,6 +187,7 @@ async def voice_interaction(request: VoiceRequest):
             "response": result['response'],
             "action_taken": result.get('action_taken'),
             "data": result.get('data'),
+            "conversation_state": result.get('conversation_state'),
             "session_id": request.session_id,
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -294,90 +285,7 @@ async def websocket_chat(websocket: WebSocket, session_id: str, enhanced: bool =
         logger.error(f"WebSocket error: {e}")
         await websocket.close(code=1000)
 
-# Context Management Endpoints
-@router.get("/ai-agent/sessions/{session_id}/context")
-async def get_conversation_context(session_id: str):
-    """
-    Get conversation context for a session
-    """
-    try:
-        context = await conversation_context_service.get_session_context(session_id)
-        return {
-            "session_id": session_id,
-            "context": context,
-            "message_count": len(context.get('messages', [])),
-            "created_at": context.get('created_at'),
-            "updated_at": context.get('updated_at')
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting conversation context: {e}")
-        raise HTTPException(status_code=500, detail=f"Context retrieval error: {str(e)}")
-
-@router.delete("/ai-agent/sessions/{session_id}")
-async def clear_conversation_session(session_id: str):
-    """
-    Clear conversation session and context
-    """
-    try:
-        await conversation_context_service.clear_session(session_id)
-        return {
-            "message": f"Session {session_id} cleared successfully",
-            "session_id": session_id,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error clearing session: {e}")
-        raise HTTPException(status_code=500, detail=f"Session clear error: {str(e)}")
-
-@router.get("/ai-agent/sessions")
-async def get_active_sessions(user_id: str = "default"):
-    """
-    Get all active conversation sessions for a user
-    """
-    try:
-        sessions = await conversation_context_service.get_user_sessions(user_id)
-        return {
-            "user_id": user_id,
-            "sessions": sessions,
-            "session_count": len(sessions),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting sessions: {e}")
-        raise HTTPException(status_code=500, detail=f"Sessions retrieval error: {str(e)}")
-
-# Agent Capabilities Endpoints
-@router.get("/ai-agent/capabilities")
-async def get_agent_capabilities():
-    """
-    Get AI agent capabilities and available actions
-    """
-    try:
-        capabilities = await ai_agent_service.get_agent_capabilities()
-        return {
-            "capabilities": capabilities,
-            "supported_actions": list(capabilities.keys()),
-            "examples": [
-                "Show me all my campaigns",
-                "Create a new prospect named John Doe from TechCorp",
-                "Send the Summer Sale campaign to Technology Companies list",
-                "What are my analytics for this month?",
-                "Upload prospects from CSV data",
-                "Create a new email template for welcome messages",
-                "Add prospects to my VIP list",
-                "Start email monitoring",
-                "Show me recent email activity"
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting capabilities: {e}")
-        raise HTTPException(status_code=500, detail=f"Capabilities error: {str(e)}")
-
+# Enhanced Conversation Management Endpoints
 @router.post("/ai-agent/set-turn-limit")
 async def set_conversation_turn_limit(request: SetTurnLimitRequest):
     """
@@ -399,51 +307,6 @@ async def set_conversation_turn_limit(request: SetTurnLimitRequest):
     except Exception as e:
         logger.error(f"Error setting turn limit: {e}")
         raise HTTPException(status_code=500, detail=f"Turn limit error: {str(e)}")
-
-@router.get("/ai-agent/enhanced-capabilities")
-async def get_enhanced_agent_capabilities():
-    """
-    Get enhanced AI agent capabilities and available actions
-    """
-    try:
-        capabilities = await enhanced_ai_agent_service.get_agent_capabilities()
-        
-        return {
-            "capabilities": capabilities,
-            "conversation_flow": {
-                "description": "Multi-turn conversation with explicit confirmation",
-                "steps": [
-                    "1. User inputs query/task",
-                    "2. Agent checks which backend endpoint to use",
-                    "3. Agent checks required payloads for API call",
-                    "4. If missing info, ask user for remaining info",
-                    "5. Confirm with user before proceeding", 
-                    "6. Execute the task",
-                    "7. Handle changes/confirmations"
-                ],
-                "states": ["analyzing", "gathering_info", "confirming", "executing", "completed", "error"]
-            },
-            "context_features": [
-                "Configurable turn limits (10-100 turns)",
-                "Regex-based context extraction",
-                "State persistence across sessions",
-                "Parameter validation and information gathering",
-                "Explicit user confirmation before actions"
-            ],
-            "examples": [
-                "Show me all my campaigns",
-                "Create a new campaign named Summer Sale",
-                "Add John Smith from TechCorp to my database",
-                "Send Test Campaign to VIP list",
-                "What are my analytics for this month?",
-                "Upload prospects from CSV data"
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting enhanced capabilities: {e}")
-        raise HTTPException(status_code=500, detail=f"Enhanced capabilities error: {str(e)}")
 
 @router.get("/ai-agent/conversation-history/{session_id}")
 async def get_conversation_history(session_id: str, limit: Optional[int] = None):
@@ -508,6 +371,181 @@ async def get_enhanced_conversation_context(session_id: str):
         logger.error(f"Error getting enhanced conversation context: {e}")
         raise HTTPException(status_code=500, detail=f"Enhanced context retrieval error: {str(e)}")
 
+# Agent Capabilities and Information
+@router.get("/ai-agent/enhanced-capabilities")
+async def get_enhanced_agent_capabilities():
+    """
+    Get enhanced AI agent capabilities and available actions
+    """
+    try:
+        capabilities = await enhanced_ai_agent_service.get_agent_capabilities()
+        
+        return {
+            "capabilities": capabilities,
+            "conversation_flow": {
+                "description": "Multi-turn conversation with explicit confirmation",
+                "steps": [
+                    "1. User inputs query/task",
+                    "2. Agent checks which backend endpoint to use",
+                    "3. Agent checks required payloads for API call",
+                    "4. If missing info, ask user for remaining info",
+                    "5. Confirm with user before proceeding", 
+                    "6. Execute the task",
+                    "7. Handle changes/confirmations"
+                ],
+                "states": ["analyzing", "gathering_info", "confirming", "executing", "completed", "error"]
+            },
+            "context_features": [
+                "Configurable turn limits (10-100 turns)",
+                "Regex-based context extraction",
+                "State persistence across sessions",
+                "Parameter validation and information gathering",
+                "Explicit user confirmation before actions"
+            ],
+            "examples": [
+                "Show me all my campaigns",
+                "Create a new campaign named Summer Sale",
+                "Add John Smith from TechCorp to my database",
+                "Send Test Campaign to VIP list",
+                "What are my analytics for this month?",
+                "Upload prospects from CSV data"
+            ],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting enhanced capabilities: {e}")
+        raise HTTPException(status_code=500, detail=f"Enhanced capabilities error: {str(e)}")
+
+@router.get("/ai-agent/capabilities")
+async def get_agent_capabilities():
+    """
+    Get AI agent capabilities (includes both legacy and enhanced features)
+    """
+    try:
+        # Get legacy capabilities
+        legacy_capabilities = await ai_agent_service.get_agent_capabilities()
+        
+        # Get enhanced capabilities
+        enhanced_capabilities = await enhanced_ai_agent_service.get_agent_capabilities()
+        
+        return {
+            "legacy_capabilities": legacy_capabilities,
+            "enhanced_capabilities": enhanced_capabilities,
+            "conversation_modes": {
+                "legacy": {
+                    "description": "Direct execution mode (original behavior)",
+                    "features": ["Immediate action execution", "Basic context retention"]
+                },
+                "enhanced": {
+                    "description": "Confirmation-based flow with multi-turn conversations",
+                    "features": [
+                        "Parameter validation and information gathering",
+                        "Explicit user confirmation before actions",
+                        "Configurable conversation context (10-100 turns)",
+                        "Regex-based context analysis",
+                        "State-based conversation management"
+                    ]
+                }
+            },
+            "supported_actions": list(enhanced_capabilities.keys()) if isinstance(enhanced_capabilities, dict) else [],
+            "examples": [
+                "Show me all my campaigns",
+                "Create a new prospect named John Doe from TechCorp",
+                "Send the Summer Sale campaign to Technology Companies list",
+                "What are my analytics for this month?",
+                "Upload prospects from CSV data",
+                "Create a new email template for welcome messages",
+                "Add prospects to my VIP list",
+                "Start email monitoring",
+                "Show me recent email activity"
+            ],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting capabilities: {e}")
+        raise HTTPException(status_code=500, detail=f"Capabilities error: {str(e)}")
+
+# Context Management Endpoints
+@router.get("/ai-agent/sessions/{session_id}/context")
+async def get_conversation_context(session_id: str, enhanced: bool = True):
+    """
+    Get conversation context for a session (supports both legacy and enhanced)
+    """
+    try:
+        if enhanced:
+            return await get_enhanced_conversation_context(session_id)
+        else:
+            context = await conversation_context_service.get_session_context(session_id)
+            return {
+                "session_id": session_id,
+                "context": context,
+                "message_count": len(context.get('messages', [])),
+                "created_at": context.get('created_at'),
+                "updated_at": context.get('updated_at'),
+                "mode": "legacy"
+            }
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation context: {e}")
+        raise HTTPException(status_code=500, detail=f"Context retrieval error: {str(e)}")
+
+@router.delete("/ai-agent/sessions/{session_id}")
+async def clear_conversation_session(session_id: str, enhanced: bool = True):
+    """
+    Clear conversation session and context (supports both legacy and enhanced)
+    """
+    try:
+        if enhanced:
+            await enhanced_conversation_service.clear_session(session_id)
+            message = f"Enhanced session {session_id} cleared successfully"
+        else:
+            await conversation_context_service.clear_session(session_id)
+            message = f"Legacy session {session_id} cleared successfully"
+        
+        return {
+            "message": message,
+            "session_id": session_id,
+            "mode": "enhanced" if enhanced else "legacy",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing session: {e}")
+        raise HTTPException(status_code=500, detail=f"Session clear error: {str(e)}")
+
+@router.get("/ai-agent/sessions")
+async def get_active_sessions(user_id: str = "default", enhanced: bool = True):
+    """
+    Get all active conversation sessions for a user (supports both systems)
+    """
+    try:
+        if enhanced:
+            # For enhanced system, we'd need to implement user session listing
+            # For now, return basic structure
+            return {
+                "user_id": user_id,
+                "sessions": [],  # Would implement enhanced session listing
+                "session_count": 0,
+                "mode": "enhanced",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        else:
+            sessions = await conversation_context_service.get_user_sessions(user_id)
+            return {
+                "user_id": user_id,
+                "sessions": sessions,
+                "session_count": len(sessions),
+                "mode": "legacy",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+    except Exception as e:
+        logger.error(f"Error getting sessions: {e}")
+        raise HTTPException(status_code=500, detail=f"Sessions retrieval error: {str(e)}")
+
+# Testing and Analytics
 @router.post("/ai-agent/test")
 async def test_agent_functionality(request: Dict[str, Any]):
     """
@@ -570,7 +608,6 @@ async def test_agent_functionality(request: Dict[str, Any]):
         logger.error(f"Error in agent test: {e}")
         raise HTTPException(status_code=500, detail=f"Agent test error: {str(e)}")
 
-# Analytics for AI Agent Usage
 @router.get("/ai-agent/analytics")
 async def get_agent_analytics():
     """
@@ -613,111 +650,28 @@ async def get_agent_analytics():
         logger.error(f"Error getting agent analytics: {e}")
         raise HTTPException(status_code=500, detail=f"Analytics error: {str(e)}")
 
-# Update the original capabilities endpoint to include enhanced features
-@router.get("/ai-agent/capabilities")
-async def get_agent_capabilities():
-    """
-    Get AI agent capabilities (includes both legacy and enhanced features)
-    """
-    try:
-        # Get legacy capabilities
-        legacy_capabilities = await ai_agent_service.get_agent_capabilities()
-        
-        # Get enhanced capabilities
-        enhanced_capabilities = await enhanced_ai_agent_service.get_agent_capabilities()
-        
-        return {
-            "legacy_capabilities": legacy_capabilities,
-            "enhanced_capabilities": enhanced_capabilities,
-            "conversation_modes": {
-                "legacy": {
-                    "description": "Direct execution mode (original behavior)",
-                    "features": ["Immediate action execution", "Basic context retention"]
-                },
-                "enhanced": {
-                    "description": "Confirmation-based flow with multi-turn conversations",
-                    "features": [
-                        "Parameter validation and information gathering",
-                        "Explicit user confirmation before actions",
-                        "Configurable conversation context (10-100 turns)",
-                        "Regex-based context analysis",
-                        "State-based conversation management"
-                    ]
-                }
-            },
-            "supported_actions": list(enhanced_capabilities.keys()) if isinstance(enhanced_capabilities, dict) else [],
-            "examples": [
-                "Show me all my campaigns",
-                "Create a new prospect named John Doe from TechCorp",
-                "Send the Summer Sale campaign to Technology Companies list",
-                "What are my analytics for this month?",
-                "Upload prospects from CSV data",
-                "Create a new email template for welcome messages",
-                "Add prospects to my VIP list",
-                "Start email monitoring",
-                "Show me recent email activity"
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting capabilities: {e}")
-        raise HTTPException(status_code=500, detail=f"Capabilities error: {str(e)}")
-
-async def test_agent_functionality(request: Dict[str, Any]):
-    """
-    Test agent functionality with sample inputs
-    """
-    try:
-        test_message = request.get('message', 'Show me all campaigns')
-        
-        result = await ai_agent_service.process_conversation(
-            message=test_message,
-            user_id="test_user",
-            session_id="test_session",
-            context={}
-        )
-        
-        return {
-            "test_message": test_message,
-            "agent_response": result['response'],
-            "action_taken": result.get('action_taken'),
-            "data": result.get('data'),
-            "suggestions": result.get('suggestions', []),
-            "status": "success",
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error in agent test: {e}")
-        raise HTTPException(status_code=500, detail=f"Agent test error: {str(e)}")
-
-# Analytics for AI Agent Usage
-@router.get("/ai-agent/analytics")
-async def get_agent_analytics():
-    """
-    Get AI agent usage analytics
-    """
-    try:
-        analytics = await conversation_context_service.get_usage_analytics()
-        return {
-            "analytics": analytics,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error getting agent analytics: {e}")
-        raise HTTPException(status_code=500, detail=f"Analytics error: {str(e)}")
-
 # Help and Guidance
 @router.get("/ai-agent/help")
 async def get_agent_help():
     """
-    Get help information for using the AI agent
+    Get help information for using the AI agent (includes enhanced features)
     """
     return {
         "help": {
-            "overview": "AI Agent allows you to control the entire application through natural language conversation.",
+            "overview": "Enhanced AI Agent allows you to control the entire application through natural language conversation with explicit confirmation steps.",
+            "conversation_flow": [
+                "1. You input a query or task",
+                "2. Agent checks which backend endpoint to use",
+                "3. Agent checks required payloads for API call", 
+                "4. If missing info, agent asks for remaining info",
+                "5. Agent confirms with you before proceeding",
+                "6. Agent performs the task after your confirmation",
+                "7. Agent handles any changes or follow-up requests"
+            ],
+            "modes": {
+                "enhanced": "Confirmation-based flow with information gathering (default)",
+                "legacy": "Direct execution mode (backward compatibility)"
+            },
             "supported_operations": [
                 "Campaign Management: 'Show campaigns', 'Create campaign', 'Send campaign'",
                 "Prospect Management: 'Add prospect', 'Show prospects', 'Upload CSV'",
@@ -726,21 +680,40 @@ async def get_agent_help():
                 "Analytics: 'Show analytics', 'Campaign performance', 'Dashboard metrics'",
                 "Email Processing: 'Start monitoring', 'Stop monitoring', 'Process status'"
             ],
+            "context_features": [
+                "Configurable turn limits (10-100 turns): 'Set turn limit to 50'",
+                "Conversation state tracking: analyzing → gathering_info → confirming → executing",
+                "Parameter extraction and validation",
+                "Multi-turn information gathering",
+                "Explicit confirmation before actions"
+            ],
             "voice_commands": "You can use voice commands by sending audio to the /voice endpoint",
-            "websocket": "Use WebSocket connection for real-time conversation",
+            "websocket": "Use WebSocket connection for real-time conversation with enhanced flow",
             "examples": [
                 "Natural: 'I want to create a new campaign for summer promotion'",
-                "Specific: 'Create campaign named Summer Sale using Welcome template for Technology list'",
+                "Specific: 'Create campaign named Summer Sale using Welcome template for Technology list'", 
                 "Question: 'How many prospects do I have in my database?'",
-                "Action: 'Send the Q4 Campaign to all VIP customers'"
+                "Action: 'Send the Q4 Campaign to all VIP customers'",
+                "Configuration: 'Set conversation turn limit to 25'",
+                "Confirmation: 'Yes, proceed with creating the campaign'"
             ]
         },
         "endpoints": {
-            "chat": "POST /ai-agent/chat - Text-based conversation",
+            "chat": "POST /ai-agent/chat - Text-based conversation (enhanced by default)",
             "voice": "POST /ai-agent/voice - Voice-based interaction",
-            "websocket": "WS /ai-agent/ws/{session_id} - Real-time chat",
+            "websocket": "WS /ai-agent/ws/{session_id} - Real-time chat with state support",
             "context": "GET /ai-agent/sessions/{session_id}/context - Get conversation context",
-            "capabilities": "GET /ai-agent/capabilities - Get agent capabilities"
+            "capabilities": "GET /ai-agent/capabilities - Get agent capabilities",
+            "enhanced_capabilities": "GET /ai-agent/enhanced-capabilities - Get enhanced features",
+            "turn_limit": "POST /ai-agent/set-turn-limit - Configure conversation context",
+            "history": "GET /ai-agent/conversation-history/{session_id} - Get conversation history"
+        },
+        "new_features": {
+            "confirmation_flow": "All actions require explicit user confirmation",
+            "information_gathering": "Agent asks for missing parameters conversationally",
+            "state_management": "Track conversation state and progress",
+            "enhanced_context": "Configurable context with regex-based analysis",
+            "parameter_validation": "Validate all parameters before execution"
         },
         "timestamp": datetime.utcnow().isoformat()
     }
