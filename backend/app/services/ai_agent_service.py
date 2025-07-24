@@ -819,7 +819,17 @@ Analyze this message and extract the intent and parameters.
             
             elif action == 'send_campaign':
                 sent_count = data.get('total_sent', 0) if data else 0
-                return f"Perfect! Your campaign has been sent successfully to {sent_count} prospects. I'll monitor the results for you."
+                follow_up_enabled = data.get('follow_up_enabled', False) if data else False
+                follow_up_intervals = data.get('follow_up_intervals', []) if data else []
+                
+                response = f"Perfect! Your campaign has been sent successfully to {sent_count} prospects."
+                
+                if follow_up_enabled and follow_up_intervals:
+                    interval_text = ", ".join([f"{i} days" for i in follow_up_intervals])
+                    response += f" I've also set up automatic follow-up emails to be sent after {interval_text}."
+                    response += " I'll monitor responses and stop follow-ups automatically when prospects reply."
+                
+                return response
             
             elif action == 'list_prospects':
                 prospects = data or []
