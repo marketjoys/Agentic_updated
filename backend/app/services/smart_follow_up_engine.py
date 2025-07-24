@@ -99,7 +99,7 @@ class SmartFollowUpEngine:
     
     async def _check_prospect_follow_up(self, prospect: Dict, campaign: Dict, 
                                       follow_up_rule: Optional[Dict], follow_up_intervals: List[int]):
-        """Check if a prospect needs a follow-up email with enhanced response detection"""
+        """Check if a prospect needs a follow-up email with enhanced datetime scheduling"""
         try:
             prospect_id = prospect["id"]
             
@@ -132,12 +132,61 @@ class SmartFollowUpEngine:
                 await self._stop_prospect_follow_ups(prospect_id, "limit_reached")
                 return
             
-            # Check if it's time for next follow-up
+            # Enhanced datetime-based follow-up scheduling
+            should_send_follow_up = await self._should_send_follow_up_now(
+                prospect, campaign, follow_up_rule, follow_up_intervals, follow_up_count
+            )
+            
+            if should_send_follow_up:
+                # Send follow-up
+                await self._send_follow_up_email(prospect, campaign, follow_up_rule, follow_up_count + 1)
+                
+        except Exception as e:
+            logger.error(f"Error checking prospect follow-up {prospect.get('id', 'unknown')}: {str(e)}")
+    
+    async def _should_send_follow_up_now(self, prospect: Dict, campaign: Dict, 
+                                        follow_up_rule: Optional[Dict], follow_up_intervals: List[int],
+                                        follow_up_count: int) -> bool:
+        """Enhanced follow-up timing logic with datetime and timezone support"""
+        try:
+            import pytz
+            from datetime import datetime, timedelta
+            
+            # Get campaign timezone
+            campaign_timezone = campaign.get("follow_up_timezone", "UTC")
+            tz = pytz.timezone(campaign_timezone)
+            current_time = datetime.now(tz)
+            
+            # Check if campaign uses precise datetime scheduling
+            schedule_type = campaign.get("follow_up_schedule_type", "interval")
+            
+            if schedule_type == "datetime" and campaign.get("follow_up_dates"):
+                # Use precise datetime scheduling
+                follow_up_dates = campaign.get("follow_up_dates", [])
+                
+                if follow_up_count < len(follow_up_dates):
+                    target_datetime = follow_up_dates[follow_up_count]
+                    
+                    # Convert to campaign timezone if needed
+                    if target_datetime.tzinfo is None:
+                        target_datetime = tz.localize(target_datetime)
+                    else:
+                        target_datetime = target_datetime.astimezone(tz)
+                    
+                    # Check if it's time to send (within 5 minutes window)
+                    time_diff = (current_time - target_datetime).total_seconds()
+                    if -300 <= time_diff <= 300:  # 5 minute window
+                        logger.info(f"Precise datetime follow-up ready for prospect {prospect['id']} at {target_datetime}")
+                        return await self._is_in_campaign_time_window(campaign, current_time)
+                    
+                    return False
+            
+            # Fallback to interval-based scheduling with timezone awareness
             last_contact = prospect.get("last_contact") or prospect.get("created_at")
             last_follow_up = prospect.get("last_follow_up")
             
             if not last_contact:
-                return
+                return False
             
             # Determine next follow-up interval
             if follow_up_count < len(follow_up_intervals):
@@ -145,22 +194,52 @@ class SmartFollowUpEngine:
             else:
                 interval_days = follow_up_intervals[-1]  # Use last interval for remaining follow-ups
             
-            # Check if enough time has passed
-            time_since_last = datetime.utcnow() - last_contact
-            if last_follow_up:
-                time_since_last = datetime.utcnow() - last_follow_up
+            # Check if enough time has passed (timezone aware)
+            reference_time = last_follow_up or last_contact
+            if reference_time.tzinfo is None:
+                reference_time = pytz.UTC.localize(reference_time)
+            
+            reference_time = reference_time.astimezone(tz)
+            time_since_last = current_time - reference_time
             
             if time_since_last.days >= interval_days:
                 # Check time window if specified
                 if follow_up_rule and not await self._is_in_time_window(follow_up_rule):
-                    return
+                    return False
                 
-                # Send follow-up
-                await self._send_follow_up_email(prospect, campaign, follow_up_rule, follow_up_count + 1)
-                
+                # Check campaign-specific time window
+                return await self._is_in_campaign_time_window(campaign, current_time)
+            
+            return False
+            
         except Exception as e:
-            logger.error(f"Error checking prospect follow-up {prospect.get('id', 'unknown')}: {str(e)}")
+            logger.error(f"Error checking follow-up timing: {str(e)}")
+            return False
     
+    async def _is_in_campaign_time_window(self, campaign: Dict, current_time) -> bool:
+        """Check if current time is within campaign's allowed sending window"""
+        try:
+            # Check day of week
+            current_day = current_time.strftime("%A").lower()
+            allowed_days = campaign.get("follow_up_days_of_week", 
+                                     ["monday", "tuesday", "wednesday", "thursday", "friday"])
+            
+            if current_day not in allowed_days:
+                return False
+            
+            # Check time window
+            start_time = campaign.get("follow_up_time_window_start", "09:00")
+            end_time = campaign.get("follow_up_time_window_end", "17:00")
+            current_time_str = current_time.strftime("%H:%M")
+            
+            if start_time <= current_time_str <= end_time:
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking campaign time window: {str(e)}")
+            return True  # Default to allowing send
     async def _send_follow_up_email(self, prospect: Dict, campaign: Dict, 
                                   follow_up_rule: Optional[Dict], follow_up_sequence: int):
         """Send a follow-up email to a prospect with enhanced tracking"""
