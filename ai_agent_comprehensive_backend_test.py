@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://c1c634a8-0d17-4c07-b0a8-c7a5f7ffaa06.preview.emergentagent.com"
+BACKEND_URL = "https://3af4418a-7a44-4e13-9f15-f488b663ef09.preview.emergentagent.com"
 AUTH_TOKEN = None  # Will be obtained from login
 
 class AIAgentTester:
