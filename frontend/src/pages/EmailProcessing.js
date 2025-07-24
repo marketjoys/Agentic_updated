@@ -17,6 +17,11 @@ const EmailProcessing = () => {
     follow_up_stats: {},
     system_status: {}
   });
+  const [imapScanStatus, setImapScanStatus] = useState({
+    last_scan: null,
+    statistics_24h: {},
+    processor_status: {}
+  });
   const [threads, setThreads] = useState([]);
   const [imapLogs, setImapLogs] = useState([]);
   const [prospectResponses, setProspectResponses] = useState([]);
