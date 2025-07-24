@@ -159,6 +159,7 @@ export const apiService = {
 
   // Follow-up Monitoring
   getFollowUpDashboard: () => api.get('/api/follow-up-monitoring/dashboard'),
+  getImapScanStatus: () => api.get('/api/follow-up-monitoring/imap-scan-status'),
   getImapLogs: (hours = 24) => api.get(`/api/follow-up-monitoring/imap-logs?hours=${hours}`),
   getProspectResponses: (days = 7) => api.get(`/api/follow-up-monitoring/prospect-responses?days=${days}`),
   analyzeProspectThread: (prospectId) => api.get(`/api/follow-up-monitoring/thread-analysis/${prospectId}`),
