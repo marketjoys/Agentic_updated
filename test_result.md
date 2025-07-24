@@ -533,9 +533,7 @@ metadata:
 test_plan:
   current_focus: 
     - "Enhanced AI Agent Confirmation Flow"
-  stuck_tasks:
-    - "Enhanced AI Agent Confirmation Flow"
-    - "AI Agent Natural Language Processing"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
