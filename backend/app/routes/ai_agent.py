@@ -206,12 +206,12 @@ async def voice_interaction(request: VoiceRequest):
         raise HTTPException(status_code=500, detail=f"Voice processing error: {str(e)}")
 
 @router.websocket("/ai-agent/ws/{session_id}")
-async def websocket_chat(websocket: WebSocket, session_id: str):
+async def websocket_chat(websocket: WebSocket, session_id: str, enhanced: bool = True):
     """
-    WebSocket endpoint for real-time conversation
+    WebSocket endpoint for real-time conversation with enhanced flow support
     """
     await manager.connect(websocket)
-    logger.info(f"WebSocket connection established for session: {session_id}")
+    logger.info(f"WebSocket connection established for session: {session_id} (Enhanced: {enhanced})")
     
     try:
         while True:
@@ -221,34 +221,69 @@ async def websocket_chat(websocket: WebSocket, session_id: str):
             
             user_message = message_data.get('message', '')
             user_id = message_data.get('user_id', 'default')
+            use_enhanced = message_data.get('use_enhanced_flow', enhanced)
             
-            logger.info(f"WebSocket message: {user_message}")
+            logger.info(f"WebSocket message: {user_message} (Enhanced: {use_enhanced})")
             
-            # Process the conversation
-            result = await ai_agent_service.process_conversation(
-                message=user_message,
-                user_id=user_id,
-                session_id=session_id,
-                context=message_data.get('context', {})
-            )
+            if use_enhanced:
+                # Use enhanced service
+                result = await enhanced_ai_agent_service.process_conversation(
+                    message=user_message,
+                    user_id=user_id,
+                    session_id=session_id,
+                    context=message_data.get('context', {})
+                )
+                
+                # Get additional context
+                conv_context = await enhanced_conversation_service.get_conversation_context(session_id, user_id)
+                
+                # Send response back to client
+                response = {
+                    "response": result['response'],
+                    "action_taken": result.get('action_taken'),
+                    "data": convert_objectid_to_str(result.get('data')),
+                    "suggestions": result.get('suggestions', []),
+                    "conversation_state": result.get('conversation_state'),
+                    "pending_action": conv_context.pending_action,
+                    "context_info": {
+                        "turn_count": len(conv_context.turns),
+                        "max_turns": conv_context.max_turns,
+                        "state": conv_context.current_state.value,
+                        "extracted_params": conv_context.extracted_params,
+                        "missing_params": conv_context.missing_params
+                    },
+                    "timestamp": datetime.utcnow().isoformat()
+                }
             
-            # Save conversation
-            await conversation_context_service.save_conversation_turn(
-                session_id=session_id,
-                user_message=user_message,
-                agent_response=result['response'],
-                action_taken=result.get('action_taken'),
-                data=result.get('data')
-            )
-            
-            # Send response back to client
-            response = {
-                "response": result['response'],
-                "action_taken": result.get('action_taken'),
-                "data": result.get('data'),
-                "suggestions": result.get('suggestions', []),
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            else:
+                # Use original service
+                result = await ai_agent_service.process_conversation(
+                    message=user_message,
+                    user_id=user_id,
+                    session_id=session_id,
+                    context=message_data.get('context', {})
+                )
+                
+                # Save conversation
+                await conversation_context_service.save_conversation_turn(
+                    session_id=session_id,
+                    user_message=user_message,
+                    agent_response=result['response'],
+                    action_taken=result.get('action_taken'),
+                    data=result.get('data')
+                )
+                
+                # Send response back to client
+                response = {
+                    "response": result['response'],
+                    "action_taken": result.get('action_taken'),
+                    "data": convert_objectid_to_str(result.get('data')),
+                    "suggestions": result.get('suggestions', []),
+                    "conversation_state": "legacy",
+                    "pending_action": None,
+                    "context_info": {"mode": "legacy"},
+                    "timestamp": datetime.utcnow().isoformat()
+                }
             
             await manager.send_personal_message(json.dumps(response), websocket)
             
