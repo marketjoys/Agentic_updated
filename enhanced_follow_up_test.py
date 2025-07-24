@@ -185,7 +185,8 @@ class EnhancedFollowUpTester:
         """Create a test prospect for campaigns"""
         try:
             import time
-            unique_id = int(time.time())
+            import random
+            unique_id = int(time.time()) + random.randint(1000, 9999)
             
             prospect_data = {
                 "email": f"test.prospect.{unique_id}@example.com",
