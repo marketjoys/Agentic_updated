@@ -240,7 +240,7 @@ const Campaigns = () => {
   );
 };
 
-const CampaignCard = ({ campaign, onSend }) => {
+const CampaignCard = ({ campaign, onSend, onView }) => {
   console.log('🔍 Campaign card rendered:', campaign);
   console.log('🔍 Campaign status:', campaign.status);
   console.log('🔍 Is draft?', campaign.status === 'draft');
@@ -250,8 +250,25 @@ const CampaignCard = ({ campaign, onSend }) => {
       case 'active': return 'bg-green-100 text-green-800';
       case 'draft': return 'bg-yellow-100 text-yellow-800';
       case 'paused': return 'bg-orange-100 text-orange-800';
-      case 'completed': return 'bg-purple-100 text-purple-800';
+      case 'completed': 
+      case 'sent': return 'bg-purple-100 text-purple-800';
+      case 'failed': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const canSendCampaign = (status) => {
+    return status === 'draft';
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return <Play className="h-4 w-4" />;
+      case 'draft': return <Pause className="h-4 w-4" />;
+      case 'completed':
+      case 'sent': return <CheckCircle className="h-4 w-4" />;
+      case 'failed': return <XCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
     }
   };
 
@@ -260,15 +277,18 @@ const CampaignCard = ({ campaign, onSend }) => {
       <div className="card-body">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-secondary-900">{campaign.name}</h3>
-          <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(campaign.status)}`}>
-            {campaign.status}
-          </span>
+          <div className="flex items-center space-x-2">
+            {getStatusIcon(campaign.status)}
+            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(campaign.status)}`}>
+              {campaign.status}
+            </span>
+          </div>
         </div>
         
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm text-secondary-600">
             <Users className="h-4 w-4 mr-2" />
-            <span>{campaign.prospect_count} prospects</span>
+            <span>{campaign.prospect_count || 0} prospects</span>
           </div>
           <div className="flex items-center text-sm text-secondary-600">
             <Send className="h-4 w-4 mr-2" />
@@ -287,14 +307,27 @@ const CampaignCard = ({ campaign, onSend }) => {
             Created {new Date(campaign.created_at).toLocaleDateString()}
           </div>
           <div className="flex space-x-2">
-            <button className="p-1 text-secondary-400 hover:text-primary-600">
+            <button 
+              onClick={() => onView(campaign.id)}
+              className="p-1 text-secondary-400 hover:text-primary-600 transition-colors"
+              title="View Campaign Details"
+            >
               <Eye className="h-4 w-4" />
             </button>
-            {campaign.status === 'draft' && (
+            {canSendCampaign(campaign.status) && (
               <button
                 onClick={() => onSend(campaign.id)}
                 className="p-2 bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 rounded-md transition-colors"
                 title="Send Campaign"
+              >
+                <Play className="h-4 w-4" />
+              </button>
+            )}
+            {!canSendCampaign(campaign.status) && campaign.status !== 'draft' && (
+              <button
+                disabled
+                className="p-2 bg-gray-100 text-gray-400 rounded-md cursor-not-allowed"
+                title={`Campaign ${campaign.status} - Cannot send again`}
               >
                 <Play className="h-4 w-4" />
               </button>
