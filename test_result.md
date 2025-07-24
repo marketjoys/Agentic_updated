@@ -532,7 +532,7 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Enhanced AI Agent Confirmation Flow"
+    - "Enhanced Auto Follow-ups and Auto Responders System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
