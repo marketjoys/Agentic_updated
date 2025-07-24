@@ -329,29 +329,70 @@ const EmailProcessing = () => {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-secondary-600">Connection Status</span>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  processingStatus === 'running' 
+                  imapScanStatus.processor_status?.running
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {processingStatus === 'running' ? 'Connected' : 'Disconnected'}
+                  {imapScanStatus.processor_status?.running ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-secondary-600">Last Scan</span>
                 <span className="text-sm font-medium text-secondary-900">
-                  {followUpDashboard.system_status?.last_updated 
-                    ? new Date(followUpDashboard.system_status.last_updated).toLocaleTimeString()
+                  {imapScanStatus.last_scan?.timestamp 
+                    ? new Date(imapScanStatus.last_scan.timestamp).toLocaleTimeString()
                     : 'Never'
                   }
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-secondary-600">Scan Frequency</span>
+                <span className="text-sm text-secondary-600">New Emails Found</span>
                 <span className="text-sm font-medium text-secondary-900">
-                  {processingStatus === 'running' ? '30 seconds' : 'Stopped'}
+                  {imapScanStatus.last_scan?.new_emails_found || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Scan Duration</span>
+                <span className="text-sm font-medium text-secondary-900">
+                  {imapScanStatus.last_scan?.scan_duration_seconds 
+                    ? `${imapScanStatus.last_scan.scan_duration_seconds.toFixed(2)}s`
+                    : 'N/A'
+                  }
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-secondary-600">Next Scan</span>
+                <span className="text-sm font-medium text-secondary-900">
+                  {imapScanStatus.processor_status?.next_scan_in_seconds 
+                    ? `In ${imapScanStatus.processor_status.next_scan_in_seconds}s`
+                    : 'Stopped'
+                  }
                 </span>
               </div>
             </div>
+            
+            {/* Last Scan Status Indicator */}
+            {imapScanStatus.last_scan && (
+              <div className="mt-4 p-3 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-secondary-700">Last Scan Result</span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    imapScanStatus.last_scan.success
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {imapScanStatus.last_scan.success ? 'Success' : 'Errors'}
+                  </span>
+                </div>
+                {imapScanStatus.last_scan.errors && imapScanStatus.last_scan.errors.length > 0 && (
+                  <div className="mt-2 text-xs text-red-600">
+                    {imapScanStatus.last_scan.errors.slice(0, 2).map((error, index) => (
+                      <div key={index}>• {error}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="mt-4">
               <button
@@ -359,7 +400,7 @@ const EmailProcessing = () => {
                 className="w-full btn btn-secondary text-sm"
               >
                 <Activity className="h-4 w-4 mr-2" />
-                View IMAP Logs
+                View Detailed Logs
               </button>
             </div>
           </div>
