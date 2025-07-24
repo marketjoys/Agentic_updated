@@ -134,10 +134,10 @@ class EnhancedAIAgentTester:
         print("\n🧪 Testing Turn Limit Configuration")
         
         try:
-            # Test setting turn limit to 25
+            # Test setting turn limit to 25 (using correct parameter name)
             payload = {
                 "session_id": self.session_id,
-                "turn_limit": 25
+                "max_turns": 25
             }
             
             response = self.session.post(f"{BASE_URL}/ai-agent/set-turn-limit", json=payload)
@@ -151,7 +151,7 @@ class EnhancedAIAgentTester:
             elif response.status_code == 200:
                 data = response.json()
                 
-                if data.get("turn_limit") == 25:
+                if data.get("max_turns") == 25:
                     print("✅ Turn Limit Configuration working correctly")
                     return True
                 else:
