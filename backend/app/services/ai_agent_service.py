@@ -378,8 +378,20 @@ Analyze this message and extract the intent and parameters.
             if match:
                 extracted_name = match.group(1).strip()
                 # Clean up extracted name
-                extracted_name = re.sub(r'\s+(using|with|for|to|at|in|on).*$', '', extracted_name, flags=re.IGNORECASE)
+                extracted_name = re.sub(r'\s+(using|with|for|to|at|in|on|now).*$', '', extracted_name, flags=re.IGNORECASE)
                 params['name'] = extracted_name
+                break
+        
+        # Extract campaign ID if present
+        id_patterns = [
+            r'campaign (?:id|ID) ([a-f0-9\-]{36})',  # "campaign id 6ab1f315-88df-4e9f-a380-a789060b2531"
+            r'(?:campaign|id|ID)\s+([a-f0-9\-]{36})',  # "send campaign 6ab1f315-88df-4e9f-a380-a789060b2531"
+        ]
+        
+        for pattern in id_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['id'] = match.group(1).strip()
                 break
         
         # Extract template - IMPROVED patterns
