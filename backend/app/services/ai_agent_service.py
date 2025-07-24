@@ -500,8 +500,9 @@ Analyze this message and extract the intent and parameters.
             
             # Extract follow-up intervals
             interval_patterns = [
-                r'(?:after|in) (\d+) days?',  # "after 3 days"
+                r'(?:after|in) (\d+) (?:and|,)?\s*(\d+)? days?',  # "after 5 and 10 days"
                 r'(\d+),?\s*(\d+),?\s*(\d+) days?',  # "3, 7, 14 days"
+                r'(?:after|in) (\d+) days?',  # "after 3 days" - single interval
             ]
             
             for pattern in interval_patterns:
