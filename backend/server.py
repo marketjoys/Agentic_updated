@@ -248,6 +248,72 @@ async def create_campaign(campaign: Campaign):
         logging.error(f"Error creating campaign: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating campaign: {str(e)}")
 
+@app.get("/api/campaigns/{campaign_id}")
+async def get_campaign_by_id(campaign_id: str):
+    """Get a specific campaign by ID with detailed information"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get campaign data
+        campaign = await db_service.get_campaign_by_id(campaign_id)
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        
+        # Get template information
+        template = None
+        if campaign.get("template_id"):
+            template = await db_service.get_template_by_id(campaign["template_id"])
+        
+        # Get prospect lists information
+        lists_info = []
+        if campaign.get("list_ids"):
+            for list_id in campaign["list_ids"]:
+                list_data = await db_service.get_list_by_id(list_id)
+                if list_data:
+                    lists_info.append(list_data)
+        
+        # Get email records for this campaign
+        email_records = []
+        try:
+            cursor = db_service.db.emails.find({"campaign_id": campaign_id})
+            email_records = await cursor.to_list(length=None)
+            
+            # Convert ObjectId to string if present
+            for record in email_records:
+                if "_id" in record:
+                    record.pop("_id")
+        except Exception as e:
+            logging.warning(f"Could not fetch email records: {e}")
+        
+        # Calculate analytics
+        total_sent = len([r for r in email_records if r.get("status") == "sent"])
+        total_failed = len([r for r in email_records if r.get("status") == "failed"])
+        
+        # Enhanced campaign details
+        campaign_details = {
+            **campaign,
+            "template": template,
+            "lists": lists_info,
+            "email_records": email_records,
+            "analytics": {
+                "total_sent": total_sent,
+                "total_failed": total_failed,
+                "total_emails": len(email_records),
+                "success_rate": (total_sent / len(email_records) * 100) if email_records else 0
+            }
+        }
+        
+        return campaign_details
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching campaign details: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching campaign details: {str(e)}")
+
 @app.put("/api/campaigns/{campaign_id}")
 async def update_campaign(campaign_id: str, campaign: dict):
     """Update a campaign"""
