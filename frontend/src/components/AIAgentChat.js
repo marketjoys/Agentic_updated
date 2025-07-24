@@ -177,7 +177,7 @@ Please try again or ask for help.`,
     sendMessage(inputMessage);
   };
   
-  const useSuggestion = (suggestion) => {
+  const handleSuggestionClick = (suggestion) => {
     sendMessage(suggestion);
   };
   
