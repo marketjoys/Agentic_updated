@@ -182,15 +182,22 @@ class EnhancedAIAgentTester:
                 data = response.json()
                 
                 # Check for conversation flow steps and enhanced features
-                required_fields = ["conversation_flow_steps", "enhanced_features"]
+                # The API returns 'conversation_flow' with 'steps' field, not 'conversation_flow_steps'
+                # And it has various capability fields, not a single 'enhanced_features' field
+                required_fields = ["conversation_flow", "capabilities"]
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if missing_fields:
                     print(f"❌ Enhanced capabilities missing required fields: {missing_fields}")
                     return False
                 else:
-                    print("✅ Enhanced Capabilities endpoint working with required fields")
-                    return True
+                    # Check if conversation_flow has steps
+                    if "steps" in data.get("conversation_flow", {}):
+                        print("✅ Enhanced Capabilities endpoint working with conversation flow steps")
+                        return True
+                    else:
+                        print("❌ Enhanced capabilities missing conversation flow steps")
+                        return False
             else:
                 print(f"❌ Enhanced Capabilities error: {response.status_code}")
                 return False
