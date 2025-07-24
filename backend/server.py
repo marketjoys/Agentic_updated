@@ -1509,6 +1509,24 @@ async def startup_event():
             logging.info("Services initialized successfully")
         except ImportError as e:
             logging.warning(f"Could not initialize some services: {e}")
+        
+        # Auto-start critical services for Auto Follow-ups and Auto Responders
+        try:
+            from app.services.smart_follow_up_engine import smart_follow_up_engine
+            from app.services.email_processor import email_processor
+            
+            # Start Follow-up Engine
+            if not smart_follow_up_engine.processing:
+                await smart_follow_up_engine.start_follow_up_engine()
+                logging.info("✅ Smart Follow-up Engine started automatically on startup")
+            
+            # Start Email Processor (Auto Responder)
+            if not email_processor.processing:
+                await email_processor.start_monitoring()
+                logging.info("✅ Email Processor (Auto Responder) started automatically on startup")
+                
+        except Exception as e:
+            logging.error(f"Failed to auto-start follow-up/auto-responder services: {e}")
             
     except Exception as e:
         logging.error(f"Error during startup: {e}")
