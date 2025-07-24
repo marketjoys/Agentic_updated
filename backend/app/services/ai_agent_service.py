@@ -411,8 +411,8 @@ Analyze this message and extract the intent and parameters.
             r'campaign (?:named|called) ([A-Z][A-Za-z\s]+?)(?:\s+using|\s+with|\s+for|$)',  # "campaign named Summer Sale using..."
             r'(?:create|make|new) (?:a |the )?campaign (?:named|called) ([A-Z][A-Za-z\s]+?)(?:\s+using|\s+with|\s+for|$)',  # "create a campaign named Summer Sale"
             r'(?:create|make|new) (?:a |the )?([A-Z][A-Za-z\s]+?) campaign',  # "create a Summer Sale campaign"
-            r'(?:send|launch|start) (?:the |campaign )([A-Z][A-Za-z\s]+?)(?:\s+now|\s+campaign|\s|$)',  # "send the Test Campaign"
-            r'(?:send|launch|start) ([A-Z][A-Za-z\s]+)(?:\s+now|\s|$)',  # "send Test Campaign now"
+            r'(?:send|launch|start) (?:the |campaign )?([A-Z][A-Za-z\s]+?)(?:\s+now|\s+campaign|\s*$)',  # "send the Test Campaign"
+            r'(?:send|launch|start) ([A-Z][A-Za-z\s]+?)(?:\s+now|\s*$)',  # "send Test Campaign now"
         ]
         
         for pattern in name_patterns:
