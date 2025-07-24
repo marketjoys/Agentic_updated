@@ -193,7 +193,7 @@ const EnhancedAIAgentChat = () => {
     sendMessage(inputMessage);
   };
   
-  const useSuggestion = (suggestion) => {
+  const handleSuggestionClick = (suggestion) => {
     sendMessage(suggestion);
   };
   
