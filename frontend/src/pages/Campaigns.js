@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Play, Pause, Send, Calendar, Users, Eye } from 'lucide-react';
+import { Plus, Play, Pause, Send, Calendar, Users, Eye, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -8,6 +8,8 @@ const Campaigns = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -73,6 +75,28 @@ const Campaigns = () => {
       loadData();
     } catch (error) {
       toast.error('Failed to create campaign');
+    }
+  };
+
+  const handleViewCampaign = async (campaignId) => {
+    console.log('👁️ handleViewCampaign called with campaignId:', campaignId);
+    
+    try {
+      console.log('📡 Fetching campaign details via API...');
+      const response = await apiService.getCampaign(campaignId);
+      console.log('✅ Campaign details fetched successfully:', response.data);
+      
+      setSelectedCampaign(response.data);
+      setShowViewModal(true);
+    } catch (error) {
+      console.error('❌ Failed to fetch campaign details:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      
+      const errorMessage = error.response?.data?.detail || 'Failed to fetch campaign details';
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-right',
+      });
     }
   };
 
@@ -172,7 +196,7 @@ const Campaigns = () => {
               <div>
                 <p className="text-sm text-secondary-600">Completed</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {campaigns.filter(c => c.status === 'completed').length}
+                  {campaigns.filter(c => c.status === 'completed' || c.status === 'sent').length}
                 </p>
               </div>
               <Users className="h-8 w-8 text-purple-600" />
@@ -188,6 +212,7 @@ const Campaigns = () => {
             key={campaign.id}
             campaign={campaign}
             onSend={handleSendCampaign}
+            onView={handleViewCampaign}
           />
         ))}
       </div>
@@ -198,6 +223,17 @@ const Campaigns = () => {
           templates={templates}
           onClose={() => setShowModal(false)}
           onSave={handleCreateCampaign}
+        />
+      )}
+
+      {/* View Campaign Modal */}
+      {showViewModal && selectedCampaign && (
+        <ViewCampaignModal
+          campaign={selectedCampaign}
+          onClose={() => {
+            setShowViewModal(false);
+            setSelectedCampaign(null);
+          }}
         />
       )}
     </div>
