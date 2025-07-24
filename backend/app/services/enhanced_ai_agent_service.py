@@ -623,7 +623,7 @@ class EnhancedAIAgentService:
             return ["What else can I help you with?", "Show me my dashboard", "Create something new"]
     
     async def get_agent_capabilities(self) -> Dict[str, Any]:
-        """Get enhanced agent capabilities"""
+        """Get enhanced agent capabilities including industry data"""
         base_capabilities = {
             "conversation_flow": {
                 "description": "Multi-turn conversation with explicit confirmation",
@@ -633,6 +633,12 @@ class EnhancedAIAgentService:
             "context_management": {
                 "description": "Enhanced conversation context with configurable turn limits",
                 "features": ["Regex-based analysis", "State persistence", "Turn history", "Context variables"]
+            },
+            "industry_support": {
+                "description": "Comprehensive industry data with 148+ industries",
+                "features": ["Industry suggestions", "URL generation", "Smart matching", "External ID mapping"],
+                "total_industries": 148,
+                "sample_industries": ["Technology", "Finance", "Healthcare", "Marketing", "Consulting"]
             }
         }
         
