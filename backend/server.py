@@ -152,6 +152,15 @@ async def get_campaigns():
         if not campaigns:
             return []
         
+        # Update prospect counts for each campaign
+        for campaign in campaigns:
+            prospect_count = 0
+            if campaign.get('list_ids'):
+                for list_id in campaign['list_ids']:
+                    prospects = await db_service.get_prospects_by_list_id(list_id)
+                    prospect_count += len(prospects)
+            campaign['prospect_count'] = prospect_count
+        
         return campaigns
         
     except Exception as e:
