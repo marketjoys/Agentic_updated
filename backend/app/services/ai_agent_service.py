@@ -478,7 +478,7 @@ Analyze this message and extract the intent and parameters.
         date_patterns = [
             r'(?:on|date) (\w+day)',  # "on Monday"
             r'(?:on|date) (\w+\s+\d{1,2})',  # "on March 15"
-            r'(?:tomorrow|next week|next month)',  # relative dates
+            r'(tomorrow|next week|next month)',  # relative dates - capture the word
             r'(?:in) (\d+) (?:hours?|days?|weeks?)',  # "in 2 hours"
         ]
         
