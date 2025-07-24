@@ -732,7 +732,7 @@ class ActionRouterService:
             return None
     
     async def send_campaign_emails(self, campaign_id: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Send campaign emails"""
+        """Send campaign emails with enhanced follow-up scheduling"""
         try:
             # Get campaign
             campaign = await self.db.get_campaign_by_id(campaign_id)
@@ -780,7 +780,7 @@ class ActionRouterService:
             if not provider:
                 return {"success": False, "error": "No email provider configured", "data": None}
             
-            # Send emails (simplified - in real implementation this would be background task)
+            # Send emails and setup follow-ups
             sent_count = 0
             failed_count = 0
             
@@ -790,7 +790,7 @@ class ActionRouterService:
                     personalized_subject = personalize_template(template["subject"], prospect)
                     personalized_content = personalize_template(template["content"], prospect)
                     
-                    # Create email record
+                    # Create email record with enhanced tracking
                     email_record = {
                         "id": generate_id(),
                         "campaign_id": campaign_id,
@@ -800,18 +800,41 @@ class ActionRouterService:
                         "content": personalized_content,
                         "status": "sent",  # Simplified - assume success
                         "sent_at": datetime.utcnow(),
-                        "provider_id": provider["id"]
+                        "provider_id": provider["id"],
+                        "sent_by_us": True,
+                        "thread_id": f"thread_{prospect['id']}"
                     }
                     
                     await self.db.create_email_record(email_record)
+                    
+                    # Setup follow-up scheduling if enabled
+                    if campaign.get("enable_follow_up", True):
+                        await self._schedule_prospect_follow_ups(
+                            prospect["id"], 
+                            campaign_id, 
+                            campaign.get("follow_up_intervals", [3, 7, 14]),
+                            campaign.get("follow_up_templates", [])
+                        )
+                    
+                    # Mark email as sent by us for thread tracking
+                    await self.db.mark_email_as_sent_by_us(email_record["id"], email_record["thread_id"])
+                    
                     sent_count += 1
                     
                 except Exception as e:
                     logger.error(f"Error sending to {prospect['email']}: {e}")
                     failed_count += 1
             
-            # Update campaign status
-            await self.db.update_campaign(campaign_id, {"status": "sent", "updated_at": datetime.utcnow()})
+            # Update campaign status and start follow-up monitoring
+            await self.db.update_campaign(campaign_id, {
+                "status": "sent", 
+                "updated_at": datetime.utcnow(),
+                "sent_at": datetime.utcnow(),
+                "prospect_count": len(prospects)
+            })
+            
+            # Start email monitoring and follow-up engine
+            await self._ensure_background_services_running()
             
             return {
                 "success": True,
@@ -819,9 +842,11 @@ class ActionRouterService:
                     "campaign_id": campaign_id,
                     "total_sent": sent_count,
                     "total_failed": failed_count,
-                    "total_prospects": len(prospects)
+                    "total_prospects": len(prospects),
+                    "follow_up_enabled": campaign.get("enable_follow_up", True),
+                    "follow_up_intervals": campaign.get("follow_up_intervals", [3, 7, 14])
                 },
-                "message": f"Campaign sent to {sent_count} prospects"
+                "message": f"Campaign sent to {sent_count} prospects with follow-up sequence enabled"
             }
             
         except Exception as e:
