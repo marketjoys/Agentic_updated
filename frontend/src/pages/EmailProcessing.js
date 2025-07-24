@@ -50,14 +50,16 @@ const EmailProcessing = () => {
         threadsResponse,
         followUpDashboardResponse,
         followUpEngineStatusResponse,
-        healthCheckResponse
+        healthCheckResponse,
+        imapScanStatusResponse
       ] = await Promise.all([
         apiService.getProcessingStatus(),
         apiService.getProcessingAnalytics(),
         apiService.getThreads(),
         apiService.getFollowUpDashboard(),
         apiService.getFollowUpEngineStatus(),
-        apiService.getFollowUpHealthCheck()
+        apiService.getFollowUpHealthCheck(),
+        apiService.getImapScanStatus()
       ]);
 
       setProcessingStatus(statusResponse.data.status);
@@ -66,6 +68,7 @@ const EmailProcessing = () => {
       setFollowUpDashboard(followUpDashboardResponse.data);
       setFollowUpEngineStatus(followUpEngineStatusResponse.data.status);
       setHealthCheck(healthCheckResponse.data);
+      setImapScanStatus(imapScanStatusResponse.data);
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load monitoring data');
