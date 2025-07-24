@@ -98,6 +98,13 @@ class EnhancedAIAgentService:
                 await self.conversation_service.set_missing_params(conv_context.session_id, missing_required)
                 await self.conversation_service.update_conversation_state(conv_context.session_id, ConversationState.GATHERING_INFO)
                 
+                # Set pending action to preserve context
+                await self.conversation_service.set_pending_action(conv_context.session_id, {
+                    "action": action,
+                    "parameters": extracted_params,
+                    "endpoint_mapping": endpoint_mapping.dict()
+                })
+                
                 # Generate information request  
                 response = await self._generate_info_gathering_response(action, missing_required, extracted_params)
                 
