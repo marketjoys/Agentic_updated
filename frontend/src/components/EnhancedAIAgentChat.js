@@ -536,7 +536,7 @@ const EnhancedAIAgentChat = () => {
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
-                onClick={() => useSuggestion(suggestion)}
+                onClick={() => handleSuggestionClick(suggestion)}
                 className="px-3 py-1 bg-white border border-blue-200 text-blue-700 rounded-full text-sm hover:bg-blue-50 transition-colors"
               >
                 {suggestion}
