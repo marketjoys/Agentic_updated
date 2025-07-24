@@ -395,26 +395,91 @@ async def get_campaign_by_id(campaign_id: str):
         raise HTTPException(status_code=500, detail=f"Error fetching campaign details: {str(e)}")
 
 @app.put("/api/campaigns/{campaign_id}")
-async def update_campaign(campaign_id: str, campaign: dict):
-    """Update a campaign"""
+async def update_campaign(campaign_id: str, campaign_update: CampaignUpdate):
+    """Update a campaign with enhanced follow-up configuration"""
     try:
         from app.services.database import db_service
+        from datetime import datetime
+        import pytz
         
         # Connect to database
         await db_service.connect()
         
+        # Prepare update data
+        update_data = {}
+        
+        # Basic fields
+        if campaign_update.name is not None:
+            update_data["name"] = campaign_update.name
+        if campaign_update.template_id is not None:
+            update_data["template_id"] = campaign_update.template_id
+        if campaign_update.list_ids is not None:
+            update_data["list_ids"] = campaign_update.list_ids
+        if campaign_update.max_emails is not None:
+            update_data["max_emails"] = campaign_update.max_emails
+        
+        # Follow-up configuration
+        if campaign_update.follow_up_enabled is not None:
+            update_data["follow_up_enabled"] = campaign_update.follow_up_enabled
+        if campaign_update.follow_up_schedule_type is not None:
+            update_data["follow_up_schedule_type"] = campaign_update.follow_up_schedule_type
+        if campaign_update.follow_up_intervals is not None:
+            update_data["follow_up_intervals"] = campaign_update.follow_up_intervals
+        if campaign_update.follow_up_timezone is not None:
+            update_data["follow_up_timezone"] = campaign_update.follow_up_timezone
+        if campaign_update.follow_up_time_window_start is not None:
+            update_data["follow_up_time_window_start"] = campaign_update.follow_up_time_window_start
+        if campaign_update.follow_up_time_window_end is not None:
+            update_data["follow_up_time_window_end"] = campaign_update.follow_up_time_window_end
+        if campaign_update.follow_up_days_of_week is not None:
+            update_data["follow_up_days_of_week"] = campaign_update.follow_up_days_of_week
+        if campaign_update.follow_up_templates is not None:
+            update_data["follow_up_templates"] = campaign_update.follow_up_templates
+        
+        # Process follow-up dates if provided
+        if campaign_update.follow_up_dates is not None:
+            follow_up_dates_processed = []
+            if campaign_update.follow_up_dates:
+                try:
+                    timezone = campaign_update.follow_up_timezone or "UTC"
+                    tz = pytz.timezone(timezone)
+                    
+                    for date_str in campaign_update.follow_up_dates:
+                        # Parse ISO datetime string
+                        follow_up_datetime = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                        
+                        # Ensure timezone awareness
+                        if follow_up_datetime.tzinfo is None:
+                            follow_up_datetime = tz.localize(follow_up_datetime)
+                        
+                        follow_up_dates_processed.append(follow_up_datetime)
+                        
+                    logging.info(f"Updated {len(follow_up_dates_processed)} follow-up dates for campaign {campaign_id}")
+                    
+                except Exception as e:
+                    logging.error(f"Error processing follow-up dates: {str(e)}")
+                    raise HTTPException(status_code=400, detail=f"Invalid follow-up dates or timezone: {str(e)}")
+                    
+            update_data["follow_up_dates"] = follow_up_dates_processed
+        
         # Add update timestamp
-        campaign["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.utcnow()
         
         # Update campaign in database
-        result = await db_service.update_campaign(campaign_id, campaign)
+        result = await db_service.update_campaign(campaign_id, update_data)
         
         if result:
-            return {
+            response_data = {
                 "id": campaign_id,
-                "message": "Campaign updated successfully",
-                **campaign
+                "message": "Campaign updated successfully with enhanced follow-up configuration",
+                **update_data
             }
+            
+            # Format datetime objects for JSON response
+            if "follow_up_dates" in update_data and update_data["follow_up_dates"]:
+                response_data["follow_up_dates"] = [dt.isoformat() for dt in update_data["follow_up_dates"]]
+            
+            return response_data
         else:
             raise HTTPException(status_code=404, detail="Campaign not found")
             
