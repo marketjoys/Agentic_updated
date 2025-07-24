@@ -90,40 +90,79 @@ manager = ConnectionManager()
 @router.post("/ai-agent/chat", response_model=ConversationResponse)
 async def chat_with_agent(request: ConversationRequest):
     """
-    Main conversational endpoint - handles text-based conversation
+    Main conversational endpoint - handles text-based conversation with enhanced confirmation flow
     """
     try:
-        logger.info(f"AI Agent chat request: {request.message}")
+        logger.info(f"AI Agent chat request: {request.message} (Enhanced: {request.use_enhanced_flow})")
         
         # Generate session ID if not provided
         if not request.session_id:
             request.session_id = generate_id()
         
-        # Process the conversation
-        result = await ai_agent_service.process_conversation(
-            message=request.message,
-            user_id=request.user_id,
-            session_id=request.session_id,
-            context=request.context or {}
-        )
+        # Choose service based on request
+        if request.use_enhanced_flow:
+            # Use enhanced service with confirmation flow
+            result = await enhanced_ai_agent_service.process_conversation(
+                message=request.message,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                context=request.context or {}
+            )
+            
+            # Get additional context info
+            conv_context = await enhanced_conversation_service.get_conversation_context(
+                request.session_id, request.user_id
+            )
+            
+            context_info = {
+                "turn_count": len(conv_context.turns),
+                "max_turns": conv_context.max_turns,
+                "state": conv_context.current_state.value,
+                "extracted_params": conv_context.extracted_params,
+                "missing_params": conv_context.missing_params
+            }
+            
+            return ConversationResponse(
+                response=result['response'],
+                action_taken=result.get('action_taken'),
+                data=convert_objectid_to_str(result.get('data')),
+                suggestions=result.get('suggestions', []),
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat(),
+                conversation_state=result.get('conversation_state'),
+                pending_action=conv_context.pending_action,
+                context_info=context_info
+            )
         
-        # Save conversation to context
-        await conversation_context_service.save_conversation_turn(
-            session_id=request.session_id,
-            user_message=request.message,
-            agent_response=result['response'],
-            action_taken=result.get('action_taken'),
-            data=convert_objectid_to_str(result.get('data'))
-        )
-        
-        return ConversationResponse(
-            response=result['response'],
-            action_taken=result.get('action_taken'),
-            data=convert_objectid_to_str(result.get('data')),
-            suggestions=result.get('suggestions', []),
-            session_id=request.session_id,
-            timestamp=datetime.utcnow().isoformat()
-        )
+        else:
+            # Use original service for backward compatibility
+            result = await ai_agent_service.process_conversation(
+                message=request.message,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                context=request.context or {}
+            )
+            
+            # Save conversation to old context system
+            await conversation_context_service.save_conversation_turn(
+                session_id=request.session_id,
+                user_message=request.message,
+                agent_response=result['response'],
+                action_taken=result.get('action_taken'),
+                data=convert_objectid_to_str(result.get('data'))
+            )
+            
+            return ConversationResponse(
+                response=result['response'],
+                action_taken=result.get('action_taken'),
+                data=convert_objectid_to_str(result.get('data')),
+                suggestions=result.get('suggestions', []),
+                session_id=request.session_id,
+                timestamp=datetime.utcnow().isoformat(),
+                conversation_state="legacy",
+                pending_action=None,
+                context_info={"mode": "legacy"}
+            )
         
     except Exception as e:
         logger.error(f"Error in AI agent chat: {e}")
