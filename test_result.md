@@ -463,8 +463,7 @@ metadata:
   test_credentials: "testuser/testpass123"
 
 test_plan:
-  current_focus:
-    - "Email Processing Auto Responder Functionality"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
