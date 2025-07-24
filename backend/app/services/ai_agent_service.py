@@ -188,6 +188,36 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
         
+        # Email Processing & Monitoring - NEW HIGH PRIORITY
+        elif any(phrase in message_lower for phrase in ['email monitoring', 'start monitoring', 'email processing', 'follow-up system', 'auto response', 'monitoring system']):
+            if any(word in message_lower for word in ['start', 'begin', 'activate', 'enable', 'turn on']):
+                return {
+                    "action": "start_email_processing",
+                    "entity": "email_processing",
+                    "operation": "start",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['stop', 'end', 'deactivate', 'disable', 'turn off']):
+                return {
+                    "action": "stop_email_processing",
+                    "entity": "email_processing",
+                    "operation": "stop",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['status', 'check', 'show', 'view']):
+                return {
+                    "action": "email_processing_status",
+                    "entity": "email_processing",
+                    "operation": "status",
+                    "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+        
         # Search/Find patterns - HIGH PRIORITY for AI prospecting
         elif any(word in message_lower for word in ['search', 'find', 'look for', 'locate']):
             if any(word in message_lower for word in ['prospect', 'prospects', 'contact', 'contacts', 'lead', 'leads']):
