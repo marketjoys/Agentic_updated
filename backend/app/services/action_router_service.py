@@ -95,9 +95,12 @@ class ActionRouterService:
                 # If no ID provided, try to find campaign by name
                 if not campaign_id and parameters.get('name'):
                     campaigns = await self.db.get_campaigns()
+                    logger.info(f"Looking for campaign with name: '{parameters['name']}'")
                     for camp in campaigns:
+                        logger.info(f"Checking campaign: '{camp.get('name', '')}'")
                         if camp.get('name', '').lower() == parameters['name'].lower():
                             campaign_id = camp.get('id')
+                            logger.info(f"Found matching campaign ID: {campaign_id}")
                             break
                 
                 if not campaign_id:
