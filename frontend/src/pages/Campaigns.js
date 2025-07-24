@@ -692,4 +692,226 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
   );
 };
 
+const ViewCampaignModal = ({ campaign, onClose }) => {
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'draft': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'paused': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'completed': 
+      case 'sent': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'failed': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return <Play className="h-5 w-5" />;
+      case 'draft': return <Pause className="h-5 w-5" />;
+      case 'completed':
+      case 'sent': return <CheckCircle className="h-5 w-5" />;
+      case 'failed': return <XCircle className="h-5 w-5" />;
+      default: return <AlertCircle className="h-5 w-5" />;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="fixed inset-0 bg-black opacity-30"></div>
+        <div className="relative bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-secondary-900">
+              Campaign Details
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600 transition-colors"
+            >
+              <XCircle className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Campaign Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-xl font-semibold text-secondary-900">
+                {campaign.name}
+              </h4>
+              <div className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${getStatusColor(campaign.status)}`}>
+                {getStatusIcon(campaign.status)}
+                <span className="font-medium capitalize">{campaign.status}</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {campaign.prospect_count || 0}
+                </div>
+                <div className="text-sm text-secondary-600">Prospects</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {campaign.analytics?.total_sent || 0}
+                </div>
+                <div className="text-sm text-secondary-600">Emails Sent</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {campaign.analytics?.success_rate?.toFixed(1) || 0}%
+                </div>
+                <div className="text-sm text-secondary-600">Success Rate</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Campaign Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Basic Info */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h5 className="font-semibold text-secondary-900 mb-3">Campaign Information</h5>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-secondary-600">Created:</span>
+                  <span className="text-secondary-900">
+                    {new Date(campaign.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-secondary-600">Max Emails:</span>
+                  <span className="text-secondary-900">{campaign.max_emails}</span>
+                </div>
+                {campaign.schedule && (
+                  <div className="flex justify-between">
+                    <span className="text-secondary-600">Scheduled:</span>
+                    <span className="text-secondary-900">
+                      {new Date(campaign.schedule).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Analytics */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h5 className="font-semibold text-secondary-900 mb-3">Email Analytics</h5>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-secondary-600">Total Emails:</span>
+                  <span className="text-secondary-900">{campaign.analytics?.total_emails || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-600">Sent:</span>
+                  <span className="text-green-700 font-medium">{campaign.analytics?.total_sent || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-red-600">Failed:</span>
+                  <span className="text-red-700 font-medium">{campaign.analytics?.total_failed || 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Template Information */}
+          {campaign.template && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h5 className="font-semibold text-secondary-900 mb-3">Template</h5>
+              <div className="space-y-2">
+                <div className="text-sm text-secondary-600">
+                  <strong>Name:</strong> {campaign.template.name}
+                </div>
+                <div className="text-sm text-secondary-600">
+                  <strong>Subject:</strong> {campaign.template.subject}
+                </div>
+                <div className="text-sm text-secondary-600">
+                  <strong>Type:</strong> {campaign.template.type}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Target Lists */}
+          {campaign.lists && campaign.lists.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h5 className="font-semibold text-secondary-900 mb-3">Target Lists</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {campaign.lists.map((list) => (
+                  <div key={list.id} className="flex items-center space-x-3 p-2 bg-white rounded border">
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: list.color }}
+                    ></div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-secondary-900">{list.name}</div>
+                      <div className="text-xs text-secondary-600">
+                        {list.prospect_count} prospects
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Email Records */}
+          {campaign.email_records && campaign.email_records.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <h5 className="font-semibold text-secondary-900 mb-3">
+                Email Records ({campaign.email_records.length})
+              </h5>
+              <div className="max-h-64 overflow-y-auto">
+                <div className="space-y-2">
+                  {campaign.email_records.slice(0, 10).map((record, index) => (
+                    <div key={record.id || index} className="flex items-center justify-between p-2 bg-white rounded border text-sm">
+                      <div className="flex-1">
+                        <div className="font-medium text-secondary-900">
+                          {record.recipient_email}
+                        </div>
+                        <div className="text-xs text-secondary-600">
+                          {record.subject}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          record.status === 'sent' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {record.status}
+                        </span>
+                        {record.sent_at && (
+                          <span className="text-xs text-secondary-400">
+                            {new Date(record.sent_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {campaign.email_records.length > 10 && (
+                    <div className="text-center text-sm text-secondary-600 p-2">
+                      ... and {campaign.email_records.length - 10} more records
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Close Button */}
+          <div className="flex justify-end pt-4 border-t">
+            <button
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default Campaigns;
