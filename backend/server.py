@@ -117,6 +117,32 @@ class Campaign(BaseModel):
     list_ids: List[str] = []
     max_emails: int = 1000
     schedule: Optional[str] = None
+    
+    # Enhanced Follow-up Configuration
+    follow_up_enabled: bool = True
+    follow_up_schedule_type: str = "interval"  # interval, datetime
+    follow_up_intervals: List[int] = [3, 7, 14]  # days (for interval mode)
+    follow_up_dates: List[str] = []  # ISO datetime strings (for datetime mode)
+    follow_up_timezone: str = "UTC"
+    follow_up_time_window_start: str = "09:00"
+    follow_up_time_window_end: str = "17:00"
+    follow_up_days_of_week: List[str] = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    follow_up_templates: List[str] = []
+
+class CampaignUpdate(BaseModel):
+    name: Optional[str] = None
+    template_id: Optional[str] = None
+    list_ids: Optional[List[str]] = None
+    max_emails: Optional[int] = None
+    follow_up_enabled: Optional[bool] = None
+    follow_up_schedule_type: Optional[str] = None
+    follow_up_intervals: Optional[List[int]] = None
+    follow_up_dates: Optional[List[str]] = None
+    follow_up_timezone: Optional[str] = None
+    follow_up_time_window_start: Optional[str] = None
+    follow_up_time_window_end: Optional[str] = None
+    follow_up_days_of_week: Optional[List[str]] = None
+    follow_up_templates: Optional[List[str]] = None
 
 class AddProspectsRequest(BaseModel):
     prospect_ids: List[str]
