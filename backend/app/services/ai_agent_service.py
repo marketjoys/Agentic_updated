@@ -831,6 +831,30 @@ Analyze this message and extract the intent and parameters.
                 
                 return response
             
+            elif action == 'schedule_campaign':
+                if action_result.get('requires_confirmation') and data:
+                    details = data.get('confirmation_details', {})
+                    campaign_name = details.get('campaign_name', 'your campaign')
+                    send_time = details.get('send_time', 'Not specified')
+                    send_date = details.get('send_date', 'Not specified')
+                    follow_up_enabled = details.get('follow_up_enabled', False)
+                    follow_up_intervals = details.get('follow_up_intervals', [])
+                    
+                    response = f"I've scheduled '{campaign_name}' for you! Here are the details:\n"
+                    response += f"• Send Date: {send_date}\n"
+                    response += f"• Send Time: {send_time}\n"
+                    response += f"• Follow-up Enabled: {'Yes' if follow_up_enabled else 'No'}\n"
+                    
+                    if follow_up_enabled and follow_up_intervals:
+                        interval_text = ", ".join([f"{i} days" for i in follow_up_intervals])
+                        response += f"• Follow-up Schedule: {interval_text} after initial send\n"
+                    
+                    response += "\nThe campaign will be automatically sent at the scheduled time, and I'll monitor responses to manage follow-ups intelligently."
+                    return response
+                else:
+                    campaign_name = data.get('name', 'your campaign') if data else 'your campaign'
+                    return f"Great! I've scheduled '{campaign_name}' and it will be sent automatically at the specified time with intelligent follow-up management."
+            
             elif action == 'list_prospects':
                 prospects = data or []
                 if not prospects:
