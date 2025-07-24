@@ -877,6 +877,14 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
         if not campaign:
             raise HTTPException(status_code=404, detail="Campaign not found")
         
+        # Check if campaign has already been sent
+        current_status = campaign.get("status", "draft")
+        if current_status in ["sent", "completed", "active"]:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Campaign has already been {current_status}. Cannot send again."
+            )
+        
         # Get template data
         template_id = campaign.get("template_id")
         if not template_id:
