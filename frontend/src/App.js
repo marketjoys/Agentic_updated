@@ -19,6 +19,7 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import SystemPrompts from './pages/SystemPrompts';
 import ResponseVerification from './pages/ResponseVerification';
 import AIAgentChat from './components/AIAgentChat';
+import EnhancedAIAgentChat from './components/EnhancedAIAgentChat';
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
@@ -57,6 +58,7 @@ const ProtectedRoutes = () => {
         <Route path="/system-prompts" element={<SystemPrompts />} />
         <Route path="/response-verification" element={<ResponseVerification />} />
         <Route path="/ai-agent" element={<AIAgentChat />} />
+        <Route path="/ai-agent-enhanced" element={<EnhancedAIAgentChat />} />
       </Routes>
     </Layout>
   );
