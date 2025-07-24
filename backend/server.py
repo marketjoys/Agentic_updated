@@ -917,6 +917,93 @@ async def get_intents():
         # Return empty list on error instead of mock data
         return []
 
+@app.get("/api/services/status")
+async def get_services_status():
+    """Get status of auto follow-up and auto-responder services"""
+    try:
+        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.email_processor import email_processor
+        
+        return {
+            "services": {
+                "smart_follow_up_engine": {
+                    "status": "running" if smart_follow_up_engine.processing else "stopped",
+                    "description": "Handles automatic follow-up emails"
+                },
+                "email_processor": {
+                    "status": "running" if email_processor.processing else "stopped", 
+                    "description": "Handles automatic email responses (auto-responder)"
+                }
+            },
+            "overall_status": "healthy" if (smart_follow_up_engine.processing and email_processor.processing) else "degraded",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            "services": {
+                "smart_follow_up_engine": {"status": "error", "error": str(e)},
+                "email_processor": {"status": "error", "error": str(e)}
+            },
+            "overall_status": "error",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+@app.post("/api/services/start-all")
+async def start_all_services():
+    """Manually start both follow-up and auto-responder services"""
+    try:
+        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.email_processor import email_processor
+        
+        results = {}
+        
+        # Start Follow-up Engine
+        if not smart_follow_up_engine.processing:
+            follow_up_result = await smart_follow_up_engine.start_follow_up_engine()
+            results["smart_follow_up_engine"] = follow_up_result
+        else:
+            results["smart_follow_up_engine"] = {"status": "already_running"}
+        
+        # Start Email Processor
+        if not email_processor.processing:
+            email_result = await email_processor.start_monitoring()
+            results["email_processor"] = email_result
+        else:
+            results["email_processor"] = {"status": "already_running"}
+        
+        return {
+            "message": "All services start initiated",
+            "results": results,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting services: {str(e)}")
+
+@app.post("/api/services/stop-all")
+async def stop_all_services():
+    """Manually stop both follow-up and auto-responder services"""
+    try:
+        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.email_processor import email_processor
+        
+        # Stop Follow-up Engine
+        follow_up_result = await smart_follow_up_engine.stop_follow_up_engine()
+        
+        # Stop Email Processor
+        email_result = await email_processor.stop_monitoring()
+        
+        return {
+            "message": "All services stopped",
+            "results": {
+                "smart_follow_up_engine": follow_up_result,
+                "email_processor": email_result
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error stopping services: {str(e)}")
 @app.get("/api/analytics/campaign/{campaign_id}")
 async def get_campaign_analytics(campaign_id: str):
     return {
