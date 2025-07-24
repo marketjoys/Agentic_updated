@@ -516,6 +516,95 @@ const EmailProcessing = () => {
         </div>
       </div>
 
+      {/* IMAP Scan Statistics (24h) */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-xl font-bold text-secondary-900 flex items-center">
+            <Activity className="h-6 w-6 mr-2 text-indigo-600" />
+            IMAP Scan Statistics (Last 24 Hours)
+          </h3>
+          <p className="text-sm text-secondary-600 mt-1">
+            Detailed breakdown of email scanning and processing activity
+          </p>
+        </div>
+        <div className="card-body">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg border">
+              <div className="text-2xl font-bold text-blue-600">
+                {imapScanStatus.statistics_24h?.total_scans || 0}
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Total Scans</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg border">
+              <div className="text-2xl font-bold text-green-600">
+                {imapScanStatus.statistics_24h?.total_emails_found || 0}
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Emails Found</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg border">
+              <div className="text-2xl font-bold text-purple-600">
+                {imapScanStatus.statistics_24h?.total_emails_processed || 0}
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Processed</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 rounded-lg border">
+              <div className="text-2xl font-bold text-yellow-600">
+                {imapScanStatus.statistics_24h?.avg_emails_per_scan || 0}
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Avg/Scan</div>
+            </div>
+            <div className="text-center p-4 bg-emerald-50 rounded-lg border">
+              <div className="text-2xl font-bold text-emerald-600">
+                {imapScanStatus.statistics_24h?.success_rate || 100}%
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Success Rate</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-lg border">
+              <div className="text-2xl font-bold text-red-600">
+                {imapScanStatus.statistics_24h?.total_errors || 0}
+              </div>
+              <div className="text-sm text-secondary-600 mt-1">Errors</div>
+            </div>
+          </div>
+          
+          {/* Quick Status Summary */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-lg font-semibold text-secondary-900 mb-3">Quick Status Summary</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-secondary-700">Auto Responder:</span>
+                <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                  processingStatus === 'running' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {processingStatus === 'running' ? 'RUNNING' : 'STOPPED'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-secondary-700">Last Activity:</span>
+                <span className="ml-2 text-secondary-900">
+                  {imapScanStatus.last_scan?.timestamp 
+                    ? new Date(imapScanStatus.last_scan.timestamp).toLocaleString()
+                    : 'No recent activity'
+                  }
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-secondary-700">System Health:</span>
+                <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                  (imapScanStatus.statistics_24h?.success_rate || 100) >= 90
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {(imapScanStatus.statistics_24h?.success_rate || 100) >= 90 ? 'HEALTHY' : 'DEGRADED'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Follow-up Monitoring Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* IMAP Monitoring */}
