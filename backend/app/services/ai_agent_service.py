@@ -19,9 +19,13 @@ class AIAgentService:
     
     async def process_conversation(self, message: str, user_id: str, session_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Main conversation processing method
+        Main conversation processing method with industry data access
         """
         try:
+            # Load industry data for context if needed
+            if any(keyword in message.lower() for keyword in ['industry', 'sector', 'field', 'business type']):
+                context['available_industries'] = await self.get_available_industries()
+            
             # Step 1: Analyze user intent and extract parameters
             intent_analysis = await self.analyze_user_intent(message, context)
             
