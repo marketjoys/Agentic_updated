@@ -343,7 +343,153 @@ async def get_agent_capabilities():
         logger.error(f"Error getting capabilities: {e}")
         raise HTTPException(status_code=500, detail=f"Capabilities error: {str(e)}")
 
-@router.post("/ai-agent/test")
+@router.post("/ai-agent/set-turn-limit")
+async def set_conversation_turn_limit(request: SetTurnLimitRequest):
+    """
+    Set the maximum number of conversation turns to keep in context
+    """
+    try:
+        if request.max_turns < 1 or request.max_turns > 1000:
+            raise HTTPException(status_code=400, detail="Turn limit must be between 1 and 1000")
+        
+        await enhanced_conversation_service.set_turn_limit(request.session_id, request.max_turns)
+        
+        return {
+            "message": f"Turn limit set to {request.max_turns} for session {request.session_id}",
+            "session_id": request.session_id,
+            "max_turns": request.max_turns,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error setting turn limit: {e}")
+        raise HTTPException(status_code=500, detail=f"Turn limit error: {str(e)}")
+
+@router.get("/ai-agent/enhanced-capabilities")
+async def get_enhanced_agent_capabilities():
+    """
+    Get enhanced AI agent capabilities and available actions
+    """
+    try:
+        capabilities = await enhanced_ai_agent_service.get_agent_capabilities()
+        
+        return {
+            "capabilities": capabilities,
+            "conversation_flow": {
+                "description": "Multi-turn conversation with explicit confirmation",
+                "steps": [
+                    "1. User inputs query/task",
+                    "2. Agent checks which backend endpoint to use",
+                    "3. Agent checks required payloads for API call",
+                    "4. If missing info, ask user for remaining info",
+                    "5. Confirm with user before proceeding", 
+                    "6. Execute the task",
+                    "7. Handle changes/confirmations"
+                ],
+                "states": ["analyzing", "gathering_info", "confirming", "executing", "completed", "error"]
+            },
+            "context_features": [
+                "Configurable turn limits (10-100 turns)",
+                "Regex-based context extraction",
+                "State persistence across sessions",
+                "Parameter validation and information gathering",
+                "Explicit user confirmation before actions"
+            ],
+            "examples": [
+                "Show me all my campaigns",
+                "Create a new campaign named Summer Sale",
+                "Add John Smith from TechCorp to my database",
+                "Send Test Campaign to VIP list",
+                "What are my analytics for this month?",
+                "Upload prospects from CSV data"
+            ],
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting enhanced capabilities: {e}")
+        raise HTTPException(status_code=500, detail=f"Enhanced capabilities error: {str(e)}")
+
+@router.get("/ai-agent/conversation-history/{session_id}")
+async def get_conversation_history(session_id: str, limit: Optional[int] = None):
+    """
+    Get conversation history for a session with optional limit
+    """
+    try:
+        history = await enhanced_conversation_service.get_conversation_history(session_id, limit)
+        
+        # Convert to serializable format
+        history_data = []
+        for turn in history:
+            history_data.append({
+                "turn_id": turn.turn_id,
+                "timestamp": turn.timestamp.isoformat(),
+                "user_message": turn.user_message,
+                "agent_response": turn.agent_response,
+                "state": turn.state.value,
+                "intent": turn.intent,
+                "extracted_params": turn.extracted_params,
+                "missing_params": turn.missing_params,
+                "action_taken": turn.action_taken,
+                "data": convert_objectid_to_str(turn.data)
+            })
+        
+        return {
+            "session_id": session_id,
+            "history": history_data,
+            "turn_count": len(history_data),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation history: {e}")
+        raise HTTPException(status_code=500, detail=f"History retrieval error: {str(e)}")
+
+@router.get("/ai-agent/conversation-context/{session_id}")
+async def get_enhanced_conversation_context(session_id: str):
+    """
+    Get enhanced conversation context with state and parameters
+    """
+    try:
+        context = await enhanced_conversation_service.get_conversation_context(session_id)
+        
+        return {
+            "session_id": context.session_id,
+            "user_id": context.user_id,
+            "current_state": context.current_state.value,
+            "turn_count": len(context.turns),
+            "max_turns": context.max_turns,
+            "pending_action": context.pending_action,
+            "extracted_params": context.extracted_params,
+            "missing_params": context.missing_params,
+            "context_variables": context.context_variables,
+            "user_preferences": context.user_preferences,
+            "created_at": context.created_at.isoformat(),
+            "updated_at": context.updated_at.isoformat(),
+            "last_activity": context.last_activity.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting enhanced conversation context: {e}")
+        raise HTTPException(status_code=500, detail=f"Enhanced context retrieval error: {str(e)}")
+
+@router.delete("/ai-agent/enhanced-sessions/{session_id}")
+async def clear_enhanced_conversation_session(session_id: str):
+    """
+    Clear enhanced conversation session and context
+    """
+    try:
+        await enhanced_conversation_service.clear_session(session_id)
+        return {
+            "message": f"Enhanced session {session_id} cleared successfully",
+            "session_id": session_id,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error clearing enhanced session: {e}")
+        raise HTTPException(status_code=500, detail=f"Enhanced session clear error: {str(e)}")
+
 async def test_agent_functionality(request: Dict[str, Any]):
     """
     Test agent functionality with sample inputs
