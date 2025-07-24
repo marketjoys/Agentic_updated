@@ -158,12 +158,13 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
             elif any(word in message_lower for word in ['send', 'launch', 'start']):
+                campaign_params = self.extract_campaign_params(message)
                 return {
                     "action": "send_campaign",
                     "entity": "campaign", 
                     "operation": "send",
-                    "parameters": self.extract_campaign_params(message),
-                    "confidence": 0.8,
+                    "parameters": campaign_params,
+                    "confidence": 0.9,  # Increased confidence for better matching
                     "requires_clarification": False
                 }
             elif any(word in message_lower for word in ['show', 'get', 'see', 'view', 'display']):
@@ -172,6 +173,17 @@ Analyze this message and extract the intent and parameters.
                     "entity": "campaign",
                     "operation": "list",
                     "parameters": {},
+                    "confidence": 0.9,
+                    "requires_clarification": False
+                }
+            elif any(word in message_lower for word in ['schedule', 'plan', 'set time', 'later']):
+                campaign_params = self.extract_campaign_params(message)
+                campaign_params.update(self.extract_scheduling_params(message))
+                return {
+                    "action": "schedule_campaign",
+                    "entity": "campaign",
+                    "operation": "schedule",
+                    "parameters": campaign_params,
                     "confidence": 0.9,
                     "requires_clarification": False
                 }
