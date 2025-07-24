@@ -556,7 +556,7 @@ metadata:
 
 test_plan:
   current_focus: 
-    - "Enhanced Auto Follow-ups and Auto Responders System"
+    - "Industry Functionality for AI Agent"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
