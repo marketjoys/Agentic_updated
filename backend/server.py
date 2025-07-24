@@ -917,6 +917,120 @@ async def get_intents():
         # Return empty list on error instead of mock data
         return []
 
+@app.get("/api/industries")
+async def get_industries():
+    """Get all industries for AI Agent"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get industries from database
+        industries = await db_service.get_industry_tags()
+        
+        # If no industries exist, return empty list
+        if not industries:
+            return []
+        
+        # Transform for AI Agent usage with URLs
+        industry_data = []
+        for industry in industries:
+            industry_data.append({
+                "id": industry.get("id"),
+                "external_id": industry.get("external_id"),
+                "industry": industry.get("industry"),
+                "description": industry.get("description", ""),
+                "url": f"/api/industries/{industry.get('external_id')}",
+                "is_active": industry.get("is_active", True)
+            })
+        
+        return {
+            "industries": industry_data,
+            "total_count": len(industry_data),
+            "message": "Industries available for AI Agent"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error fetching industries: {str(e)}")
+        return {"industries": [], "total_count": 0, "error": str(e)}
+
+@app.get("/api/industries/{external_id}")
+async def get_industry_by_external_id(external_id: str):
+    """Get specific industry by external ID"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get specific industry by external_id
+        industry = await db_service.db.industry_tags.find_one({"external_id": external_id})
+        
+        if not industry:
+            raise HTTPException(status_code=404, detail="Industry not found")
+        
+        # Clean up the data
+        if "_id" in industry:
+            industry.pop("_id")
+        
+        return {
+            "id": industry.get("id"),
+            "external_id": industry.get("external_id"),
+            "industry": industry.get("industry"),
+            "description": industry.get("description", ""),
+            "url": f"/api/industries/{external_id}",
+            "is_active": industry.get("is_active", True),
+            "created_at": industry.get("created_at"),
+            "updated_at": industry.get("updated_at")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching industry: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching industry: {str(e)}")
+
+@app.get("/api/industries/search/{search_term}")
+async def search_industries(search_term: str):
+    """Search industries by name for AI Agent"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Search industries by name (case-insensitive)
+        industries = await db_service.db.industry_tags.find({
+            "industry": {"$regex": search_term, "$options": "i"}
+        }).to_list(length=50)  # Limit to 50 results
+        
+        # Transform results
+        industry_data = []
+        for industry in industries:
+            if "_id" in industry:
+                industry.pop("_id")
+                
+            industry_data.append({
+                "id": industry.get("id"),
+                "external_id": industry.get("external_id"),
+                "industry": industry.get("industry"),
+                "description": industry.get("description", ""),
+                "url": f"/api/industries/{industry.get('external_id')}",
+                "is_active": industry.get("is_active", True)
+            })
+        
+        return {
+            "search_term": search_term,
+            "industries": industry_data,
+            "total_count": len(industry_data),
+            "message": f"Found {len(industry_data)} industries matching '{search_term}'"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error searching industries: {str(e)}")
+        return {"search_term": search_term, "industries": [], "total_count": 0, "error": str(e)}
+
 @app.get("/api/services/status")
 async def get_services_status():
     """Get status of auto follow-up and auto-responder services"""
