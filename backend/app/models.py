@@ -214,8 +214,17 @@ class Campaign(BaseModel):
     # Follow-up Configuration
     follow_up_enabled: bool = True
     follow_up_rule_id: str = ""
-    follow_up_intervals: List[int] = [3, 7, 14]  # days
+    follow_up_intervals: List[int] = [3, 7, 14]  # days (backward compatibility)
     follow_up_templates: List[str] = []
+    
+    # Enhanced Follow-up Scheduling with Precise DateTime + Timezone
+    follow_up_schedule_type: str = "interval"  # interval, datetime, custom
+    follow_up_dates: List[datetime] = []  # Precise follow-up datetimes
+    follow_up_timezone: str = "UTC"  # Timezone for follow-up scheduling
+    follow_up_time_window_start: str = "09:00"  # Daily time window start
+    follow_up_time_window_end: str = "17:00"  # Daily time window end
+    follow_up_days_of_week: List[str] = ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    follow_up_auto_start: bool = True  # Auto-start follow-ups when campaign starts
     
     # Enhanced analytics
     sent_count: int = 0
