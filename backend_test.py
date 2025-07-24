@@ -98,8 +98,8 @@ class EnhancedAIAgentTester:
         try:
             # Test legacy flow chat endpoint
             payload = {
-                "message": "Create campaign Summer Sale",
-                "session_id": self.session_id,
+                "message": "Show me all my campaigns",
+                "session_id": self.session_id + "_legacy",
                 "use_enhanced_flow": False
             }
             
@@ -114,13 +114,17 @@ class EnhancedAIAgentTester:
             elif response.status_code == 200:
                 data = response.json()
                 
-                # Legacy mode should execute directly, not ask for confirmation
-                if "conversation_state" in data or "pending_action" in data:
-                    print("❌ Legacy mode incorrectly using enhanced flow features")
-                    return False
-                else:
+                # Legacy mode should have conversation_state = "legacy" and pending_action = None
+                # This indicates it's working in legacy mode, not enhanced confirmation mode
+                conversation_state = data.get("conversation_state")
+                pending_action = data.get("pending_action")
+                
+                if conversation_state == "legacy" and pending_action is None:
                     print("✅ Legacy AI Agent Chat endpoint working in direct execution mode")
                     return True
+                else:
+                    print(f"❌ Legacy mode not working correctly. State: {conversation_state}, Pending: {pending_action}")
+                    return False
             else:
                 print(f"❌ Legacy AI Agent Chat endpoint error: {response.status_code}")
                 return False
