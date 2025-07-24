@@ -464,6 +464,55 @@ Analyze this message and extract the intent and parameters.
                 break
         
         return params
+    
+    def extract_scheduling_params(self, message: str) -> Dict[str, Any]:
+        """Extract scheduling parameters from message"""
+        params = {}
+        
+        # Extract time/date patterns
+        time_patterns = [
+            r'(?:at|time) (\d{1,2}:\d{2}(?:\s*[AP]M)?)',  # "at 2:30PM"
+            r'(?:at|time) (\d{1,2}\s*[AP]M)',  # "at 2PM"
+        ]
+        
+        date_patterns = [
+            r'(?:on|date) (\w+day)',  # "on Monday"
+            r'(?:on|date) (\w+\s+\d{1,2})',  # "on March 15"
+            r'(?:tomorrow|next week|next month)',  # relative dates
+            r'(?:in) (\d+) (?:hours?|days?|weeks?)',  # "in 2 hours"
+        ]
+        
+        for pattern in time_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['send_time'] = match.group(1).strip()
+                break
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                params['send_date'] = match.group(0).strip()
+                break
+        
+        # Extract follow-up settings
+        if any(word in message.lower() for word in ['follow up', 'follow-up', 'followup']):
+            params['enable_follow_up'] = True
+            
+            # Extract follow-up intervals
+            interval_patterns = [
+                r'(?:after|in) (\d+) days?',  # "after 3 days"
+                r'(\d+),?\s*(\d+),?\s*(\d+) days?',  # "3, 7, 14 days"
+            ]
+            
+            for pattern in interval_patterns:
+                match = re.search(pattern, message, re.IGNORECASE)
+                if match:
+                    if len(match.groups()) == 1:
+                        params['follow_up_intervals'] = [int(match.group(1))]
+                    else:
+                        intervals = [int(g) for g in match.groups() if g]
+                        params['follow_up_intervals'] = intervals
+                    break
         
         return params
     
