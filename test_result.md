@@ -452,7 +452,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "AI Agent Natural Language Processing"
+    - "Email Processing Auto Responder Functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
