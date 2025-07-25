@@ -35,11 +35,19 @@ async def create_intent(intent_data: dict):
         result = await db_service.create_intent(intent_data)
         
         if result:
-            return {
+            # Return clean response without ObjectId or MongoDB-specific fields
+            response_data = {
                 "id": intent_data["id"],
-                "message": "Intent created successfully",
-                **intent_data
+                "name": intent_data["name"],
+                "description": intent_data["description"],
+                "keywords": intent_data["keywords"],
+                "confidence_threshold": intent_data["confidence_threshold"],
+                "auto_respond": intent_data["auto_respond"],
+                "created_at": intent_data["created_at"].isoformat(),
+                "updated_at": intent_data["updated_at"].isoformat(),
+                "message": "Intent created successfully"
             }
+            return response_data
         else:
             raise HTTPException(status_code=500, detail="Failed to create intent")
             
