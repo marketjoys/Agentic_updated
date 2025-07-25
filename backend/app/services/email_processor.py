@@ -562,55 +562,61 @@ class EmailProcessor:
             personalized_content = personalize_template(response_data["content"], prospect)
             personalized_subject = personalize_template(response_data["subject"], prospect)
             
-            # Send email
-            success = await send_email(
-                prospect["email"],
-                personalized_subject,
-                personalized_content
-            )
-            
-            if success:
-                # Create email record with enhanced tracking
-                email_id = generate_id()
-                email_record = {
-                    "id": email_id,
-                    "prospect_id": prospect["id"],
-                    "campaign_id": "",
-                    "subject": personalized_subject,
-                    "content": personalized_content,
-                    "status": "sent",
-                    "sent_at": datetime.utcnow(),
-                    "created_at": datetime.utcnow(),
-                    "sent_by_us": True,
-                    "thread_id": thread_id,
-                    "ai_generated": True,
-                    "is_auto_response": True
-                }
+            # Send email with proper error handling
+            try:
+                success = await send_email(
+                    prospect["email"],
+                    personalized_subject,
+                    personalized_content
+                )
                 
-                await db_service.create_email_record(email_record)
-                
-                # Mark email as sent by us in the database
-                await db_service.mark_email_as_sent_by_us(email_id, thread_id)
-                
-                # Add response to thread with sent flag
-                await db_service.update_thread_with_sent_flag(thread_id, {
-                    "type": "sent",
-                    "recipient": prospect["email"],
-                    "subject": personalized_subject,
-                    "content": personalized_content,
-                    "timestamp": datetime.utcnow(),
-                    "ai_generated": True,
-                    "is_auto_response": True,
-                    "template_used": response_data.get("template_used"),
-                    "email_id": email_id
-                })
-                
-                logger.info(f"Automatic response sent successfully to: {prospect['email']}")
-            else:
-                logger.error(f"Failed to send automatic response to: {prospect['email']}")
+                if success:
+                    # Create email record with enhanced tracking
+                    email_id = generate_id()
+                    email_record = {
+                        "id": email_id,
+                        "prospect_id": prospect["id"],
+                        "campaign_id": "",
+                        "subject": personalized_subject,
+                        "content": personalized_content,
+                        "status": "sent",
+                        "sent_at": datetime.utcnow(),
+                        "created_at": datetime.utcnow(),
+                        "sent_by_us": True,
+                        "thread_id": thread_id,
+                        "ai_generated": True,
+                        "is_auto_response": True
+                    }
+                    
+                    await db_service.create_email_record(email_record)
+                    
+                    # Mark email as sent by us in the database
+                    await db_service.mark_email_as_sent_by_us(email_id, thread_id)
+                    
+                    # Add response to thread with sent flag
+                    await db_service.update_thread_with_sent_flag(thread_id, {
+                        "type": "sent",
+                        "recipient": prospect["email"],
+                        "subject": personalized_subject,
+                        "content": personalized_content,
+                        "timestamp": datetime.utcnow(),
+                        "ai_generated": True,
+                        "is_auto_response": True,
+                        "template_used": response_data.get("template_used"),
+                        "email_id": email_id
+                    })
+                    
+                    logger.info(f"Automatic response sent successfully to: {prospect['email']}")
+                else:
+                    logger.error(f"Failed to send automatic response to: {prospect['email']}")
+                    
+            except Exception as email_error:
+                logger.error(f"SMTP Error sending automatic response to {prospect['email']}: {str(email_error)}")
+                raise email_error
                 
         except Exception as e:
             logger.error(f"Error sending automatic response: {str(e)}")
+            raise e
     
     async def _stop_follow_ups_for_prospect(self, prospect_id: str):
         """Stop any scheduled follow-ups for a prospect who has responded"""
