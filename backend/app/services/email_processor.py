@@ -281,7 +281,7 @@ class EmailProcessor:
         
         return scan_result
     
-    async def _process_email(self, email_message):
+    async def _process_email(self, email_message, provider_config: dict = None):
         """Process individual email with enhanced follow-up detection"""
         try:
             # Extract email details
