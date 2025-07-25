@@ -539,6 +539,7 @@ async def create_email_provider(provider: EmailProvider):
     try:
         from app.services.database import db_service
         from app.utils.helpers import generate_id
+        from app.services.email_processor import email_processor
         
         # Connect to database
         await db_service.connect()
@@ -560,6 +561,7 @@ async def create_email_provider(provider: EmailProvider):
             "imap_port": provider.imap_port,
             "imap_username": provider.imap_username,
             "imap_password": provider.imap_password,
+            "imap_enabled": bool(provider.imap_host and provider.imap_username and provider.imap_password),  # Auto-enable IMAP if credentials provided
             "daily_send_limit": provider.daily_send_limit,
             "hourly_send_limit": provider.hourly_send_limit,
             "is_default": provider.is_default,
@@ -580,6 +582,14 @@ async def create_email_provider(provider: EmailProvider):
         result = await db_service.create_email_provider(provider_data)
         
         if result:
+            # Auto-start IMAP monitoring if enabled and email processor is running
+            if provider_data["imap_enabled"] and email_processor.processing:
+                try:
+                    await email_processor.add_provider_to_monitoring(provider_id, provider_data)
+                    logging.info(f"Auto-started IMAP monitoring for provider: {provider.name}")
+                except Exception as imap_error:
+                    logging.warning(f"Failed to auto-start IMAP monitoring: {str(imap_error)}")
+            
             return {
                 "id": provider_id,
                 "message": "Email provider created successfully",
@@ -588,6 +598,7 @@ async def create_email_provider(provider: EmailProvider):
                 "email_address": provider.email_address,
                 "is_active": True,
                 "is_default": provider.is_default,
+                "imap_enabled": provider_data["imap_enabled"],
                 "daily_send_limit": provider.daily_send_limit,
                 "hourly_send_limit": provider.hourly_send_limit,
                 "current_daily_count": 0,
@@ -601,6 +612,88 @@ async def create_email_provider(provider: EmailProvider):
     except Exception as e:
         logging.error(f"Error creating email provider: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating email provider: {str(e)}")
+
+@app.put("/api/email-providers/{provider_id}/toggle-imap")
+async def toggle_provider_imap(provider_id: str):
+    """Toggle IMAP monitoring for a specific provider"""
+    try:
+        from app.services.database import db_service
+        from app.services.email_processor import email_processor
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get provider data
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        # Toggle IMAP enabled status
+        new_imap_status = not provider.get("imap_enabled", False)
+        
+        # Update in database
+        await db_service.update_email_provider(provider_id, {
+            "imap_enabled": new_imap_status,
+            "updated_at": datetime.utcnow()
+        })
+        
+        # Update email processor monitoring
+        if new_imap_status:
+            # Start monitoring this provider
+            if email_processor.processing:
+                await email_processor.add_provider_to_monitoring(provider_id, provider)
+                logging.info(f"Started IMAP monitoring for provider: {provider['name']}")
+        else:
+            # Stop monitoring this provider
+            await email_processor.remove_provider_from_monitoring(provider_id)
+            logging.info(f"Stopped IMAP monitoring for provider: {provider['name']}")
+        
+        return {
+            "id": provider_id,
+            "message": f"IMAP monitoring {'enabled' if new_imap_status else 'disabled'}",
+            "imap_enabled": new_imap_status
+        }
+        
+    except Exception as e:
+        logging.error(f"Error toggling IMAP for provider {provider_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error toggling IMAP: {str(e)}")
+
+@app.get("/api/email-providers/{provider_id}/imap-status")
+async def get_provider_imap_status(provider_id: str):
+    """Get IMAP status for a specific provider"""
+    try:
+        from app.services.database import db_service
+        from app.services.email_processor import email_processor
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get provider data
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        # Get IMAP monitoring status
+        is_monitoring = email_processor.is_provider_being_monitored(provider_id)
+        last_scan = await db_service.get_last_imap_scan_for_provider(provider_id)
+        
+        return {
+            "provider_id": provider_id,
+            "provider_name": provider.get("name"),
+            "imap_enabled": provider.get("imap_enabled", False),
+            "is_monitoring": is_monitoring,
+            "email_processor_running": email_processor.processing,
+            "last_scan": last_scan.isoformat() if last_scan else None,
+            "imap_config": {
+                "host": provider.get("imap_host", ""),
+                "port": provider.get("imap_port", 993),
+                "username": provider.get("imap_username", "")
+            }
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting IMAP status for provider {provider_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting IMAP status: {str(e)}")
 
 @app.put("/api/email-providers/{provider_id}")
 async def update_email_provider(provider_id: str, provider: EmailProvider):
