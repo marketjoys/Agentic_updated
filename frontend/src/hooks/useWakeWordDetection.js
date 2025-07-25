@@ -26,10 +26,57 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     return true;
   }, []);
 
+  // Check microphone permission status
+  const checkMicrophonePermission = useCallback(async () => {
+    if (permissionChecked) return permissionGranted;
+    
+    try {
+      // Check if permissions API is available
+      if ('permissions' in navigator) {
+        const permission = await navigator.permissions.query({ name: 'microphone' });
+        if (permission.state === 'granted') {
+          setPermissionGranted(true);
+          setPermissionChecked(true);
+          return true;
+        } else if (permission.state === 'denied') {
+          setError('Microphone permission denied');
+          setPermissionGranted(false);
+          setPermissionChecked(true);
+          return false;
+        }
+      }
+      
+      // Fallback: try to get user media without storing stream
+      if (!permissionRequestedRef.current) {
+        permissionRequestedRef.current = true;
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Immediately stop all tracks to free up microphone
+        stream.getTracks().forEach(track => track.stop());
+        setPermissionGranted(true);
+        setPermissionChecked(true);
+        console.log('Microphone permission granted');
+        return true;
+      }
+      
+      return permissionGranted;
+    } catch (error) {
+      console.error('Microphone permission check failed:', error);
+      setError('Microphone permission required for voice commands');
+      setPermissionGranted(false);
+      setPermissionChecked(true);
+      
+      // Don't show toast if user explicitly denied permission
+      if (error.name !== 'NotAllowedError') {
+        toast.error('Please allow microphone access for voice commands');
+      }
+      return false;
+    }
+  }, [permissionGranted, permissionChecked]);
+
   const containsWakeWord = useCallback((transcript) => {
     const normalizedTranscript = transcript.toLowerCase().trim();
     return WAKE_WORDS.some(wakeWord => normalizedTranscript.includes(wakeWord));
-  }, []);
+  }, [WAKE_WORDS]);
 
   const resetSleepTimer = useCallback(() => {
     if (timeoutRef.current) {
