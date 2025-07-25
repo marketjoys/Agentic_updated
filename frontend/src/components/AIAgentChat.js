@@ -46,8 +46,9 @@ const AIAgentChat = () => {
     setMessages([{
       id: 'welcome',
       type: 'agent',
-      content: "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!",
+      content: "Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to activate voice mode, or just type your message. I can help you manage campaigns, prospects, templates, and much more!",
       suggestions: [
+        "Hello Joy",
         "Show me all my campaigns",
         "Create a new prospect",
         "What are my analytics?",
@@ -57,12 +58,20 @@ const AIAgentChat = () => {
     }]);
     
     setSuggestions([
-      "Show me all my campaigns",
+      "Hello Joy",
+      "Show me all my campaigns", 
       "Create a new prospect",
       "What are my analytics?",
       "Upload prospects from CSV"
     ]);
-  }, []);
+
+    // Auto-speak welcome message if voice is enabled
+    if (voiceEnabled) {
+      setTimeout(() => {
+        speakResponse("Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to wake me up anytime.");
+      }, 1000);
+    }
+  }, [voiceEnabled]);
   
   useEffect(() => {
     scrollToBottom();
