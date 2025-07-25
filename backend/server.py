@@ -1228,17 +1228,23 @@ async def get_dashboard_metrics():
         }
 
 # Email sending functionality
-async def send_email_via_provider(provider_data: dict, recipient: dict, subject: str, content: str):
-    """Send email using the specified provider"""
+async def send_email_via_provider(provider_data: dict, recipient: dict, subject: str, content: str, html_content: str = None):
+    """Send email using the specified provider with HTML support"""
     try:
         # Create message
-        message = MIMEMultipart()
+        message = MIMEMultipart('alternative')
         message["From"] = provider_data["email_address"]
         message["To"] = recipient["email"]
         message["Subject"] = subject
         
-        # Attach HTML content
-        message.attach(MIMEText(content, "html"))
+        # Attach plain text version
+        text_part = MIMEText(content, "plain")
+        message.attach(text_part)
+        
+        # Attach HTML version if provided
+        if html_content:
+            html_part = MIMEText(html_content, "html")
+            message.attach(html_part)
         
         # Send email using aiosmtplib
         await aiosmtplib.send(
@@ -1256,7 +1262,7 @@ async def send_email_via_provider(provider_data: dict, recipient: dict, subject:
         return {"status": "failed", "message": str(e)}
 
 def personalize_template(template_content: str, recipient: dict) -> str:
-    """Personalize template with recipient data"""
+    """Personalize template with recipient data - supports both text and HTML"""
     personalized = template_content
     
     # Replace placeholders
@@ -1266,7 +1272,8 @@ def personalize_template(template_content: str, recipient: dict) -> str:
         "{{company}}": recipient.get("company", ""),
         "{{job_title}}": recipient.get("job_title", ""),
         "{{industry}}": recipient.get("industry", ""),
-        "{{email}}": recipient.get("email", "")
+        "{{email}}": recipient.get("email", ""),
+        "{{subject}}": recipient.get("subject", "")  # For HTML templates
     }
     
     for placeholder, value in placeholders.items():
