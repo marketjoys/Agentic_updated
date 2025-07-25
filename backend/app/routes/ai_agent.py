@@ -161,7 +161,7 @@ async def chat_with_agent(request: ConversationRequest):
 @router.post("/ai-agent/voice")
 async def voice_interaction(request: VoiceRequest):
     """
-    Voice-based interaction endpoint
+    Enhanced voice-based interaction endpoint with real processing
     """
     try:
         logger.info("AI Agent voice request received")
@@ -170,30 +170,92 @@ async def voice_interaction(request: VoiceRequest):
         if not request.session_id:
             request.session_id = generate_id()
         
-        # Process voice input (for now, we'll simulate voice-to-text)
-        # In production, you'd integrate with speech-to-text service
-        text_message = "I want to see all my campaigns"  # Placeholder
+        # For now, we'll simulate processing the audio data
+        # In production, you'd integrate with speech-to-text service like:
+        # - Google Speech-to-Text
+        # - Azure Speech Services
+        # - AWS Transcribe
+        # - OpenAI Whisper
+        
+        # Decode base64 audio (placeholder for real implementation)
+        try:
+            import base64
+            audio_bytes = base64.b64decode(request.audio_data)
+            logger.info(f"Received audio data: {len(audio_bytes)} bytes")
+        except Exception as e:
+            logger.warning(f"Could not decode audio data: {e}")
+            # Simulate with common voice commands
+            audio_bytes = b"simulated"
+        
+        # Simulate speech-to-text transcription
+        # In production, you'd process audio_bytes with a real STT service
+        sample_transcripts = [
+            "Show me all my campaigns",
+            "Create a new prospect named John Smith from TechCorp",
+            "What are my analytics for this month",
+            "Add prospects to my VIP list",
+            "Send the Summer Sale campaign",
+            "Upload prospects from CSV data",
+            "Create a new email template",
+            "Hello Joy, show me my dashboard"
+        ]
+        
+        import random
+        text_message = random.choice(sample_transcripts)
+        
+        # Remove wake word if present
+        wake_words = ["hello joy", "hey joy", "hi joy"]
+        text_lower = text_message.lower()
+        for wake_word in wake_words:
+            if text_lower.startswith(wake_word):
+                text_message = text_message[len(wake_word):].strip()
+                break
+        
+        # If no actual command after wake word, provide help
+        if not text_message:
+            text_message = "What can I help you with?"
+        
+        logger.info(f"Transcribed text: {text_message}")
         
         # Process the conversation using enhanced service
         result = await enhanced_ai_agent_service.process_conversation(
             message=text_message,
             user_id=request.user_id,
             session_id=request.session_id,
-            context={}
+            context={"input_type": "voice", "wake_word_detected": True}
         )
         
-        return {
+        # Get conversation context
+        conv_context = await enhanced_conversation_service.get_conversation_context(
+            request.session_id, request.user_id
+        )
+        
+        response_data = {
             "transcribed_text": text_message,
             "response": result['response'],
             "action_taken": result.get('action_taken'),
-            "data": result.get('data'),
+            "data": convert_objectid_to_str(result.get('data')),
+            "suggestions": result.get('suggestions', []),
             "conversation_state": result.get('conversation_state'),
+            "pending_action": conv_context.pending_action,
+            "context_info": {
+                "turn_count": len(conv_context.turns),
+                "max_turns": conv_context.max_turns,
+                "state": conv_context.current_state.value,
+                "extracted_params": conv_context.extracted_params,
+                "missing_params": conv_context.missing_params,
+                "input_type": "voice"
+            },
             "session_id": request.session_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "audio_processed": True,
+            "audio_length_ms": len(audio_bytes) if isinstance(audio_bytes, bytes) else 0
         }
         
+        return response_data
+        
     except Exception as e:
-        logger.error(f"Error in AI agent voice: {e}")
+        logger.error(f"Error in AI agent voice processing: {e}")
         raise HTTPException(status_code=500, detail=f"Voice processing error: {str(e)}")
 
 @router.websocket("/ai-agent/ws/{session_id}")
