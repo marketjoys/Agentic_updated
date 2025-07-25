@@ -29,52 +29,131 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     return true;
   }, []);
 
-  // Check microphone permission status
+  // Enhanced microphone permission check with better Windows support
   const checkMicrophonePermission = useCallback(async () => {
-    if (permissionChecked) return permissionGranted;
+    // If permission was permanently denied, don't retry
+    if (permissionDeniedPermanently) {
+      return false;
+    }
+
+    // If we already have permission, return true
+    if (permissionChecked && permissionGranted) {
+      return true;
+    }
+
+    // Prevent multiple simultaneous permission requests
+    if (permissionRequestInProgressRef.current) {
+      return false;
+    }
+
+    // Respect cooldown period
+    const now = Date.now();
+    if (now - lastPermissionRequestTime.current < PERMISSION_REQUEST_COOLDOWN) {
+      return permissionGranted;
+    }
+
+    permissionRequestInProgressRef.current = true;
+    lastPermissionRequestTime.current = now;
     
     try {
-      // Check if permissions API is available
+      // First check if permissions API is available and permission is already granted
       if ('permissions' in navigator) {
-        const permission = await navigator.permissions.query({ name: 'microphone' });
-        if (permission.state === 'granted') {
-          setPermissionGranted(true);
-          setPermissionChecked(true);
-          return true;
-        } else if (permission.state === 'denied') {
-          setError('Microphone permission denied');
-          setPermissionGranted(false);
-          setPermissionChecked(true);
-          return false;
+        try {
+          const permission = await navigator.permissions.query({ name: 'microphone' });
+          if (permission.state === 'granted') {
+            setPermissionGranted(true);
+            setPermissionChecked(true);
+            permissionRequestInProgressRef.current = false;
+            return true;
+          } else if (permission.state === 'denied') {
+            setError('Microphone access was denied by the user');
+            setPermissionGranted(false);
+            setPermissionChecked(true);
+            setPermissionDeniedPermanently(true);
+            permissionRequestInProgressRef.current = false;
+            toast.error('Voice commands disabled. Please enable microphone access in browser settings.', {
+              duration: 5000
+            });
+            return false;
+          }
+        } catch (permError) {
+          console.log('Permission query not supported, trying direct access');
         }
       }
       
-      // Fallback: try to get user media without storing stream
-      if (!permissionRequestedRef.current) {
-        permissionRequestedRef.current = true;
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Request permission through getUserMedia
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        
         // Immediately stop all tracks to free up microphone
         stream.getTracks().forEach(track => track.stop());
+        
         setPermissionGranted(true);
         setPermissionChecked(true);
-        console.log('Microphone permission granted');
+        setError(null);
+        permissionRequestInProgressRef.current = false;
+        
+        console.log('Microphone permission granted successfully');
+        toast.success('🎤 Voice commands enabled!', { duration: 2000 });
         return true;
+        
+      } catch (mediaError) {
+        console.error('getUserMedia failed:', mediaError);
+        
+        let errorMessage = 'Microphone access failed';
+        let isPermanent = false;
+        
+        switch (mediaError.name) {
+          case 'NotAllowedError':
+            errorMessage = 'Microphone access was denied';
+            isPermanent = true;
+            break;
+          case 'NotFoundError':
+            errorMessage = 'No microphone device found';
+            isPermanent = true;
+            break;
+          case 'NotReadableError':
+            errorMessage = 'Microphone is being used by another application';
+            break;
+          case 'OverconstrainedError':
+            errorMessage = 'Microphone doesn\'t support required features';
+            break;
+          default:
+            errorMessage = `Microphone error: ${mediaError.message}`;
+        }
+        
+        setError(errorMessage);
+        setPermissionGranted(false);
+        setPermissionChecked(true);
+        
+        if (isPermanent) {
+          setPermissionDeniedPermanently(true);
+          toast.error(`${errorMessage}. Voice commands are disabled.`, {
+            duration: 5000
+          });
+        } else {
+          toast.error(errorMessage, { duration: 3000 });
+        }
+        
+        permissionRequestInProgressRef.current = false;
+        return false;
       }
       
-      return permissionGranted;
     } catch (error) {
-      console.error('Microphone permission check failed:', error);
-      setError('Microphone permission required for voice commands');
+      console.error('Unexpected error during permission check:', error);
+      setError('Unexpected error accessing microphone');
       setPermissionGranted(false);
       setPermissionChecked(true);
-      
-      // Don't show toast if user explicitly denied permission
-      if (error.name !== 'NotAllowedError') {
-        toast.error('Please allow microphone access for voice commands');
-      }
+      permissionRequestInProgressRef.current = false;
       return false;
     }
-  }, [permissionGranted, permissionChecked]);
+  }, [permissionGranted, permissionChecked, permissionDeniedPermanently]);
 
   const containsWakeWord = useCallback((transcript) => {
     const normalizedTranscript = transcript.toLowerCase().trim();
