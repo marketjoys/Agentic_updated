@@ -211,40 +211,66 @@ Please try again or ask for help.`,
     sendMessage(suggestion);
   };
   
-  const startVoiceRecognition = () => {
+  const startVoiceRecognition = (autoSend = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
     }
     
+    // Reset activity timer when user interacts
+    resetActivity();
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    recognitionRef.current = new SpeechRecognition();
     
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognitionRef.current.lang = 'en-US';
+    recognitionRef.current.interimResults = false;
+    recognitionRef.current.maxAlternatives = 1;
     
-    recognition.onstart = () => {
+    recognitionRef.current.onstart = () => {
       setIsListening(true);
-      toast('Listening... Speak now', { icon: '🎤' });
+      toast('🎤 Listening... Speak now', { 
+        icon: '🎤',
+        duration: 1000 
+      });
     };
     
-    recognition.onresult = (event) => {
+    recognitionRef.current.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
+      
+      // Check for sleep command
+      if (transcript.toLowerCase().includes('sleep') || transcript.toLowerCase().includes('go to sleep')) {
+        toast('Going to sleep. Say "Hello Joy" to wake me up.', { icon: '😴' });
+        goToSleep();
+        return;
+      }
+      
       setInputMessage(transcript);
       toast.success(`Heard: "${transcript}"`);
+      
+      // Auto-send if triggered by wake word
+      if (autoSend) {
+        setTimeout(() => sendMessage(transcript), 500);
+      }
     };
     
-    recognition.onerror = (event) => {
+    recognitionRef.current.onerror = (event) => {
       setIsListening(false);
-      toast.error(`Voice recognition error: ${event.error}`);
+      if (event.error !== 'aborted') {
+        toast.error(`Voice recognition error: ${event.error}`);
+      }
     };
     
-    recognition.onend = () => {
+    recognitionRef.current.onend = () => {
       setIsListening(false);
     };
     
-    recognition.start();
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      toast.error('Failed to start voice recognition');
+      setIsListening(false);
+    }
   };
   
   const speakResponse = (text) => {
