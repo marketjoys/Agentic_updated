@@ -322,16 +322,34 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
             </label>
             <button
               type="button"
-              onClick={() => startVoiceRecognition(false)}
-              disabled={isListening || loading || !isAwake}
+              onClick={async () => {
+                if (!permissionGranted || !isAwake) {
+                  // If no permission or not awake, try to activate voice mode first
+                  const activated = await activateVoiceMode();
+                  if (activated) {
+                    // Small delay then start voice recognition
+                    setTimeout(() => startVoiceRecognition(false), 500);
+                  }
+                } else {
+                  // If already awake and have permission, start voice recognition directly
+                  startVoiceRecognition(false);
+                }
+              }}
+              disabled={isListening || loading}
               className={`flex items-center space-x-1 px-2 py-1 rounded text-xs transition-colors ${
                 isListening 
                   ? 'bg-red-100 text-red-600' 
-                  : isAwake
+                  : permissionGranted && isAwake
                   ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
-                  : 'bg-gray-100 text-gray-500'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              title={!isAwake ? "Say 'Hello Joy' to wake up for voice input" : "Voice input"}
+              title={
+                !permissionGranted 
+                  ? "Click to enable microphone and voice search" 
+                  : !isAwake 
+                  ? "Click to activate voice mode for search" 
+                  : "Voice input for search query"
+              }
             >
               {isListening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
               <span>{isListening ? 'Stop' : 'Voice'}</span>
