@@ -9,11 +9,35 @@ router = APIRouter()
 @router.post("/intents")
 async def create_intent(intent: IntentConfig):
     """Create a new intent configuration"""
-    intent.id = generate_id()
-    intent_dict = intent.dict()
-    result = await db_service.create_intent(intent_dict)
-    intent_dict.pop('_id', None)
-    return intent_dict
+    try:
+        # Connect to database
+        await db_service.connect()
+        
+        # Generate ID if not provided
+        if not intent.id:
+            intent.id = generate_id()
+        
+        # Add timestamps
+        intent_dict = intent.dict()
+        intent_dict["created_at"] = datetime.utcnow()
+        intent_dict["updated_at"] = datetime.utcnow()
+        
+        # Create intent in database
+        result = await db_service.create_intent(intent_dict)
+        
+        if result:
+            # Clean up response
+            intent_dict.pop('_id', None)
+            return {
+                "id": intent.id,
+                "message": "Intent created successfully",
+                **intent_dict
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create intent")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating intent: {str(e)}")
 
 @router.get("/intents")
 async def get_intents():
