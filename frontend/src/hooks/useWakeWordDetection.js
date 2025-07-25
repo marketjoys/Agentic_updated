@@ -187,11 +187,11 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     timeoutRef.current = setTimeout(() => {
       if (isAwake) {
         setIsAwake(false);
-        startWakeWordListening();
         toast('Joy is now sleeping. Say "Hello Joy" to wake up.', { 
           icon: '😴',
           duration: 2000
         });
+        // Note: We'll restart wake word listening in the useEffect that handles isAwake changes
       }
     }, SLEEP_TIMEOUT);
   }, [isAwake]);
