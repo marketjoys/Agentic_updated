@@ -907,5 +907,26 @@ class DatabaseService:
         search = await self.db.ai_searches.find_one({"id": search_id})
         return clean_document(search) if search else None
 
+    async def get_last_imap_scan_for_provider(self, provider_id: str):
+        """Get the last IMAP scan timestamp for a specific provider"""
+        await self.connect()
+        try:
+            # Get the most recent scan log for this provider
+            last_scan = await self.db.imap_scan_logs.find_one(
+                {"provider_id": provider_id},
+                sort=[("timestamp", -1)]
+            )
+            
+            if last_scan:
+                return last_scan.get("timestamp")
+            
+            # Fallback: check if we have scan timestamp in monitored providers
+            # This is for backward compatibility
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error getting last IMAP scan for provider {provider_id}: {str(e)}")
+            return None
+
 # Create global database service instance
 db_service = DatabaseService()
