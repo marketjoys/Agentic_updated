@@ -12,14 +12,15 @@ def generate_id():
 async def send_email(to_email: str, subject: str, content: str):
     """Send email using SMTP"""
     try:
-        smtp_host = os.getenv("SMTP_HOST")
+        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
         smtp_port = int(os.getenv("SMTP_PORT", 587))
         smtp_username = os.getenv("SMTP_USERNAME")
         smtp_password = os.getenv("SMTP_PASSWORD")
         
         if not all([smtp_host, smtp_username, smtp_password]):
-            print(f"SMTP not configured - would send email to {to_email}")
-            return True  # Return True for demo purposes
+            error_msg = f"SMTP not configured properly - Missing: {', '.join([k for k, v in {'host': smtp_host, 'username': smtp_username, 'password': smtp_password}.items() if not v])}"
+            print(error_msg)
+            raise Exception(error_msg)
         
         message = MIMEMultipart()
         message["From"] = smtp_username
@@ -27,6 +28,8 @@ async def send_email(to_email: str, subject: str, content: str):
         message["Subject"] = subject
         
         message.attach(MIMEText(content, "html"))
+        
+        print(f"Attempting to send email to {to_email} via {smtp_host}:{smtp_port}")
         
         await aiosmtplib.send(
             message,
@@ -36,10 +39,14 @@ async def send_email(to_email: str, subject: str, content: str):
             username=smtp_username,
             password=smtp_password,
         )
+        
+        print(f"Email sent successfully to {to_email}")
         return True
+        
     except Exception as e:
-        print(f"Email sending failed: {str(e)}")
-        return True  # Return True for demo purposes
+        error_msg = f"Email sending failed to {to_email}: {str(e)}"
+        print(error_msg)
+        raise Exception(error_msg)
 
 def personalize_template(template_content: str, prospect: dict) -> str:
     """Personalize template with prospect data"""
