@@ -133,6 +133,3 @@ const VoiceIndicator = ({
 };
 
 export default VoiceIndicator;
-};
-
-export default VoiceIndicator;
