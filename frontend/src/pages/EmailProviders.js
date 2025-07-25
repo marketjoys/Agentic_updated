@@ -575,19 +575,62 @@ const EmailProviders = () => {
               </div>
               <div>
                 <p className="text-gray-500">Daily Limit</p>
-                <p className="font-medium">{provider.current_daily_count}/{provider.daily_send_limit}</p>
+                <p className="font-medium">{provider.current_daily_count || 0}/{provider.daily_send_limit}</p>
               </div>
               <div>
                 <p className="text-gray-500">Hourly Limit</p>
-                <p className="font-medium">{provider.current_hourly_count}/{provider.hourly_send_limit}</p>
+                <p className="font-medium">{provider.current_hourly_count || 0}/{provider.hourly_send_limit}</p>
               </div>
               <div>
-                <p className="text-gray-500">Last Sync</p>
-                <p className="font-medium">
-                  {provider.last_sync ? new Date(provider.last_sync).toLocaleDateString() : 'Never'}
-                </p>
+                <p className="text-gray-500">IMAP Status</p>
+                <div className="flex items-center space-x-1">
+                  {provider.imap_enabled ? (
+                    <Wifi className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <WifiOff className="w-4 h-4 text-gray-400" />
+                  )}
+                  <p className="font-medium">
+                    {provider.imap_enabled ? 'Enabled' : 'Disabled'}
+                  </p>
+                </div>
               </div>
             </div>
+
+            {/* IMAP Toggle Section */}
+            {provider.imap_host && provider.imap_username && (
+              <div className="border-t pt-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">IMAP Monitoring</span>
+                    {provider.imap_enabled && (
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleToggleImap(provider.id)}
+                    disabled={togglingImap === provider.id}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      provider.imap_enabled
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    } disabled:opacity-50`}
+                  >
+                    {togglingImap === provider.id ? (
+                      'Toggling...'
+                    ) : (
+                      provider.imap_enabled ? 'Disable' : 'Enable'
+                    )}
+                  </button>
+                </div>
+                {provider.imap_enabled && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Monitoring emails on {provider.imap_host}:{provider.imap_port || 993}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex space-x-2">
               <button
