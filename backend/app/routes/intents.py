@@ -7,35 +7,44 @@ from app.utils.helpers import generate_id
 router = APIRouter()
 
 @router.post("/intents")
-async def create_intent(intent: IntentConfig):
+async def create_intent(intent_data: dict):
     """Create a new intent configuration"""
     try:
         # Connect to database
         await db_service.connect()
         
+        # Validate required fields
+        if not intent_data.get("name"):
+            raise HTTPException(status_code=400, detail="Intent name is required")
+        
         # Generate ID if not provided
-        if not intent.id:
-            intent.id = generate_id()
+        if not intent_data.get("id"):
+            intent_data["id"] = generate_id()
         
         # Add timestamps
-        intent_dict = intent.dict()
-        intent_dict["created_at"] = datetime.utcnow()
-        intent_dict["updated_at"] = datetime.utcnow()
+        intent_data["created_at"] = datetime.utcnow()
+        intent_data["updated_at"] = datetime.utcnow()
+        
+        # Set default values
+        intent_data.setdefault("keywords", [])
+        intent_data.setdefault("confidence_threshold", 0.7)
+        intent_data.setdefault("auto_respond", True)
+        intent_data.setdefault("description", "")
         
         # Create intent in database
-        result = await db_service.create_intent(intent_dict)
+        result = await db_service.create_intent(intent_data)
         
         if result:
-            # Clean up response
-            intent_dict.pop('_id', None)
             return {
-                "id": intent.id,
+                "id": intent_data["id"],
                 "message": "Intent created successfully",
-                **intent_dict
+                **intent_data
             }
         else:
             raise HTTPException(status_code=500, detail="Failed to create intent")
             
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating intent: {str(e)}")
 
