@@ -42,31 +42,81 @@ async def create_intent(intent: IntentConfig):
 @router.get("/intents")
 async def get_intents():
     """Get all intent configurations"""
-    intents = await db_service.get_intents()
-    return intents
+    try:
+        # Connect to database
+        await db_service.connect()
+        
+        # Get intents from database
+        intents = await db_service.get_intents()
+        return intents
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching intents: {str(e)}")
 
 @router.get("/intents/{intent_id}")
 async def get_intent(intent_id: str):
     """Get specific intent by ID"""
-    intent = await db_service.get_intent_by_id(intent_id)
-    if not intent:
-        raise HTTPException(status_code=404, detail="Intent not found")
-    return intent
+    try:
+        # Connect to database
+        await db_service.connect()
+        
+        # Get intent from database
+        intent = await db_service.get_intent_by_id(intent_id)
+        if not intent:
+            raise HTTPException(status_code=404, detail="Intent not found")
+        return intent
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching intent: {str(e)}")
 
 @router.put("/intents/{intent_id}")
 async def update_intent(intent_id: str, intent: IntentConfig):
     """Update an intent configuration"""
-    intent_dict = intent.dict()
-    intent_dict.pop('id', None)
-    result = await db_service.update_intent(intent_id, intent_dict)
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Intent not found")
-    return {"message": "Intent updated successfully"}
+    try:
+        # Connect to database
+        await db_service.connect()
+        
+        # Prepare update data
+        intent_dict = intent.dict()
+        intent_dict.pop('id', None)  # Remove ID from update data
+        intent_dict["updated_at"] = datetime.utcnow()
+        
+        # Update intent in database
+        result = await db_service.update_intent(intent_id, intent_dict)
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Intent not found")
+        
+        return {
+            "id": intent_id,
+            "message": "Intent updated successfully",
+            **intent_dict
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating intent: {str(e)}")
 
 @router.delete("/intents/{intent_id}")
 async def delete_intent(intent_id: str):
     """Delete an intent configuration"""
-    result = await db_service.delete_intent(intent_id)
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Intent not found")
-    return {"message": "Intent deleted successfully"}
+    try:
+        # Connect to database
+        await db_service.connect()
+        
+        # Delete intent from database
+        result = await db_service.delete_intent(intent_id)
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Intent not found")
+        
+        return {
+            "id": intent_id,
+            "message": "Intent deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting intent: {str(e)}")
