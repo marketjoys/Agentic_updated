@@ -128,16 +128,15 @@ const Templates = () => {
       </div>
 
       {/* Template Modal */}
-      {showModal && (
-        <TemplateModal
-          template={editingTemplate}
-          onClose={() => {
-            setShowModal(false);
-            setEditingTemplate(null);
-          }}
-          onSave={handleSaveTemplate}
-        />
-      )}
+      <HTMLTemplateEditor
+        isOpen={showModal}
+        template={editingTemplate}
+        onClose={() => {
+          setShowModal(false);
+          setEditingTemplate(null);
+        }}
+        onSave={handleSaveTemplate}
+      />
     </div>
   );
 };
