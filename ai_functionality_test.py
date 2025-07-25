@@ -8,7 +8,7 @@ import requests
 import json
 from datetime import datetime
 
-BACKEND_URL = "https://b9312b09-0291-4341-83e9-28393511b75a.preview.emergentagent.com"
+BACKEND_URL = "https://a5bd14af-2054-464a-9676-36072f2c8d35.preview.emergentagent.com"
 
 def test_ai_intent_classification():
     """Test AI intent classification functionality"""
