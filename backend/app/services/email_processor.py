@@ -16,14 +16,18 @@ logger = logging.getLogger(__name__)
 
 class EmailProcessor:
     def __init__(self):
+        # Default IMAP settings (for backward compatibility)
         self.imap_host = os.getenv("IMAP_HOST", "imap.gmail.com")
         self.imap_port = int(os.getenv("IMAP_PORT", 993))
         self.email_username = os.getenv("SMTP_USERNAME")
         self.email_password = os.getenv("SMTP_PASSWORD")
+        
         self.processing = False
+        self.monitored_providers = {}  # Dictionary to store provider configurations
+        self.provider_threads = {}  # Dictionary to store monitoring tasks per provider
         
     async def start_monitoring(self):
-        """Start IMAP email monitoring"""
+        """Start IMAP email monitoring for all enabled providers"""
         if self.processing:
             return {"status": "already_running"}
         
@@ -31,31 +35,150 @@ class EmailProcessor:
         logger.info("Starting email monitoring...")
         
         try:
+            # Load all enabled email providers from database
+            await self._load_enabled_providers()
+            
             # Start monitoring in background
-            asyncio.create_task(self._monitor_emails())
-            return {"status": "started", "message": "Email monitoring started"}
+            asyncio.create_task(self._monitor_all_providers())
+            return {"status": "started", "message": "Email monitoring started", "providers_count": len(self.monitored_providers)}
         except Exception as e:
             self.processing = False
             logger.error(f"Failed to start email monitoring: {str(e)}")
             return {"status": "error", "message": str(e)}
     
-    async def stop_monitoring(self):
-        """Stop email monitoring"""
-        self.processing = False
-        logger.info("Email monitoring stopped")
-        return {"status": "stopped"}
+    async def _load_enabled_providers(self):
+        """Load all email providers that have IMAP enabled"""
+        try:
+            await db_service.connect()
+            
+            # Get all providers with IMAP enabled
+            providers = await db_service.db.email_providers.find({
+                "is_active": True,
+                "imap_enabled": True,
+                "$and": [
+                    {"imap_host": {"$ne": ""}},
+                    {"imap_username": {"$ne": ""}},
+                    {"imap_password": {"$ne": ""}}
+                ]
+            }).to_list(length=None)
+            
+            # Store provider configurations
+            for provider in providers:
+                if "_id" in provider:
+                    provider.pop("_id")
+                self.monitored_providers[provider["id"]] = {
+                    "id": provider["id"],
+                    "name": provider["name"],
+                    "imap_host": provider["imap_host"],
+                    "imap_port": provider.get("imap_port", 993),
+                    "imap_username": provider["imap_username"],
+                    "imap_password": provider["imap_password"],
+                    "email_address": provider["email_address"],
+                    "provider_type": provider["provider_type"],
+                    "last_scan": None
+                }
+            
+            logger.info(f"Loaded {len(self.monitored_providers)} enabled email providers for monitoring")
+            
+            # Also add default provider if configured (for backward compatibility)
+            if self.email_username and self.email_password and "default" not in self.monitored_providers:
+                self.monitored_providers["default"] = {
+                    "id": "default",
+                    "name": "Default Provider",
+                    "imap_host": self.imap_host,
+                    "imap_port": self.imap_port,
+                    "imap_username": self.email_username,
+                    "imap_password": self.email_password,
+                    "email_address": self.email_username,
+                    "provider_type": "default",
+                    "last_scan": None
+                }
+                
+        except Exception as e:
+            logger.error(f"Error loading enabled providers: {str(e)}")
     
-    async def _monitor_emails(self):
-        """Monitor IMAP for new emails with improved polling"""
-        consecutive_errors = 0
+    async def add_provider_to_monitoring(self, provider_id: str, provider_data: dict):
+        """Add a new provider to active monitoring"""
+        try:
+            if not provider_data.get("imap_enabled", False):
+                return
+                
+            self.monitored_providers[provider_id] = {
+                "id": provider_id,
+                "name": provider_data["name"],
+                "imap_host": provider_data["imap_host"],
+                "imap_port": provider_data.get("imap_port", 993),
+                "imap_username": provider_data["imap_username"],
+                "imap_password": provider_data["imap_password"],
+                "email_address": provider_data["email_address"],
+                "provider_type": provider_data["provider_type"],
+                "last_scan": None
+            }
+            
+            logger.info(f"Added provider {provider_data['name']} to monitoring")
+            
+        except Exception as e:
+            logger.error(f"Error adding provider to monitoring: {str(e)}")
+    
+    async def remove_provider_from_monitoring(self, provider_id: str):
+        """Remove a provider from active monitoring"""
+        try:
+            if provider_id in self.monitored_providers:
+                provider_name = self.monitored_providers[provider_id]["name"]
+                del self.monitored_providers[provider_id]
+                logger.info(f"Removed provider {provider_name} from monitoring")
+                
+        except Exception as e:
+            logger.error(f"Error removing provider from monitoring: {str(e)}")
+    
+    def is_provider_being_monitored(self, provider_id: str) -> bool:
+        """Check if a provider is currently being monitored"""
+        return provider_id in self.monitored_providers
+    
+    async def _monitor_all_providers(self):
+        """Monitor all enabled providers concurrently"""
         while self.processing:
             try:
-                scan_result = await self._check_for_new_emails()
+                if not self.monitored_providers:
+                    # No providers to monitor, wait and reload
+                    await asyncio.sleep(60)
+                    await self._load_enabled_providers()
+                    continue
+                
+                # Create monitoring tasks for all providers
+                tasks = []
+                for provider_id, provider_config in self.monitored_providers.items():
+                    task = asyncio.create_task(
+                        self._monitor_single_provider(provider_id, provider_config)
+                    )
+                    tasks.append(task)
+                
+                # Wait for all tasks to complete (they shouldn't unless there's an error)
+                if tasks:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                
+            except Exception as e:
+                logger.error(f"Error in multi-provider monitoring: {str(e)}")
+                await asyncio.sleep(60)  # Wait before retrying
+    
+    async def _monitor_single_provider(self, provider_id: str, provider_config: dict):
+        """Monitor a single email provider"""
+        consecutive_errors = 0
+        max_errors = 5
+        
+        logger.info(f"Starting monitoring for provider: {provider_config['name']}")
+        
+        while self.processing and provider_id in self.monitored_providers:
+            try:
+                scan_result = await self._check_provider_for_new_emails(provider_config)
                 consecutive_errors = 0  # Reset error count on successful scan
+                
+                # Update last scan time
+                self.monitored_providers[provider_id]["last_scan"] = datetime.utcnow()
                 
                 # If we found emails, scan again sooner to catch any others
                 if scan_result.get("new_emails_found", 0) > 0:
-                    logger.info("Found new emails, scanning again in 10 seconds...")
+                    logger.info(f"Provider {provider_config['name']}: Found new emails, scanning again in 10 seconds...")
                     await asyncio.sleep(10)
                 else:
                     # Normal interval when no emails found
@@ -63,11 +186,17 @@ class EmailProcessor:
                     
             except Exception as e:
                 consecutive_errors += 1
-                logger.error(f"Error in email monitoring (consecutive errors: {consecutive_errors}): {str(e)}")
+                logger.error(f"Provider {provider_config['name']} monitoring error (consecutive: {consecutive_errors}): {str(e)}")
                 
-                # Exponential backoff on errors, but cap at 5 minutes
-                wait_time = min(60 * consecutive_errors, 300)
-                await asyncio.sleep(wait_time)
+                # If too many consecutive errors, temporarily disable this provider
+                if consecutive_errors >= max_errors:
+                    logger.warning(f"Too many errors for provider {provider_config['name']}, temporarily disabling")
+                    await asyncio.sleep(300)  # Wait 5 minutes before retrying
+                    consecutive_errors = 0
+                else:
+                    # Exponential backoff on errors, but cap at 5 minutes
+                    wait_time = min(60 * consecutive_errors, 300)
+                    await asyncio.sleep(wait_time)
     
     async def _check_for_new_emails(self):
         """Check for new emails via IMAP with enhanced monitoring"""
