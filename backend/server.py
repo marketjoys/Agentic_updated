@@ -1456,7 +1456,7 @@ async def get_campaign_status(campaign_id: str):
 
 @app.post("/api/templates")
 async def create_template(template: dict):
-    """Create a new email template"""
+    """Create a new email template with HTML support"""
     try:
         from app.services.database import db_service
         from app.utils.helpers import generate_id
@@ -1470,6 +1470,20 @@ async def create_template(template: dict):
         template["created_at"] = datetime.utcnow()
         template["updated_at"] = datetime.utcnow()
         
+        # Ensure HTML support fields are present
+        if "html_content" not in template:
+            template["html_content"] = convert_text_to_html(template.get("content", ""))
+        if "is_html_enabled" not in template:
+            template["is_html_enabled"] = True
+        if "style_settings" not in template:
+            template["style_settings"] = {
+                "primaryColor": "#3B82F6",
+                "backgroundColor": "#FFFFFF", 
+                "textColor": "#1F2937",
+                "font": "Arial, sans-serif",
+                "borderRadius": "8px"
+            }
+        
         # Create template in database
         result = await db_service.create_template(template)
         
@@ -1480,7 +1494,10 @@ async def create_template(template: dict):
                 "name": template.get("name"),
                 "subject": template.get("subject"),
                 "content": template.get("content"),
+                "html_content": template.get("html_content"),
+                "is_html_enabled": template.get("is_html_enabled"),
                 "type": template.get("type"),
+                "style_settings": template.get("style_settings"),
                 "created_at": template["created_at"].isoformat(),
                 "updated_at": template["updated_at"].isoformat()
             }
@@ -1490,6 +1507,136 @@ async def create_template(template: dict):
     except Exception as e:
         logging.error(f"Error creating template: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating template: {str(e)}")
+
+def convert_text_to_html(text_content):
+    """Convert plain text to basic HTML template"""
+    if not text_content:
+        return get_default_html_template()
+    
+    paragraphs = text_content.split('\n')
+    html_paragraphs = []
+    
+    for paragraph in paragraphs:
+        paragraph = paragraph.strip()
+        if paragraph:
+            html_paragraphs.append(f"            <p>{paragraph}</p>")
+    
+    html_content = '\n'.join(html_paragraphs)
+    
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{{{subject}}}}</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #1F2937;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+        }}
+        .email-container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }}
+        h1, h2, h3 {{ color: #1F2937; }}
+        p {{ margin-bottom: 16px; }}
+        .signature {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            font-size: 14px;
+            color: #6B7280;
+        }}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+{html_content}
+        <div class="signature">
+            <p>Best regards,<br>
+            Your Team</p>
+        </div>
+    </div>
+</body>
+</html>'''
+
+def get_default_html_template():
+    """Get default HTML template"""
+    return '''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{subject}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #1F2937;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #3B82F6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .footer {
+            background-color: #F3F4F6;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6B7280;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3B82F6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        h1, h2, h3 { color: #1F2937; }
+        p { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Hello {{first_name}}!</h1>
+        </div>
+        <div class="content">
+            <p>Write your email content here...</p>
+            <p>You can personalize with {{first_name}}, {{last_name}}, {{company}}, etc.</p>
+        </div>
+        <div class="footer">
+            <p>This email was sent to {{email}}</p>
+        </div>
+    </div>
+</body>
+</html>'''
 
 @app.put("/api/templates/{template_id}")
 async def update_template(template_id: str, template: dict):
