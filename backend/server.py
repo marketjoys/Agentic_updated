@@ -1375,16 +1375,22 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
         
         for prospect in prospects:
             try:
-                # Personalize template
+                # Personalize template - support both HTML and text
                 personalized_subject = personalize_template(template["subject"], prospect)
                 personalized_content = personalize_template(template["content"], prospect)
+                
+                # Personalize HTML content if available
+                personalized_html_content = None
+                if template.get("html_content") and template.get("is_html_enabled", False):
+                    personalized_html_content = personalize_template(template["html_content"], prospect)
                 
                 # Send email using email provider service
                 success, error = await email_provider_service.send_email(
                     provider["id"],
                     prospect["email"],
                     personalized_subject,
-                    personalized_content
+                    personalized_content,
+                    personalized_html_content  # Pass HTML content
                 )
                 
                 if success:
