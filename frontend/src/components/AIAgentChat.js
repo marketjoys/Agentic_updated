@@ -368,24 +368,26 @@ Please try again or ask for help.`,
             <MessageCircle className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">AI Agent Assistant</h1>
+            <h1 className="text-xl font-bold text-gray-900">Joy - AI Agent Assistant</h1>
             <p className="text-sm text-gray-500">
               {isConnected ? '🟢 Connected via WebSocket' : '🔴 HTTP Mode'}
             </p>
           </div>
         </div>
         
+        {/* Voice Indicator */}
+        <VoiceIndicator
+          isListeningForWakeWord={isListeningForWakeWord}
+          isAwake={isAwake}
+          isListening={isListening}
+          isSpeaking={isSpeaking}
+          error={wakeWordError}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
+          onGoToSleep={goToSleep}
+        />
+        
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setVoiceEnabled(!voiceEnabled)}
-            className={`p-2 rounded-lg transition-colors ${
-              voiceEnabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-            }`}
-            title="Toggle voice responses"
-          >
-            {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-          </button>
-          
           <button
             onClick={connectWebSocket}
             disabled={isConnected}
