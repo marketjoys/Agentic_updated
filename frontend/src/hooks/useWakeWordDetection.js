@@ -513,6 +513,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     startWakeWordListening,
     stopWakeWordListening,
     resetPermissionState,
+    activateVoiceMode,
     // Additional utility methods for better integration
     requestPermission: checkMicrophonePermission,
     hasSupport: checkWakeWordSupport()
