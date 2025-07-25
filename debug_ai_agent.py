@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://a5bd14af-2054-464a-9676-36072f2c8d35.preview.emergentagent.com"
+BACKEND_URL = "https://1a57e556-e465-4823-8ddc-9b0a2b804cbb.preview.emergentagent.com"
 
 def test_single_command(message, expected_name):
     """Test a single command and show detailed extraction results"""
