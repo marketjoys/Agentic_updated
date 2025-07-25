@@ -11,13 +11,32 @@ const AIAgentChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [sessionId, setSessionId] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true); // Default to enabled for wake word
   const [suggestions, setSuggestions] = useState([]);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  // Wake word detection
+  const {
+    isListeningForWakeWord,
+    isAwake,
+    error: wakeWordError,
+    goToSleep,
+    resetActivity,
+    startWakeWordListening,
+    stopWakeWordListening
+  } = useWakeWordDetection(
+    () => {
+      // When wake word is detected, automatically start listening for command
+      setTimeout(() => startVoiceRecognition(true), 1000);
+    },
+    voiceEnabled
+  );
   
   useEffect(() => {
     // Generate session ID
