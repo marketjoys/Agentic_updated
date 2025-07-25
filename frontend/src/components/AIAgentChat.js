@@ -231,15 +231,22 @@ Please try again or ask for help.`,
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
+    // Windows-optimized settings
     recognitionRef.current.lang = 'en-US';
     recognitionRef.current.interimResults = false;
     recognitionRef.current.maxAlternatives = 1;
+    recognitionRef.current.continuous = false; // Set to false for single command
+    
+    // Windows compatibility: Add service hints
+    if (window.webkitSpeechRecognition) {
+      recognitionRef.current.serviceURI = 'wss://www.google.com/speech-api/full-duplex/v1/up';
+    }
     
     recognitionRef.current.onstart = () => {
       setIsListening(true);
       toast('🎤 Listening... Speak now', { 
         icon: '🎤',
-        duration: 1000 
+        duration: 2000 
       });
     };
     
@@ -264,7 +271,15 @@ Please try again or ask for help.`,
     
     recognitionRef.current.onerror = (event) => {
       setIsListening(false);
-      if (event.error !== 'aborted') {
+      console.error('Voice recognition error:', event.error);
+      
+      if (event.error === 'not-allowed') {
+        toast.error('Microphone permission denied. Please allow microphone access.');
+      } else if (event.error === 'no-speech') {
+        toast.error('No speech detected. Please try again.');
+      } else if (event.error === 'network') {
+        toast.error('Network error. Check your internet connection.');
+      } else if (event.error !== 'aborted') {
         toast.error(`Voice recognition error: ${event.error}`);
       }
     };
@@ -276,6 +291,7 @@ Please try again or ask for help.`,
     try {
       recognitionRef.current.start();
     } catch (error) {
+      console.error('Failed to start voice recognition:', error);
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
