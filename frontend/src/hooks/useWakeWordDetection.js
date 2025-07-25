@@ -141,7 +141,16 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
             duration: 5000
           });
         } else {
-          toast.error(errorMessage, { duration: 3000 });
+          // For temporary issues, don't set permanently denied
+          setPermissionDeniedPermanently(false);
+          toast.error(`${errorMessage}. Click to retry voice commands.`, { 
+            duration: 3000,
+            onClick: () => {
+              setPermissionDeniedPermanently(false);
+              setPermissionChecked(false);
+              setError(null);
+            }
+          });
         }
         
         permissionRequestInProgressRef.current = false;
