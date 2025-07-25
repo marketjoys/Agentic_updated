@@ -1,6 +1,6 @@
 // Voice Activity Indicator Component
 import React from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Waves, Moon, Sun } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Waves, Moon, Sun, Shield } from 'lucide-react';
 
 const VoiceIndicator = ({ 
   isListeningForWakeWord, 
@@ -9,10 +9,13 @@ const VoiceIndicator = ({
   isSpeaking, 
   error,
   voiceEnabled,
+  permissionGranted,
   onToggleVoice,
-  onGoToSleep 
+  onGoToSleep,
+  onRequestPermission
 }) => {
   const getStatusIcon = () => {
+    if (error && error.includes('permission')) return <Shield className="h-5 w-5 text-red-500" />;
     if (error) return <MicOff className="h-5 w-5 text-red-500" />;
     if (isSpeaking) return <Volume2 className="h-5 w-5 text-purple-500" />;
     if (isListening) return <Mic className="h-5 w-5 text-green-500" />;
@@ -22,15 +25,18 @@ const VoiceIndicator = ({
   };
 
   const getStatusText = () => {
+    if (error && error.includes('permission')) return 'Permission needed - Click to grant';
     if (error) return error;
     if (isSpeaking) return 'Speaking';
     if (isListening) return 'Listening';
     if (isAwake) return 'Awake - Say something or "sleep"';
     if (isListeningForWakeWord) return 'Sleeping - Say "Hello Joy" to wake';
+    if (!permissionGranted) return 'Click to enable microphone';
     return 'Voice disabled';
   };
 
   const getStatusColor = () => {
+    if (error && error.includes('permission')) return 'bg-orange-100 text-orange-700 border-orange-200';
     if (error) return 'bg-red-100 text-red-700 border-red-200';
     if (isSpeaking) return 'bg-purple-100 text-purple-700 border-purple-200';
     if (isListening) return 'bg-green-100 text-green-700 border-green-200';
@@ -45,10 +51,22 @@ const VoiceIndicator = ({
     return '';
   };
 
+  const handleStatusClick = () => {
+    if (error && error.includes('permission') && onRequestPermission) {
+      onRequestPermission();
+    }
+  };
+
   return (
     <div className="flex items-center space-x-3">
       {/* Voice Status Indicator */}
-      <div className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${getStatusColor()} transition-all duration-300`}>
+      <div 
+        className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${getStatusColor()} transition-all duration-300 ${
+          (error && error.includes('permission')) ? 'cursor-pointer hover:opacity-80' : ''
+        }`}
+        onClick={handleStatusClick}
+        title={getStatusText()}
+      >
         <div className={`relative ${getPulseAnimation()}`}>
           {getStatusIcon()}
           {/* Audio visualization dots */}
@@ -80,6 +98,17 @@ const VoiceIndicator = ({
           {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </button>
 
+        {/* Permission Request Button */}
+        {!permissionGranted && onRequestPermission && (
+          <button
+            onClick={onRequestPermission}
+            className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
+            title="Request microphone permission"
+          >
+            <Shield className="h-4 w-4" />
+          </button>
+        )}
+
         {/* Sleep Control */}
         {isAwake && onGoToSleep && (
           <button
@@ -101,6 +130,7 @@ const VoiceIndicator = ({
       )}
     </div>
   );
+};
 };
 
 export default VoiceIndicator;
