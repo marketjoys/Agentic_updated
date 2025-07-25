@@ -502,16 +502,34 @@ Please try again or ask for help.`,
             
             <button
               type="button"
-              onClick={() => startVoiceRecognition(false)}
-              disabled={isListening || isLoading || !isAwake}
+              onClick={async () => {
+                if (!permissionGranted || !isAwake) {
+                  // If no permission or not awake, try to activate voice mode first
+                  const activated = await activateVoiceMode();
+                  if (activated) {
+                    // Small delay then start voice recognition
+                    setTimeout(() => startVoiceRecognition(false), 500);
+                  }
+                } else {
+                  // If already awake and have permission, start voice recognition directly
+                  startVoiceRecognition(false);
+                }
+              }}
+              disabled={isListening || isLoading}
               className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full transition-colors ${
                 isListening 
                   ? 'text-red-600 bg-red-100' 
-                  : isAwake
+                  : permissionGranted && isAwake
                   ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
               }`}
-              title={!isAwake ? "Say 'Hello Joy' to wake up for voice input" : "Voice input"}
+              title={
+                !permissionGranted 
+                  ? "Click to enable microphone and voice commands" 
+                  : !isAwake 
+                  ? "Click to activate voice mode" 
+                  : "Voice input (or say 'Hello Joy' to wake up)"
+              }
             >
               {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
