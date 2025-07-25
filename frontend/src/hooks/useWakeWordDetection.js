@@ -175,6 +175,27 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     retryCountRef.current = 0;
   }, []);
 
+  const containsWakeWord = useCallback((transcript) => {
+    const normalizedTranscript = transcript.toLowerCase().trim();
+    return WAKE_WORDS.some(wakeWord => normalizedTranscript.includes(wakeWord));
+  }, [WAKE_WORDS]);
+
+  const resetSleepTimer = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      if (isAwake) {
+        setIsAwake(false);
+        startWakeWordListening();
+        toast('Joy is now sleeping. Say "Hello Joy" to wake up.', { 
+          icon: '😴',
+          duration: 2000
+        });
+      }
+    }, SLEEP_TIMEOUT);
+  }, [isAwake]);
+
   // New function to manually activate wake mode after permission is granted
   const activateVoiceMode = useCallback(async () => {
     if (!checkWakeWordSupport() || !enabled) {
@@ -199,27 +220,6 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     
     return true;
   }, [enabled, checkWakeWordSupport, checkMicrophonePermission, resetSleepTimer]);
-
-  const containsWakeWord = useCallback((transcript) => {
-    const normalizedTranscript = transcript.toLowerCase().trim();
-    return WAKE_WORDS.some(wakeWord => normalizedTranscript.includes(wakeWord));
-  }, [WAKE_WORDS]);
-
-  const resetSleepTimer = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      if (isAwake) {
-        setIsAwake(false);
-        startWakeWordListening();
-        toast('Joy is now sleeping. Say "Hello Joy" to wake up.', { 
-          icon: '😴',
-          duration: 2000
-        });
-      }
-    }, SLEEP_TIMEOUT);
-  }, [isAwake]);
 
   const startWakeWordListening = useCallback(async () => {
     if (!checkWakeWordSupport() || !enabled) return;
