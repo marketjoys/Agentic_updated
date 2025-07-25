@@ -161,6 +161,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       return;
     }
 
+    resetActivity();
     setLoading(true);
     setStep('searching');
 
@@ -185,24 +186,46 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
           setClarificationQuestions(result.questions || []);
           setExtractedParameters(result.extracted_parameters);
           setStep('clarification');
+          
+          // Voice feedback for clarification
+          if (voiceEnabled && isAwake) {
+            const clarificationText = `I need more information. ${result.questions?.[0] || 'Please provide additional details.'}`;
+            setTimeout(() => speakResponse(clarificationText), 500);
+          }
         } else {
           setSearchResults(result);
           setStep('results');
           if (result.prospects_count > 0) {
-            toast.success(`Found ${result.prospects_count} prospects!`);
+            const successMessage = `Found ${result.prospects_count} prospects!`;
+            toast.success(successMessage);
+            if (voiceEnabled && isAwake) {
+              setTimeout(() => speakResponse(successMessage), 500);
+            }
             if (onProspectsAdded) {
               onProspectsAdded(result.prospects_count);
             }
           } else {
-            toast.info('No prospects found matching your criteria');
+            const noResultsMessage = 'No prospects found matching your criteria';
+            toast.info(noResultsMessage);
+            if (voiceEnabled && isAwake) {
+              setTimeout(() => speakResponse(noResultsMessage), 500);
+            }
           }
         }
       } else {
-        toast.error(result.error || 'Search failed');
+        const errorMessage = result.error || 'Search failed';
+        toast.error(errorMessage);
+        if (voiceEnabled && isAwake) {
+          setTimeout(() => speakResponse(`Search failed: ${errorMessage}`), 500);
+        }
         setStep('query');
       }
     } catch (error) {
-      toast.error('Search failed. Please try again.');
+      const errorMessage = 'Search failed. Please try again.';
+      toast.error(errorMessage);
+      if (voiceEnabled && isAwake) {
+        setTimeout(() => speakResponse(errorMessage), 500);
+      }
       setStep('query');
     } finally {
       setLoading(false);
