@@ -234,9 +234,22 @@ const EnhancedAIAgentChat = () => {
     }
   };
   
-  const startVoiceRecognition = () => {
+  const startVoiceRecognition = async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
+      return;
+    }
+    
+    // Check if we have microphone permission first
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // Stop immediately, we just needed permission
+    } catch (error) {
+      if (error.name === 'NotAllowedError') {
+        toast.error('Microphone permission denied. Please allow microphone access.');
+      } else {
+        toast.error(`Microphone error: ${error.message}`);
+      }
       return;
     }
     
@@ -260,7 +273,15 @@ const EnhancedAIAgentChat = () => {
     
     recognition.onerror = (event) => {
       setIsListening(false);
-      toast.error(`Voice recognition error: ${event.error}`);
+      if (event.error === 'not-allowed') {
+        toast.error('Microphone permission denied. Please allow microphone access.');
+      } else if (event.error === 'no-speech') {
+        toast.error('No speech detected. Please try again.');
+      } else if (event.error === 'network') {
+        toast.error('Network error. Check your internet connection.');
+      } else if (event.error !== 'aborted') {
+        toast.error(`Voice recognition error: ${event.error}`);
+      }
     };
     
     recognition.onend = () => {
