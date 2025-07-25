@@ -29,7 +29,10 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     goToSleep,
     resetActivity,
     startWakeWordListening,
-    stopWakeWordListening
+    stopWakeWordListening,
+    activateVoiceMode,
+    requestPermission,
+    permissionGranted
   } = useWakeWordDetection(
     () => {
       // When wake word is detected in prospector, start listening for search query
