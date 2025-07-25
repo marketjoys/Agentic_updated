@@ -28,19 +28,37 @@ class VoiceService {
         throw new Error('Microphone access not supported in this browser');
       }
 
-      // Check if we already have permission
+      // Check if we already have an active permission
       if (this.mediaStream && this.mediaStream.active) {
         return { success: true, stream: this.mediaStream };
       }
 
-      // Request permission
+      // Clean up any existing inactive streams
+      if (this.mediaStream && !this.mediaStream.active) {
+        this.mediaStream = null;
+      }
+
+      // Check permission status first
+      const permissionStatus = await this.checkPermissionStatus();
+      if (permissionStatus === 'denied') {
+        throw new Error('Microphone permission was previously denied. Please enable it in browser settings.');
+      }
+
+      // Request permission with enhanced constraints for better compatibility
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 44100
+          autoGainControl: true,
+          sampleRate: { ideal: 44100, min: 16000 },
+          channelCount: { ideal: 1 }
         } 
       });
+
+      // Verify the stream is active
+      if (!this.mediaStream || !this.mediaStream.active) {
+        throw new Error('Failed to activate microphone stream');
+      }
 
       toast.success('🎤 Microphone access granted!', { duration: 2000 });
 
@@ -49,37 +67,49 @@ class VoiceService {
     } catch (error) {
       console.error('Microphone permission error:', error);
       
-      let errorMessage = 'Microphone access denied';
+      let errorMessage = 'Microphone access failed';
       let helpText = '';
+      let isRetryable = true;
 
       switch (error.name) {
         case 'NotAllowedError':
           errorMessage = 'Microphone permission denied';
-          helpText = 'Please allow microphone access in your browser settings';
+          helpText = 'Please allow microphone access in your browser settings and refresh the page';
+          isRetryable = false;
           break;
         case 'NotFoundError':
           errorMessage = 'No microphone found';
           helpText = 'Please connect a microphone to your device';
+          isRetryable = false;
           break;
         case 'NotReadableError':
           errorMessage = 'Microphone is being used by another application';
-          helpText = 'Please close other applications using the microphone';
+          helpText = 'Please close other applications using the microphone and try again';
+          isRetryable = true;
           break;
         case 'OverconstrainedError':
           errorMessage = 'Microphone constraints not supported';
           helpText = 'Your microphone may not support the required features';
+          isRetryable = false;
+          break;
+        case 'AbortError':
+          errorMessage = 'Microphone request was cancelled';
+          helpText = 'Please try again';
+          isRetryable = true;
           break;
         default:
-          errorMessage = `Microphone error: ${error.message}`;
-          helpText = 'Please check your microphone settings';
+          errorMessage = error.message || 'Unknown microphone error';
+          helpText = 'Please check your microphone settings and try again';
       }
 
-      toast.error(errorMessage + (helpText ? `\n${helpText}` : ''), { 
-        duration: 5000,
+      const fullMessage = helpText ? `${errorMessage}\n${helpText}` : errorMessage;
+      
+      toast.error(fullMessage, { 
+        duration: isRetryable ? 4000 : 6000,
         style: { maxWidth: '400px' }
       });
 
-      return { success: false, error: errorMessage, helpText };
+      return { success: false, error: errorMessage, helpText, isRetryable };
     }
   }
 
