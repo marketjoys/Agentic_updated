@@ -287,16 +287,53 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
           <Brain className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-gray-900">AI Prospector</h3>
-          <p className="text-gray-600">Describe the type of prospects you're looking for in natural language</p>
+          <h3 className="text-xl font-bold text-gray-900">Joy - AI Prospector</h3>
+          <p className="text-gray-600">
+            {isAwake 
+              ? "🎙️ I'm listening! Describe the prospects you're looking for"
+              : "Say 'Hello Joy' for voice mode, or describe prospects you're looking for"
+            }
+          </p>
         </div>
+      </div>
+
+      {/* Voice Indicator for Prospector */}
+      <div className="flex items-center justify-center mb-4">
+        <VoiceIndicator
+          isListeningForWakeWord={isListeningForWakeWord}
+          isAwake={isAwake}
+          isListening={isListening}
+          isSpeaking={isSpeaking}
+          error={wakeWordError}
+          voiceEnabled={voiceEnabled}
+          onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
+          onGoToSleep={goToSleep}
+        />
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Search Query *
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Search Query *
+            </label>
+            <button
+              type="button"
+              onClick={() => startVoiceRecognition(false)}
+              disabled={isListening || loading || !isAwake}
+              className={`flex items-center space-x-1 px-2 py-1 rounded text-xs transition-colors ${
+                isListening 
+                  ? 'bg-red-100 text-red-600' 
+                  : isAwake
+                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                  : 'bg-gray-100 text-gray-500'
+              }`}
+              title={!isAwake ? "Say 'Hello Joy' to wake up for voice input" : "Voice input"}
+            >
+              {isListening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+              <span>{isListening ? 'Stop' : 'Voice'}</span>
+            </button>
+          </div>
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -340,8 +377,9 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
           <div>
             <h4 className="text-sm font-medium text-blue-900">How it works</h4>
             <p className="text-sm text-blue-800 mt-1">
-              Our AI will analyze your query and search Apollo.io's database for matching prospects. 
+              Joy will analyze your query and search Apollo.io's database for matching prospects. 
               You can specify job titles, industries, company sizes, and locations in natural language.
+              {voiceEnabled && " Use voice commands by saying 'Hello Joy' to activate voice mode."}
             </p>
           </div>
         </div>
