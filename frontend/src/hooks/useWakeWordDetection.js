@@ -179,17 +179,24 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
   const startWakeWordListening = useCallback(async () => {
     if (!checkWakeWordSupport() || !enabled) return;
 
-    // Check permission first
+    // If permission was denied permanently, don't attempt to start
+    if (permissionDeniedPermanently) {
+      console.log('Cannot start wake word listening: microphone permission denied permanently');
+      return;
+    }
+
+    // Check permission first with enhanced handling
     const hasPermission = await checkMicrophonePermission();
     if (!hasPermission) {
       console.log('Cannot start wake word listening: no microphone permission');
       return;
     }
 
-    // Stop existing recognition
+    // Stop existing recognition gracefully
     if (recognitionRef.current) {
       try {
-        recognitionRef.current.stop();
+        recognitionRef.current.abort(); // Use abort instead of stop for immediate termination
+        recognitionRef.current = null;
       } catch (error) {
         console.log('Error stopping existing recognition:', error);
       }
@@ -199,62 +206,36 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
 
-      // Windows-optimized settings
+      // Enhanced Windows-compatible settings
       recognitionRef.current.lang = 'en-US';
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       recognitionRef.current.maxAlternatives = 1;
       
-      // Windows compatibility: Add service hints
-      if (window.webkitSpeechRecognition) {
+      // Improved settings for better reliability
+      if ('webkitSpeechRecognition' in window) {
         recognitionRef.current.serviceURI = 'wss://www.google.com/speech-api/full-duplex/v1/up';
+        recognitionRef.current.grammars = null; // Clear any grammar constraints
       }
 
       recognitionRef.current.onstart = () => {
         setIsListeningForWakeWord(true);
         setError(null);
         retryCountRef.current = 0;
-        console.log('Wake word detection started');
+        console.log('Wake word detection started successfully');
       };
 
       recognitionRef.current.onresult = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          
-          if (containsWakeWord(transcript)) {
-            console.log('Wake word detected:', transcript);
-            setIsAwake(true);
-            setIsListeningForWakeWord(false);
+          const result = event.results[i];
+          if (result.isFinal || result[0].confidence > 0.7) {
+            const transcript = result[0].transcript.toLowerCase().trim();
             
-            // Stop wake word recognition
-            if (recognitionRef.current) {
-              recognitionRef.current.stop();
+            if (containsWakeWord(transcript)) {
+              console.log('Wake word detected:', transcript);
+              handleWakeWordDetected();
+              break;
             }
-            
-            // Provide audio feedback
-            toast('Hello! How can I help you?', { 
-              icon: '🎙️',
-              duration: 3000
-            });
-            
-            // Play wake sound (Windows compatible)
-            if ('speechSynthesis' in window && speechSynthesis.getVoices().length > 0) {
-              const utterance = new SpeechSynthesisUtterance('Hello! I\'m listening.');
-              utterance.rate = 1.1;
-              utterance.pitch = 1.2;
-              utterance.volume = 0.8;
-              speechSynthesis.speak(utterance);
-            }
-            
-            // Start sleep timer
-            resetSleepTimer();
-            
-            // Trigger callback
-            if (onWakeWordDetected) {
-              setTimeout(() => onWakeWordDetected(), 1000);
-            }
-            
-            break;
           }
         }
       };
@@ -263,50 +244,134 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
         console.error('Wake word recognition error:', event.error);
         setError(event.error);
         
-        // Handle different error types
-        if (event.error === 'not-allowed') {
-          setError('Microphone permission denied. Please allow microphone access.');
-          setPermissionGranted(false);
-          toast.error('Microphone permission required for wake word detection');
-          return;
-        }
-        
-        if (event.error === 'no-speech' && retryCountRef.current < MAX_RETRIES) {
-          retryCountRef.current++;
-          console.log(`Retrying wake word detection (${retryCountRef.current}/${MAX_RETRIES})`);
-          setTimeout(() => {
-            if (!isAwake && enabled && permissionGranted) {
-              startWakeWordListening();
+        // Handle different error types with improved logic
+        switch (event.error) {
+          case 'not-allowed':
+            setError('Microphone permission denied');
+            setPermissionGranted(false);
+            setPermissionDeniedPermanently(true);
+            toast.error('Microphone permission required for wake word detection');
+            return;
+            
+          case 'no-speech':
+            // Don't treat no-speech as a critical error, just retry once
+            if (retryCountRef.current < MAX_RETRIES) {
+              retryCountRef.current++;
+              console.log(`No speech detected, retrying (${retryCountRef.current}/${MAX_RETRIES})`);
+              setTimeout(() => {
+                if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+                  startWakeWordListening();
+                }
+              }, 3000);
             }
-          }, 2000); // Longer delay for Windows
-        } else if (event.error === 'network') {
-          console.log('Network error in speech recognition, retrying...');
-          setTimeout(() => {
-            if (!isAwake && enabled && permissionGranted) {
-              startWakeWordListening();
-            }
-          }, 5000);
+            break;
+            
+          case 'network':
+            console.log('Network error in speech recognition, will retry');
+            setTimeout(() => {
+              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+                startWakeWordListening();
+              }
+            }, 5000);
+            break;
+            
+          case 'audio-capture':
+            setError('Audio capture failed - microphone may be in use');
+            toast.error('Microphone is being used by another application');
+            break;
+            
+          default:
+            console.log(`Speech recognition error: ${event.error}`);
+            // For other errors, don't retry immediately
+            break;
         }
       };
 
       recognitionRef.current.onend = () => {
         setIsListeningForWakeWord(false);
         
-        // Only restart if not awake, enabled, and have permission
-        if (!isAwake && enabled && permissionGranted && retryCountRef.current < MAX_RETRIES) {
+        // Only restart if conditions are met and we haven't exceeded retries
+        if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && retryCountRef.current < MAX_RETRIES) {
           setTimeout(() => {
-            startWakeWordListening();
-          }, 1000); // Delay to prevent rapid restarts
+            if (!isAwake && enabled && permissionGranted) {
+              startWakeWordListening();
+            }
+          }, 2000); // Longer delay to prevent rapid restarts
         }
       };
 
       recognitionRef.current.start();
+      
     } catch (error) {
       console.error('Failed to start wake word recognition:', error);
       setError('Failed to start voice recognition');
       setIsListeningForWakeWord(false);
+      
+      // Show user-friendly error message
+      toast.error('Voice recognition failed to start. Please check your microphone.', {
+        duration: 4000
+      });
     }
-  }, [enabled, isAwake, containsWakeWord, checkWakeWordSupport, checkMicrophonePermission, onWakeWordDetected, resetSleepTimer, permissionGranted]);
+  }, [enabled, isAwake, containsWakeWord, checkWakeWordSupport, checkMicrophonePermission, permissionGranted, permissionDeniedPermanently]);
+
+  const handleWakeWordDetected = useCallback(() => {
+    setIsAwake(true);
+    setIsListeningForWakeWord(false);
+    
+    // Stop wake word recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      } catch (error) {
+        console.log('Error stopping wake word recognition:', error);
+      }
+    }
+    
+    // Provide enhanced feedback
+    toast('Hello! How can I help you?', { 
+      icon: '🎙️',
+      duration: 3000
+    });
+    
+    // Enhanced speech feedback with error handling
+    if ('speechSynthesis' in window) {
+      try {
+        // Wait for voices to load
+        const speak = () => {
+          const utterance = new SpeechSynthesisUtterance('Hello! I\'m listening.');
+          utterance.rate = 1.0;
+          utterance.pitch = 1.1;
+          utterance.volume = 0.7;
+          
+          // Use a more reliable voice if available
+          const voices = speechSynthesis.getVoices();
+          const englishVoice = voices.find(voice => voice.lang.startsWith('en'));
+          if (englishVoice) {
+            utterance.voice = englishVoice;
+          }
+          
+          speechSynthesis.speak(utterance);
+        };
+        
+        if (speechSynthesis.getVoices().length > 0) {
+          speak();
+        } else {
+          speechSynthesis.addEventListener('voiceschanged', speak, { once: true });
+        }
+      } catch (speechError) {
+        console.log('Speech synthesis error:', speechError);
+      }
+    }
+    
+    // Start sleep timer
+    resetSleepTimer();
+    
+    // Trigger callback
+    if (onWakeWordDetected) {
+      setTimeout(() => onWakeWordDetected(), 1000);
+    }
+  }, [resetSleepTimer, onWakeWordDetected]);
 
   const stopWakeWordListening = useCallback(() => {
     if (recognitionRef.current) {
