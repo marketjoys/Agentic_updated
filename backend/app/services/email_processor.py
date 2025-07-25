@@ -198,10 +198,19 @@ class EmailProcessor:
                     wait_time = min(60 * consecutive_errors, 300)
                     await asyncio.sleep(wait_time)
     
-    async def _check_for_new_emails(self):
-        """Check for new emails via IMAP with enhanced monitoring"""
+    async def stop_monitoring(self):
+        """Stop email monitoring for all providers"""
+        self.processing = False
+        self.monitored_providers.clear()
+        logger.info("Email monitoring stopped for all providers")
+        return {"status": "stopped"}
+    
+    async def _check_provider_for_new_emails(self, provider_config: dict):
+        """Check a specific provider for new emails via IMAP"""
         scan_start_time = datetime.utcnow()
         scan_result = {
+            "provider_id": provider_config["id"],
+            "provider_name": provider_config["name"],
             "new_emails_found": 0,
             "emails_processed": 0,
             "errors": [],
@@ -210,8 +219,8 @@ class EmailProcessor:
         
         try:
             # Connect to IMAP server
-            mail = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
-            mail.login(self.email_username, self.email_password)
+            mail = imaplib.IMAP4_SSL(provider_config["imap_host"], provider_config["imap_port"])
+            mail.login(provider_config["imap_username"], provider_config["imap_password"])
             mail.select("inbox")
             
             # Search for unread emails
@@ -221,7 +230,7 @@ class EmailProcessor:
                 message_ids = messages[0].split()
                 scan_result["new_emails_found"] = len(message_ids)
                 
-                logger.info(f"Found {len(message_ids)} new emails to process")
+                logger.info(f"Provider {provider_config['name']}: Found {len(message_ids)} new emails to process")
                 
                 for msg_id in message_ids:
                     try:
@@ -233,8 +242,8 @@ class EmailProcessor:
                             email_body = msg_data[0][1]
                             email_message = email.message_from_bytes(email_body)
                             
-                            # Process the email
-                            processed = await self._process_email(email_message)
+                            # Process the email with provider context
+                            processed = await self._process_email(email_message, provider_config)
                             if processed:
                                 scan_result["emails_processed"] += 1
                             
@@ -242,7 +251,7 @@ class EmailProcessor:
                             mail.store(msg_id, '+FLAGS', '\\Seen')
                             
                     except Exception as e:
-                        error_msg = f"Error processing email {msg_id}: {str(e)}"
+                        error_msg = f"Provider {provider_config['name']}: Error processing email {msg_id}: {str(e)}"
                         logger.error(error_msg)
                         scan_result["errors"].append(error_msg)
                         continue
@@ -251,7 +260,7 @@ class EmailProcessor:
             mail.logout()
             
         except Exception as e:
-            error_msg = f"IMAP connection error: {str(e)}"
+            error_msg = f"Provider {provider_config['name']}: IMAP connection error: {str(e)}"
             logger.error(error_msg)
             scan_result["errors"].append(error_msg)
         
@@ -259,15 +268,15 @@ class EmailProcessor:
         scan_duration = (datetime.utcnow() - scan_start_time).total_seconds()
         scan_result["scan_duration_seconds"] = scan_duration
         
-        # Log scan activity
+        # Log scan activity to database
         try:
             await db_service.log_imap_scan_activity(scan_result)
         except Exception as e:
-            logger.error(f"Failed to log scan activity: {str(e)}")
+            logger.error(f"Failed to log scan activity for provider {provider_config['name']}: {str(e)}")
         
         # Log summary
         if scan_result["new_emails_found"] > 0:
-            logger.info(f"IMAP scan completed: {scan_result['new_emails_found']} new emails found, "
+            logger.info(f"Provider {provider_config['name']}: IMAP scan completed: {scan_result['new_emails_found']} new emails found, "
                        f"{scan_result['emails_processed']} processed, {len(scan_result['errors'])} errors")
         
         return scan_result
