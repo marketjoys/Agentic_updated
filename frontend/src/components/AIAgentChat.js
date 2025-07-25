@@ -274,12 +274,39 @@ Please try again or ask for help.`,
   };
   
   const speakResponse = (text) => {
-    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
     
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 0.8;
+    setIsSpeaking(true);
+    
+    // Clean up text for better speech
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+      .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
+      .replace(/#{1,6}\s/g, '') // Remove markdown headers
+      .replace(/```[\s\S]*?```/g, 'code block') // Replace code blocks
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Replace links with text
+      .replace(/---+/g, '') // Remove horizontal rules
+      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+      .substring(0, 300); // Limit length for speech
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 0.9;
+    
+    utterance.onstart = () => {
+      resetActivity();
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      resetActivity();
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
     
     speechSynthesis.speak(utterance);
   };
