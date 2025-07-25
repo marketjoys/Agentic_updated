@@ -512,7 +512,10 @@ Please try again or ask for help.`,
         </form>
         
         <div className="mt-2 text-xs text-gray-500 text-center">
-          Try: "Show my campaigns" • "Create prospect John Doe from TechCorp" • "What are my analytics?" • "Send Summer Sale campaign"
+          {isAwake 
+            ? "🎙️ Voice activated! Say 'sleep' to deactivate • Try: \"Show my campaigns\" • \"Create prospect John Doe from TechCorp\""
+            : "💤 Say \"Hello Joy\" to activate voice mode • Or type: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
+          }
         </div>
       </div>
     </div>
