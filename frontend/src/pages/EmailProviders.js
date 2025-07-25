@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Settings, CheckCircle, XCircle, AlertCircle, Mail, Server, Edit, Trash2, TestTube } from 'lucide-react';
+import { Plus, Settings, CheckCircle, XCircle, AlertCircle, Mail, Server, Edit, Trash2, TestTube, Eye, EyeOff, Wifi, WifiOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
