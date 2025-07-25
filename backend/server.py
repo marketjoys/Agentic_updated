@@ -1640,7 +1640,7 @@ def get_default_html_template():
 
 @app.put("/api/templates/{template_id}")
 async def update_template(template_id: str, template: dict):
-    """Update an email template"""
+    """Update an email template with HTML support"""
     try:
         from app.services.database import db_service
         
@@ -1650,15 +1650,25 @@ async def update_template(template_id: str, template: dict):
         # Add update timestamp
         template["updated_at"] = datetime.utcnow()
         
+        # Ensure HTML support fields are present if enabling HTML
+        if template.get("is_html_enabled") and "html_content" not in template:
+            template["html_content"] = convert_text_to_html(template.get("content", ""))
+        
         # Update template in database
         result = await db_service.update_template(template_id, template)
         
         if result:
-            return {
+            response_data = {
                 "id": template_id,
                 "message": "Template updated successfully",
                 **template
             }
+            
+            # Convert datetime to string for JSON response
+            if "updated_at" in response_data and hasattr(response_data["updated_at"], "isoformat"):
+                response_data["updated_at"] = response_data["updated_at"].isoformat()
+                
+            return response_data
         else:
             raise HTTPException(status_code=404, detail="Template not found")
             
