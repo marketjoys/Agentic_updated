@@ -461,10 +461,14 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     isAwake,
     error,
     permissionGranted,
+    permissionDeniedPermanently,
     goToSleep,
     resetActivity,
     startWakeWordListening,
-    stopWakeWordListening
+    stopWakeWordListening,
+    // Additional utility methods for better integration
+    requestPermission: checkMicrophonePermission,
+    hasSupport: checkWakeWordSupport()
   };
 };
 
