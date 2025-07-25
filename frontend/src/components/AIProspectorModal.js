@@ -64,6 +64,97 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     }
   };
 
+  const startVoiceRecognition = (autoSearch = false) => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error('Voice recognition not supported in this browser');
+      return;
+    }
+    
+    resetActivity();
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast('🎤 Listening for your prospect search...', { 
+        icon: '🎤',
+        duration: 1000 
+      });
+    };
+    
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      
+      // Check for sleep command
+      if (transcript.toLowerCase().includes('sleep') || transcript.toLowerCase().includes('go to sleep')) {
+        toast('Going to sleep. Say "Hello Joy" to wake me up.', { icon: '😴' });
+        goToSleep();
+        return;
+      }
+      
+      setQuery(transcript);
+      toast.success(`Heard: "${transcript}"`);
+      speakResponse(`I heard: ${transcript}. Let me search for those prospects.`);
+      
+      // Auto-search if triggered by wake word
+      if (autoSearch) {
+        setTimeout(() => handleSearch(), 1000);
+      }
+    };
+    
+    recognition.onerror = (event) => {
+      setIsListening(false);
+      if (event.error !== 'aborted') {
+        toast.error(`Voice recognition error: ${event.error}`);
+      }
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    
+    try {
+      recognition.start();
+    } catch (error) {
+      toast.error('Failed to start voice recognition');
+      setIsListening(false);
+    }
+  };
+
+  const speakResponse = (text) => {
+    if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
+    
+    setIsSpeaking(true);
+    
+    // Clean up text for better speech
+    const cleanText = text.substring(0, 200); // Limit length for speech
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 0.9;
+    
+    utterance.onstart = () => {
+      resetActivity();
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      resetActivity();
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+    
+    speechSynthesis.speak(utterance);
+  };
+
   const handleSearch = async () => {
     if (!query.trim()) {
       toast.error('Please enter a search query');
