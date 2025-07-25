@@ -593,9 +593,9 @@ const EnhancedAIAgentChat = () => {
               className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full transition-colors ${
                 isListening 
                   ? 'text-red-600 bg-red-100' 
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                  : 'text-blue-600 bg-blue-100 hover:bg-blue-200'
               }`}
-              title="Voice input"
+              title="Voice input - Click to enable microphone"
             >
               {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
