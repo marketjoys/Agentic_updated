@@ -131,6 +131,8 @@ const VoiceIndicator = ({
     </div>
   );
 };
+
+export default VoiceIndicator;
 };
 
 export default VoiceIndicator;
