@@ -627,6 +627,66 @@ class EmailProcessor:
             logger.error(f"Error sending automatic response: {str(e)}")
             raise e
     
+    async def _get_original_email_provider(self, prospect_id: str) -> Dict:
+        """Get the original email provider used for this prospect"""
+        try:
+            # Find the most recent email sent to this prospect from us
+            cursor = db_service.db.emails.find({
+                "prospect_id": prospect_id,
+                "sent_by_us": True,
+                "provider_id": {"$ne": None}
+            }).sort("sent_at", -1).limit(1)
+            
+            email_records = await cursor.to_list(length=1)
+            
+            if email_records:
+                provider_id = email_records[0].get("provider_id")
+                if provider_id:
+                    # Get the provider details
+                    provider = await db_service.get_email_provider_by_id(provider_id)
+                    if provider:
+                        logger.info(f"Found original provider for prospect {prospect_id}: {provider.get('email_address')}")
+                        return provider
+            
+            # Fallback to default provider if no original provider found
+            logger.info(f"No original provider found for prospect {prospect_id}, using default provider")
+            provider = await db_service.get_default_email_provider()
+            return provider
+            
+        except Exception as e:
+            logger.error(f"Error getting original email provider: {str(e)}")
+            # Fallback to default provider
+            return await db_service.get_default_email_provider()
+    
+    async def _send_email_with_provider(self, provider: Dict, to_email: str, subject: str, content: str) -> bool:
+        """Send email using specific provider"""
+        try:
+            if not provider:
+                logger.error("No email provider available")
+                return False
+            
+            # Use the email provider service to send the email
+            from app.services.email_provider_service import email_provider_service
+            
+            success, error = await email_provider_service.send_email(
+                provider["id"],
+                to_email,
+                subject,
+                content,
+                "html"
+            )
+            
+            if success:
+                logger.info(f"Email sent successfully to {to_email} using provider: {provider.get('email_address')}")
+                return True
+            else:
+                logger.error(f"Failed to send email to {to_email} using provider {provider.get('email_address')}: {error}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error sending email with provider: {str(e)}")
+            return False
+
     async def _stop_follow_ups_for_prospect(self, prospect_id: str):
         """Stop any scheduled follow-ups for a prospect who has responded"""
         try:
