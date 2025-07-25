@@ -337,6 +337,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
   const handleWakeWordDetected = useCallback(() => {
     setIsAwake(true);
     setIsListeningForWakeWord(false);
+    setError(null); // Clear any previous errors
     
     // Stop wake word recognition
     if (recognitionRef.current) {
