@@ -894,28 +894,29 @@ async def get_prospects(skip: int = 0, limit: int = 100):
         # Return empty list on error instead of mock data
         return []
 
-@app.get("/api/intents")
-async def get_intents():
-    """Get all intents from database"""
-    try:
-        from app.services.database import db_service
-        
-        # Connect to database
-        await db_service.connect()
-        
-        # Get intents from database
-        intents = await db_service.get_intents()
-        
-        # If no intents exist, return empty list
-        if not intents:
-            return []
-        
-        return intents
-        
-    except Exception as e:
-        logging.error(f"Error fetching intents: {str(e)}")
-        # Return empty list on error instead of mock data
-        return []
+# Intents endpoint removed - handled by router
+# @app.get("/api/intents")
+# async def get_intents():
+#     """Get all intents from database"""
+#     try:
+#         from app.services.database import db_service
+#         
+#         # Connect to database
+#         await db_service.connect()
+#         
+#         # Get intents from database
+#         intents = await db_service.get_intents()
+#         
+#         # If no intents exist, return empty list
+#         if not intents:
+#             return []
+#         
+#         return intents
+#         
+#     except Exception as e:
+#         logging.error(f"Error fetching intents: {str(e)}")
+#         # Return empty list on error instead of mock data
+#         return []
 
 @app.get("/api/industries")
 async def get_industries():
