@@ -157,6 +157,28 @@ class EmailSendRequest(BaseModel):
     follow_up_intervals: List[int] = [3, 7, 14]
     follow_up_templates: List[str] = []
 
+@app.post("/api/test-email")
+async def test_email_sending(request: Dict[str, Any]):
+    """Test email sending functionality"""
+    try:
+        to_email = request.get("to_email")
+        subject = request.get("subject")
+        content = request.get("content")
+        
+        if not all([to_email, subject, content]):
+            raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        # Send test email
+        await send_email(to_email, subject, content)
+        
+        return {
+            "status": "success",
+            "message": f"Test email sent successfully to {to_email}"
+        }
+    except Exception as e:
+        logging.error(f"Test email failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Test email failed: {str(e)}")
+
 # Basic endpoints
 @app.get("/api/health")
 async def health_check():
