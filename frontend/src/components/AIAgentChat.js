@@ -402,8 +402,10 @@ Please try again or ask for help.`,
           isSpeaking={isSpeaking}
           error={wakeWordError}
           voiceEnabled={voiceEnabled}
+          permissionGranted={permissionGranted}
           onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
           onGoToSleep={goToSleep}
+          onRequestPermission={requestPermission}
         />
         
         <div className="flex items-center space-x-2">
