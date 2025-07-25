@@ -1127,10 +1127,22 @@ async def search_industries(search_term: str):
 
 @app.get("/api/services/status")
 async def get_services_status():
-    """Get status of auto follow-up and auto-responder services"""
+    """Get status of auto follow-up and auto-responder services with provider details"""
     try:
         from app.services.smart_follow_up_engine import smart_follow_up_engine
         from app.services.email_processor import email_processor
+        
+        # Get monitored providers info
+        monitored_providers_info = []
+        if hasattr(email_processor, 'monitored_providers'):
+            for provider_id, provider_config in email_processor.monitored_providers.items():
+                monitored_providers_info.append({
+                    "id": provider_id,
+                    "name": provider_config["name"],
+                    "provider_type": provider_config["provider_type"],
+                    "last_scan": provider_config["last_scan"].isoformat() if provider_config["last_scan"] else None,
+                    "imap_host": provider_config["imap_host"]
+                })
         
         return {
             "services": {
@@ -1140,7 +1152,9 @@ async def get_services_status():
                 },
                 "email_processor": {
                     "status": "running" if email_processor.processing else "stopped", 
-                    "description": "Handles automatic email responses (auto-responder)"
+                    "description": "Handles automatic email responses (auto-responder)",
+                    "monitored_providers_count": len(monitored_providers_info),
+                    "monitored_providers": monitored_providers_info
                 }
             },
             "overall_status": "healthy" if (smart_follow_up_engine.processing and email_processor.processing) else "degraded",
