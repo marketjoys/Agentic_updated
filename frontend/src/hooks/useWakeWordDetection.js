@@ -408,35 +408,51 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     }
   }, [isAwake, resetSleepTimer]);
 
-  // Initialize microphone permission check on mount
+  // Initialize microphone permission check on mount with improved logic
   useEffect(() => {
     if (enabled && checkWakeWordSupport()) {
+      // Initial permission check without starting listening immediately
       checkMicrophonePermission().then((hasPermission) => {
-        if (hasPermission) {
-          console.log('Starting wake word detection...');
-          startWakeWordListening();
+        if (hasPermission && !permissionDeniedPermanently) {
+          console.log('Microphone permission available, starting wake word detection...');
+          // Small delay to ensure state is properly set
+          setTimeout(() => {
+            startWakeWordListening();
+          }, 500);
+        } else {
+          console.log('Microphone permission not available or denied permanently');
         }
+      }).catch((error) => {
+        console.error('Failed to check microphone permission on mount:', error);
       });
     }
 
     return () => {
       stopWakeWordListening();
     };
-  }, [enabled]); // Only depend on enabled, not the functions
+  }, [enabled, checkWakeWordSupport]); // Removed function dependencies to prevent loops
 
-  // Clean up on unmount
+  // Clean up on unmount with enhanced cleanup
   useEffect(() => {
     return () => {
+      // Cleanup recognition
       if (recognitionRef.current) {
         try {
-          recognitionRef.current.stop();
+          recognitionRef.current.abort();
+          recognitionRef.current = null;
         } catch (error) {
-          console.log('Cleanup error:', error);
+          console.log('Cleanup recognition error:', error);
         }
       }
+      
+      // Cleanup timer
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+      
+      // Reset permission request flag
+      permissionRequestInProgressRef.current = false;
     };
   }, []);
 
