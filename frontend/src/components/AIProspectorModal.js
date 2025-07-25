@@ -309,8 +309,10 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
           isSpeaking={isSpeaking}
           error={wakeWordError}
           voiceEnabled={voiceEnabled}
+          permissionGranted={permissionGranted}
           onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
           onGoToSleep={goToSleep}
+          onRequestPermission={requestPermission}
         />
       </div>
 
