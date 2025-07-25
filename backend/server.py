@@ -1335,6 +1335,36 @@ async def get_dashboard_metrics():
         }
 
 # Email sending functionality
+async def send_email(to_email: str, subject: str, content: str):
+    """Simple email sending function for testing"""
+    try:
+        from app.services.database import db_service
+        from app.services.email_provider_service import email_provider_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get default email provider
+        provider = await email_provider_service.get_default_provider()
+        if not provider:
+            raise Exception("No default email provider configured")
+        
+        # Send email using email provider service
+        success, error = await email_provider_service.send_email(
+            provider["id"],
+            to_email,
+            subject,
+            content
+        )
+        
+        if not success:
+            raise Exception(error or "Failed to send email")
+            
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error in send_email: {str(e)}")
+        raise e
 async def send_email_via_provider(provider_data: dict, recipient: dict, subject: str, content: str, html_content: str = None):
     """Send email using the specified provider with HTML support"""
     try:
