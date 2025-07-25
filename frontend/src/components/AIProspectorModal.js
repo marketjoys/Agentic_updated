@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Sparkles, Users, Building, MapPin, AlertCircle, CheckCircle, Clock, Brain } from 'lucide-react';
+import { X, Search, Sparkles, Users, Building, MapPin, AlertCircle, CheckCircle, Clock, Brain, Mic, MicOff } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
+import useWakeWordDetection from '../hooks/useWakeWordDetection';
+import VoiceIndicator from './VoiceIndicator';
 
 const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [step, setStep] = useState('query'); // query, clarification, searching, results
