@@ -502,6 +502,18 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     };
   }, []);
 
+  // Handle wake word listening restart when isAwake changes
+  useEffect(() => {
+    if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+      // Small delay before restarting wake word listening
+      const restartTimeout = setTimeout(() => {
+        startWakeWordListening();
+      }, 1000);
+      
+      return () => clearTimeout(restartTimeout);
+    }
+  }, [isAwake, enabled, permissionGranted, permissionDeniedPermanently, startWakeWordListening]);
+
   return {
     isListeningForWakeWord,
     isAwake,
