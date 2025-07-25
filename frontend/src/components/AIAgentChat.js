@@ -553,7 +553,9 @@ Please try again or ask for help.`,
         <div className="mt-2 text-xs text-gray-500 text-center">
           {isAwake 
             ? "🎙️ Voice activated! Say 'sleep' to deactivate • Try: \"Show my campaigns\" • \"Create prospect John Doe from TechCorp\""
-            : "💤 Say \"Hello Joy\" to activate voice mode • Or type: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
+            : permissionGranted
+            ? "💤 Say \"Hello Joy\" to activate voice mode or click the microphone • Try: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
+            : "🎤 Click the microphone to enable voice commands • Or type: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
           }
         </div>
       </div>
