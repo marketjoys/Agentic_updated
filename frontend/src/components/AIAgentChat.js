@@ -1,8 +1,10 @@
-// Voice/Chat Interface for AI Agent - React Component
+// Voice/Chat Interface for AI Agent - React Component with Wake Word
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, MicOff, MessageCircle, Headphones, Volume2, VolumeX, Settings } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import apiService from '../services/api';
+import useWakeWordDetection from '../hooks/useWakeWordDetection';
+import VoiceIndicator from './VoiceIndicator';
 
 const AIAgentChat = () => {
   const [messages, setMessages] = useState([]);
