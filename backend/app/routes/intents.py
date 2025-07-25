@@ -89,26 +89,25 @@ async def get_intent(intent_id: str):
         raise HTTPException(status_code=500, detail=f"Error fetching intent: {str(e)}")
 
 @router.put("/intents/{intent_id}")
-async def update_intent(intent_id: str, intent: IntentConfig):
+async def update_intent(intent_id: str, intent_data: dict):
     """Update an intent configuration"""
     try:
         # Connect to database
         await db_service.connect()
         
         # Prepare update data
-        intent_dict = intent.dict()
-        intent_dict.pop('id', None)  # Remove ID from update data
-        intent_dict["updated_at"] = datetime.utcnow()
+        intent_data.pop('id', None)  # Remove ID from update data
+        intent_data["updated_at"] = datetime.utcnow()
         
         # Update intent in database
-        result = await db_service.update_intent(intent_id, intent_dict)
+        result = await db_service.update_intent(intent_id, intent_data)
         if result.matched_count == 0:
             raise HTTPException(status_code=404, detail="Intent not found")
         
         return {
             "id": intent_id,
             "message": "Intent updated successfully",
-            **intent_dict
+            **intent_data
         }
         
     except HTTPException:
