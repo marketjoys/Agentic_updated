@@ -228,7 +228,11 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
 
   const stopWakeWordListening = useCallback(() => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.log('Error stopping recognition:', error);
+      }
     }
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -242,12 +246,14 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    startWakeWordListening();
+    if (permissionGranted) {
+      startWakeWordListening();
+    }
     toast('Going back to sleep. Say "Hello Joy" to wake up.', { 
       icon: '😴',
       duration: 2000
     });
-  }, [startWakeWordListening]);
+  }, [startWakeWordListening, permissionGranted]);
 
   const resetActivity = useCallback(() => {
     if (isAwake) {
@@ -255,31 +261,31 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     }
   }, [isAwake, resetSleepTimer]);
 
-  // Request microphone permission on mount
+  // Initialize microphone permission check on mount
   useEffect(() => {
     if (enabled && checkWakeWordSupport()) {
-      navigator.mediaDevices?.getUserMedia({ audio: true })
-        .then(() => {
-          console.log('Microphone permission granted');
+      checkMicrophonePermission().then((hasPermission) => {
+        if (hasPermission) {
+          console.log('Starting wake word detection...');
           startWakeWordListening();
-        })
-        .catch((error) => {
-          console.error('Microphone permission denied:', error);
-          setError('Microphone permission required');
-          toast.error('Please allow microphone access for wake word detection');
-        });
+        }
+      });
     }
 
     return () => {
       stopWakeWordListening();
     };
-  }, [enabled, startWakeWordListening, stopWakeWordListening, checkWakeWordSupport]);
+  }, [enabled]); // Only depend on enabled, not the functions
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.log('Cleanup error:', error);
+        }
       }
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -291,6 +297,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     isListeningForWakeWord,
     isAwake,
     error,
+    permissionGranted,
     goToSleep,
     resetActivity,
     startWakeWordListening,
