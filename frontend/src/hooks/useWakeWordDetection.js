@@ -175,6 +175,31 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     retryCountRef.current = 0;
   }, []);
 
+  // New function to manually activate wake mode after permission is granted
+  const activateVoiceMode = useCallback(async () => {
+    if (!checkWakeWordSupport() || !enabled) {
+      console.log('Voice mode activation failed: not supported or disabled');
+      return false;
+    }
+
+    // Check/request permission
+    const hasPermission = await checkMicrophonePermission();
+    if (!hasPermission) {
+      console.log('Voice mode activation failed: no permission');
+      return false;
+    }
+
+    // If permission is granted, set awake state and start wake word detection
+    setIsAwake(true);
+    setError(null);
+    toast.success('🎙️ Voice mode activated! You can now use voice commands.', { duration: 3000 });
+    
+    // Start sleep timer
+    resetSleepTimer();
+    
+    return true;
+  }, [enabled, checkWakeWordSupport, checkMicrophonePermission, resetSleepTimer]);
+
   const containsWakeWord = useCallback((transcript) => {
     const normalizedTranscript = transcript.toLowerCase().trim();
     return WAKE_WORDS.some(wakeWord => normalizedTranscript.includes(wakeWord));
