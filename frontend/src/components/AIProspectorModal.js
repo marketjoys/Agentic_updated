@@ -15,6 +15,28 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [clarificationQuestions, setClarificationQuestions] = useState([]);
   const [clarifications, setClarifications] = useState({});
   const [extractedParameters, setExtractedParameters] = useState(null);
+  
+  // Voice capabilities
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Wake word detection for Auto Prospector
+  const {
+    isListeningForWakeWord,
+    isAwake,
+    error: wakeWordError,
+    goToSleep,
+    resetActivity,
+    startWakeWordListening,
+    stopWakeWordListening
+  } = useWakeWordDetection(
+    () => {
+      // When wake word is detected in prospector, start listening for search query
+      setTimeout(() => startVoiceRecognition(true), 1000);
+    },
+    voiceEnabled && isOpen
+  );
 
   useEffect(() => {
     if (isOpen) {
