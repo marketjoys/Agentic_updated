@@ -147,6 +147,7 @@ const TemplateCard = ({ template, onEdit }) => {
       case 'initial': return 'bg-blue-100 text-blue-800';
       case 'follow_up': return 'bg-green-100 text-green-800';
       case 'auto_response': return 'bg-purple-100 text-purple-800';
+      case 'email': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -155,31 +156,63 @@ const TemplateCard = ({ template, onEdit }) => {
     <div className="card">
       <div className="card-body">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-secondary-900">{template.name}</h3>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-lg font-semibold text-secondary-900">{template.name}</h3>
+            {template.is_html_enabled && (
+              <div className="flex items-center space-x-1">
+                <Code className="h-4 w-4 text-purple-600" />
+                <span className="text-xs text-purple-600">HTML</span>
+              </div>
+            )}
+          </div>
           <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(template.type)}`}>
-            {template.type.replace('_', ' ')}
+            {template.type?.replace('_', ' ') || 'Email'}
           </span>
         </div>
         <p className="text-sm text-secondary-600 mb-3">{template.subject}</p>
         <div className="text-sm text-secondary-500 mb-4">
           <div className="max-h-20 overflow-hidden">
-            {template.content.substring(0, 100)}...
+            {template.content ? 
+              template.content.substring(0, 100) + (template.content.length > 100 ? '...' : '') :
+              'No content preview'
+            }
           </div>
         </div>
         <div className="flex justify-between items-center">
-          <div className="text-xs text-secondary-400">
-            {new Date(template.created_at).toLocaleDateString()}
+          <div className="text-xs text-secondary-400 flex items-center space-x-2">
+            <span>{template.created_at ? new Date(template.created_at).toLocaleDateString() : 'Unknown date'}</span>
+            {template.style_settings?.primaryColor && (
+              <div className="flex items-center space-x-1">
+                <Palette className="h-3 w-3" />
+                <div 
+                  className="w-3 h-3 rounded-full border" 
+                  style={{ backgroundColor: template.style_settings.primaryColor }}
+                ></div>
+              </div>
+            )}
           </div>
           <div className="flex space-x-2">
             <button
               onClick={() => onEdit(template)}
-              className="p-1 text-secondary-400 hover:text-primary-600"
+              className="p-1 text-secondary-400 hover:text-primary-600 transition-colors"
+              title="Edit Template"
             >
               <Edit className="h-4 w-4" />
             </button>
-            <button className="p-1 text-secondary-400 hover:text-primary-600">
+            <button 
+              className="p-1 text-secondary-400 hover:text-primary-600 transition-colors"
+              title="Preview Template"
+            >
               <Eye className="h-4 w-4" />
             </button>
+            {template.is_html_enabled && (
+              <button 
+                className="p-1 text-secondary-400 hover:text-primary-600 transition-colors"
+                title="HTML Template"
+              >
+                <Mail className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
