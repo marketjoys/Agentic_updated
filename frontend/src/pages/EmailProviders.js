@@ -301,6 +301,7 @@ const EmailProviders = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [testingProvider, setTestingProvider] = useState(null);
+  const [togglingImap, setTogglingImap] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     provider_type: 'gmail',
