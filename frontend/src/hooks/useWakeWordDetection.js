@@ -167,6 +167,14 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     }
   }, [permissionGranted, permissionChecked, permissionDeniedPermanently]);
 
+  const resetPermissionState = useCallback(() => {
+    setPermissionDeniedPermanently(false);
+    setPermissionChecked(false);
+    setPermissionGranted(false);
+    setError(null);
+    retryCountRef.current = 0;
+  }, []);
+
   const containsWakeWord = useCallback((transcript) => {
     const normalizedTranscript = transcript.toLowerCase().trim();
     return WAKE_WORDS.some(wakeWord => normalizedTranscript.includes(wakeWord));
