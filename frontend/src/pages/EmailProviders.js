@@ -484,6 +484,38 @@ const EmailProviders = () => {
     }));
   }, []);
 
+  // Toggle IMAP monitoring for a provider
+  const handleToggleImap = async (providerId) => {
+    try {
+      setTogglingImap(providerId);
+      const response = await axios.put(`${BACKEND_URL}/api/email-providers/${providerId}/toggle-imap`);
+      
+      if (response.data) {
+        toast.success(response.data.message);
+        // Update the provider in the local state
+        setProviders(prev => prev.map(p => 
+          p.id === providerId ? { ...p, imap_enabled: response.data.imap_enabled } : p
+        ));
+      }
+    } catch (error) {
+      console.error('Error toggling IMAP:', error);
+      toast.error(error.response?.data?.detail || 'Failed to toggle IMAP monitoring');
+    } finally {
+      setTogglingImap(null);
+    }
+  };
+
+  // Check IMAP status for a provider
+  const checkImapStatus = async (providerId) => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/email-providers/${providerId}/imap-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error checking IMAP status:', error);
+      return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
