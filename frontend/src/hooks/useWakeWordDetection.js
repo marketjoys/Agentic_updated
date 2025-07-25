@@ -115,17 +115,20 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
             isPermanent = true;
             break;
           case 'NotFoundError':
-            errorMessage = 'No microphone device found';
-            isPermanent = true;
+            errorMessage = 'No microphone device found. Please check your microphone connection.';
+            isPermanent = false; // Don't make this permanent - user might connect microphone later
             break;
           case 'NotReadableError':
             errorMessage = 'Microphone is being used by another application';
+            isPermanent = false; // This is temporary - other app might release microphone
             break;
           case 'OverconstrainedError':
             errorMessage = 'Microphone doesn\'t support required features';
+            isPermanent = false; // Try with different constraints
             break;
           default:
             errorMessage = `Microphone error: ${mediaError.message}`;
+            isPermanent = false; // Don't assume it's permanent
         }
         
         setError(errorMessage);
