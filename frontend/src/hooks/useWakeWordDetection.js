@@ -1,4 +1,4 @@
-// Wake Word Detection Hook for "Hello Joy"
+// Wake Word Detection Hook for "Hello Joy" - Fixed for Windows
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -6,12 +6,15 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
   const [isListeningForWakeWord, setIsListeningForWakeWord] = useState(false);
   const [isAwake, setIsAwake] = useState(false);
   const [error, setError] = useState(null);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionChecked, setPermissionChecked] = useState(false);
   
   const recognitionRef = useRef(null);
   const timeoutRef = useRef(null);
   const retryCountRef = useRef(0);
+  const permissionRequestedRef = useRef(false);
 
-  const MAX_RETRIES = 3;
+  const MAX_RETRIES = 2; // Reduced retries to prevent loops
   const WAKE_WORDS = ['hello joy', 'hello, joy', 'helo joy', 'helo, joy', 'hey joy', 'hey, joy'];
   const SLEEP_TIMEOUT = 30000; // 30 seconds of inactivity before going back to wake word listening
 
