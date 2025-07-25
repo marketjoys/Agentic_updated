@@ -483,14 +483,16 @@ Please try again or ask for help.`,
             
             <button
               type="button"
-              onClick={startVoiceRecognition}
-              disabled={isListening || isLoading}
+              onClick={() => startVoiceRecognition(false)}
+              disabled={isListening || isLoading || !isAwake}
               className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full transition-colors ${
                 isListening 
                   ? 'text-red-600 bg-red-100' 
+                  : isAwake
+                  ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
                   : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
               }`}
-              title="Voice input"
+              title={!isAwake ? "Say 'Hello Joy' to wake up for voice input" : "Voice input"}
             >
               {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
             </button>
