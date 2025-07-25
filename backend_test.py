@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://0303c9d9-0233-4461-8e05-020270817f99.preview.emergentagent.com/api"
+BASE_URL = "https://d90eaae8-ec2e-41a4-a8e7-e61f976a5052.preview.emergentagent.com/api"
 USERNAME = "testuser"
 PASSWORD = "testpass123"
 
@@ -402,7 +402,7 @@ import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://0303c9d9-0233-4461-8e05-020270817f99.preview.emergentagent.com"
+BACKEND_URL = "https://d90eaae8-ec2e-41a4-a8e7-e61f976a5052.preview.emergentagent.com"
 AUTH_TOKEN = None  # Will be obtained from login
 
 class BackendTester:

@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 import time
 
-BACKEND_URL = "https://0303c9d9-0233-4461-8e05-020270817f99.preview.emergentagent.com"
+BACKEND_URL = "https://d90eaae8-ec2e-41a4-a8e7-e61f976a5052.preview.emergentagent.com"
 
 def test_campaign_sending_functionality():
     """Test the complete campaign sending workflow"""
