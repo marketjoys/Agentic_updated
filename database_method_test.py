@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://d3d3b35a-8392-498b-a8b4-eadfbec328d1.preview.emergentagent.com/api"
+BASE_URL = "https://b5f20154-c131-4ea5-9b47-ef59aae7ea1b.preview.emergentagent.com/api"
 USERNAME = "testuser"
 PASSWORD = "testpass123"
 PROVIDER_ID = "544fe9dd-3b65-4e23-8509-82f1ad0db1e5"

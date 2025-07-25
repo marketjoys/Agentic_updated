@@ -19,7 +19,7 @@ import time
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://d3d3b35a-8392-498b-a8b4-eadfbec328d1.preview.emergentagent.com"
+BACKEND_URL = "https://b5f20154-c131-4ea5-9b47-ef59aae7ea1b.preview.emergentagent.com"
 
 class AIAgentNLPTester:
     def __init__(self):
