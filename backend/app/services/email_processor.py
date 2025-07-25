@@ -556,15 +556,19 @@ class EmailProcessor:
             return False
     
     async def _send_automatic_response(self, prospect: Dict, response_data: Dict, thread_id: str):
-        """Send automatic response with enhanced tracking"""
+        """Send automatic response with enhanced tracking using original campaign provider"""
         try:
             # Personalize response
             personalized_content = personalize_template(response_data["content"], prospect)
             personalized_subject = personalize_template(response_data["subject"], prospect)
             
-            # Send email with proper error handling
+            # Find the original email provider used for this prospect
+            original_provider = await self._get_original_email_provider(prospect["id"])
+            
+            # Send email with proper error handling using the original provider
             try:
-                success = await send_email(
+                success = await self._send_email_with_provider(
+                    original_provider,
                     prospect["email"],
                     personalized_subject,
                     personalized_content
@@ -585,7 +589,9 @@ class EmailProcessor:
                         "sent_by_us": True,
                         "thread_id": thread_id,
                         "ai_generated": True,
-                        "is_auto_response": True
+                        "is_auto_response": True,
+                        "provider_id": original_provider["id"] if original_provider else None,
+                        "recipient_email": prospect["email"]
                     }
                     
                     await db_service.create_email_record(email_record)
@@ -603,10 +609,13 @@ class EmailProcessor:
                         "ai_generated": True,
                         "is_auto_response": True,
                         "template_used": response_data.get("template_used"),
-                        "email_id": email_id
+                        "email_id": email_id,
+                        "provider_id": original_provider["id"] if original_provider else None,
+                        "provider_email": original_provider["email_address"] if original_provider else None
                     })
                     
-                    logger.info(f"Automatic response sent successfully to: {prospect['email']}")
+                    provider_email = original_provider["email_address"] if original_provider else "default"
+                    logger.info(f"Automatic response sent successfully to: {prospect['email']} from provider: {provider_email}")
                 else:
                     logger.error(f"Failed to send automatic response to: {prospect['email']}")
                     
