@@ -133,6 +133,9 @@ const AIAgentChat = () => {
   const sendMessage = async (message) => {
     if (!message.trim()) return;
     
+    // Reset activity timer when sending message
+    resetActivity();
+    
     // Add user message
     const userMessage = {
       id: `user_${Date.now()}`,
@@ -144,7 +147,7 @@ const AIAgentChat = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
-    
+
     try {
       if (isConnected && websocketRef.current) {
         // Send via WebSocket
@@ -175,6 +178,11 @@ const AIAgentChat = () => {
         setMessages(prev => [...prev, agentMessage]);
         setSuggestions(response.data.suggestions || []);
         setIsLoading(false);
+        
+        // Speak response if voice is enabled and user is awake
+        if (voiceEnabled && isAwake) {
+          setTimeout(() => speakResponse(response.data.response), 500);
+        }
       }
     } catch (error) {
       console.error('Detailed error sending message:', error);
