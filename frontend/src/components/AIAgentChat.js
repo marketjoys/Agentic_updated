@@ -29,7 +29,10 @@ const AIAgentChat = () => {
     goToSleep,
     resetActivity,
     startWakeWordListening,
-    stopWakeWordListening
+    stopWakeWordListening,
+    activateVoiceMode,
+    requestPermission,
+    permissionGranted
   } = useWakeWordDetection(
     () => {
       // When wake word is detected, automatically start listening for command
