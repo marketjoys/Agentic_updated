@@ -402,7 +402,8 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
             <p className="text-sm text-blue-800 mt-1">
               Joy will analyze your query and search Apollo.io's database for matching prospects. 
               You can specify job titles, industries, company sizes, and locations in natural language.
-              {voiceEnabled && " Use voice commands by saying 'Hello Joy' to activate voice mode."}
+              {voiceEnabled && permissionGranted && " Use voice commands by saying 'Hello Joy' to activate voice mode."}
+              {voiceEnabled && !permissionGranted && " Click the microphone button to enable voice commands."}
             </p>
           </div>
         </div>
