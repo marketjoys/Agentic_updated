@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 import json
 
-BACKEND_URL = "https://051bebc3-8c3e-4e1d-86cb-7c2b7ec17228.preview.emergentagent.com"
+BACKEND_URL = "https://c7a1ce41-8b78-4aa9-b2bd-0db18addaca3.preview.emergentagent.com"
 
 async def test_ai_prospecting():
     """Test AI prospecting functionality directly"""
