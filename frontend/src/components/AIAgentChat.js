@@ -407,6 +407,7 @@ Please try again or ask for help.`,
           onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
           onGoToSleep={goToSleep}
           onRequestPermission={requestPermission}
+          onForceRestart={forceRestartListening}
         />
         
         <div className="flex items-center space-x-2">
