@@ -335,12 +335,43 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
             
           case 'audio-capture':
             setError('Audio capture failed - microphone may be in use');
-            toast.error('Microphone is being used by another application');
+            toast.error('Microphone is being used by another application', {
+              duration: 4000
+            });
+            break;
+            
+          case 'service-not-allowed':
+            setError('Speech recognition service not allowed');
+            toast.error('Speech recognition service is not available', {
+              duration: 4000
+            });
+            break;
+            
+          case 'bad-grammar':
+            setError('Speech recognition grammar error');
+            console.log('Grammar error - will retry with basic settings');
+            setTimeout(() => {
+              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+                startWakeWordListening();
+              }
+            }, 2000);
             break;
             
           default:
             console.log(`Speech recognition error: ${event.error}`);
-            // For other errors, don't retry immediately
+            setError(`Voice recognition error: ${event.error}`);
+            
+            // For unknown errors, show a user-friendly message with troubleshooting
+            const isWindows = navigator.platform.toLowerCase().includes('win');
+            if (isWindows) {
+              toast.error('Voice recognition failed. Try: 1) Check microphone permissions, 2) Use Chrome browser, 3) Restart browser', {
+                duration: 8000
+              });
+            } else {
+              toast.error('Voice recognition failed. Please check your microphone and try again.', {
+                duration: 4000
+              });
+            }
             break;
         }
       };
