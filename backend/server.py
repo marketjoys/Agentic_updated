@@ -635,6 +635,9 @@ async def create_email_provider(provider: EmailProvider):
         else:
             raise HTTPException(status_code=500, detail="Failed to create email provider")
             
+    except HTTPException:
+        # Re-raise HTTPException so it's not caught by the generic handler
+        raise
     except Exception as e:
         logging.error(f"Error creating email provider: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating email provider: {str(e)}")
