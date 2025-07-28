@@ -414,6 +414,20 @@ class DatabaseService:
     # Email Provider operations
     async def create_email_provider(self, provider_data: dict):
         """Create a new email provider"""
+        # Check for duplicate email address
+        existing_provider = await self.db.email_providers.find_one({
+            "email_address": provider_data.get("email_address")
+        })
+        if existing_provider:
+            raise ValueError(f"Email provider with address '{provider_data.get('email_address')}' already exists")
+        
+        # Check for duplicate provider name
+        existing_name = await self.db.email_providers.find_one({
+            "name": provider_data.get("name")
+        })
+        if existing_name:
+            raise ValueError(f"Email provider with name '{provider_data.get('name')}' already exists")
+        
         result = await self.db.email_providers.insert_one(provider_data)
         return result
     
