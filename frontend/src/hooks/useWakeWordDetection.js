@@ -184,6 +184,8 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     setPermissionGranted(false);
     setError(null);
     retryCountRef.current = 0;
+    consecutiveErrorsRef.current = 0;
+    lastErrorToastTime.current = 0;
   }, []);
 
   const containsWakeWord = useCallback((transcript) => {
