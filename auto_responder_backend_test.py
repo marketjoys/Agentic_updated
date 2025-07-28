@@ -22,7 +22,7 @@ import time
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://f7c26956-bd4f-4a69-a308-2b4c05615dc0.preview.emergentagent.com"
+BACKEND_URL = "https://6aa35d2d-1224-4abb-b5c1-ebe60774a6f1.preview.emergentagent.com"
 
 class AutoResponderTester:
     def __init__(self):
