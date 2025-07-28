@@ -641,33 +641,14 @@ async def create_email_provider(provider: EmailProvider):
         
         # Generate ID and add timestamps
         provider_id = generate_id()
-        provider_data = {
-            "id": provider_id,
-            "name": provider.name,
-            "provider_type": provider.provider_type,
-            "email_address": provider.email_address,
-            "display_name": provider.display_name,
-            "smtp_host": provider.smtp_host,
-            "smtp_port": provider.smtp_port,
-            "smtp_username": provider.smtp_username,
-            "smtp_password": provider.smtp_password,
-            "smtp_use_tls": provider.smtp_use_tls,
-            "imap_host": provider.imap_host,
-            "imap_port": provider.imap_port,
-            "imap_username": provider.imap_username,
-            "imap_password": provider.imap_password,
-            "imap_enabled": bool(provider.imap_host and provider.imap_username and provider.imap_password),  # Auto-enable IMAP if credentials provided
-            "daily_send_limit": provider.daily_send_limit,
-            "hourly_send_limit": provider.hourly_send_limit,
-            "is_default": provider.is_default,
-            "is_active": True,
-            "skip_connection_test": provider.skip_connection_test,
-            "current_daily_count": 0,
-            "current_hourly_count": 0,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
-            "last_sync": datetime.utcnow()
-        }
+        
+        # Auto-configure provider based on type for production readiness
+        provider_data = await _auto_configure_provider(provider_id, provider)
+        
+        # Validate provider configuration
+        validation_error = await _validate_provider_configuration(provider_data)
+        if validation_error:
+            raise HTTPException(status_code=400, detail=validation_error)
         
         # If this is set as default, unset other defaults
         if provider.is_default:
