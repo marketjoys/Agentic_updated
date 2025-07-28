@@ -30,20 +30,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       setError('Voice recognition not supported in this browser');
       return false;
     }
-    
-    // Check for Windows-specific issues
-    const isWindows = navigator.platform.toLowerCase().includes('win');
-    const isChrome = navigator.userAgent.toLowerCase().includes('chrome');
-    
-    if (isWindows && !isChrome) {
-      setError('Voice recognition works best on Chrome browser on Windows');
-      toast.error('For best voice recognition on Windows, please use Chrome browser', {
-        duration: 6000
-      });
-      return false;
-    }
-    
-    return true;
+    return true; // Remove Windows-specific restrictions - let users try
   }, []);
 
   // Enhanced microphone permission check with better Windows support
