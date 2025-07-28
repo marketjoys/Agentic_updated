@@ -13,7 +13,8 @@ const VoiceIndicator = ({
   onToggleVoice,
   onGoToSleep,
   onRequestPermission,
-  onForceRestart // New prop for manual restart
+  onForceRestart, // New prop for manual restart
+  onShowHelp // New prop for showing help
 }) => {
   const getStatusIcon = () => {
     if (error && error.includes('permission')) return <Shield className="h-5 w-5 text-red-500" />;
