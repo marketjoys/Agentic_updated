@@ -1147,6 +1147,10 @@ Analyze this message and extract the intent and parameters.
                 "actions": ["start", "stop", "status", "test"],
                 "description": "Automated email processing and AI responses"
             },
+            "ai_prospecting": {
+                "actions": ["search", "suggest", "find_prospects"],
+                "description": "AI-powered prospect discovery and lead generation using Apollo.io and advanced filtering"
+            },
             "conversation": {
                 "actions": ["help", "capabilities", "examples"],
                 "description": "Conversational assistance and guidance"
