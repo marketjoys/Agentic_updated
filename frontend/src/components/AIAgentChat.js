@@ -17,6 +17,7 @@ const AIAgentChat = () => {
   const [sessionId, setSessionId] = useState('');
   const [voiceEnabled, setVoiceEnabled] = useState(true); // Default to enabled for wake word
   const [suggestions, setSuggestions] = useState([]);
+  const [showTroubleshootingModal, setShowTroubleshootingModal] = useState(false);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
