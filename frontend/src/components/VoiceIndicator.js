@@ -124,6 +124,17 @@ const VoiceIndicator = ({
             <Moon className="h-4 w-4" />
           </button>
         )}
+
+        {/* Help Button */}
+        {onShowHelp && (error || !permissionGranted) && (
+          <button
+            onClick={onShowHelp}
+            className="p-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors"
+            title="Voice troubleshooting help"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Wake Word Indicator */}
