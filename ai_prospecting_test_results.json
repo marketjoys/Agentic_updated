@@ -1,0 +1,203 @@
+{
+  "timestamp": "2025-07-28T09:14:50.419341",
+  "test_results": [
+    {
+      "test_name": "AI Agent Prospecting Queries",
+      "total_queries": 5,
+      "successful": 5,
+      "ai_prospecting_recognized": 2,
+      "recognition_rate": 40.0,
+      "results": [
+        {
+          "query": "Find prospects like CEOs at tech companies",
+          "status": "success",
+          "action_taken": "help",
+          "response": "I'm not sure how to help with that. I can assist with campaigns, prospects, templates, lists, email providers, and analytics. What would you like to do?",
+          "ai_prospecting_recognized": true,
+          "conversation_state": "analyzing",
+          "pending_action": null,
+          "data": null
+        },
+        {
+          "query": "AI prospect search for marketing directors",
+          "status": "success",
+          "action_taken": "help",
+          "response": "I'm not sure how to help with that. I can assist with campaigns, prospects, templates, lists, email providers, and analytics. What would you like to do?",
+          "ai_prospecting_recognized": true,
+          "conversation_state": "analyzing",
+          "pending_action": null,
+          "data": null
+        },
+        {
+          "query": "Suggest prospects for VIP list",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I had trouble analyzing your request: 'NoneType' object has no attribute 'get'. Could you please rephrase it?",
+          "ai_prospecting_recognized": false,
+          "conversation_state": "error",
+          "pending_action": null,
+          "data": null
+        },
+        {
+          "query": "Find CTOs at software companies in California",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I had trouble analyzing your request: 'NoneType' object has no attribute 'get'. Could you please rephrase it?",
+          "ai_prospecting_recognized": false,
+          "conversation_state": "error",
+          "pending_action": null,
+          "data": null
+        },
+        {
+          "query": "Search for founders in fintech startups",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I had trouble analyzing your request: 'NoneType' object has no attribute 'get'. Could you please rephrase it?",
+          "ai_prospecting_recognized": false,
+          "conversation_state": "error",
+          "pending_action": null,
+          "data": null
+        }
+      ]
+    },
+    {
+      "test_name": "Direct AI Prospecting Endpoint",
+      "total_cases": 3,
+      "successful": 0,
+      "success_rate": 0.0,
+      "results": [
+        {
+          "query": "Find CEOs at technology companies",
+          "target_list": null,
+          "status": "success",
+          "success": false,
+          "prospects_count": 0,
+          "message": "",
+          "needs_clarification": false
+        },
+        {
+          "query": "Search for marketing directors in California",
+          "target_list": "Marketing Prospects",
+          "status": "success",
+          "success": false,
+          "prospects_count": 0,
+          "message": "",
+          "needs_clarification": false
+        },
+        {
+          "query": "Find CTOs at software startups",
+          "target_list": "Tech Leaders",
+          "status": "success",
+          "success": false,
+          "prospects_count": 0,
+          "message": "",
+          "needs_clarification": false
+        }
+      ]
+    },
+    {
+      "test_name": "List Management Integration",
+      "total_cases": 3,
+      "successful": 3,
+      "success_rate": 100.0,
+      "results": [
+        {
+          "description": "Add to existing list",
+          "query": "Find marketing managers at tech companies",
+          "target_list": "Technology Companies",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attribute 'get'. Please try rephrasing your request or...",
+          "data": null
+        },
+        {
+          "description": "Add to non-existent list (should create default)",
+          "query": "Find sales directors in healthcare",
+          "target_list": "Non-Existent List 12345",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attribute 'get'. Please try rephrasing your request or...",
+          "data": null
+        },
+        {
+          "description": "No target list specified",
+          "query": "Find product managers at startups",
+          "target_list": null,
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attribute 'get'. Please try rephrasing your request or...",
+          "data": null
+        }
+      ]
+    },
+    {
+      "test_name": "Edge Cases and Error Handling",
+      "total_cases": 5,
+      "handled_gracefully": 5,
+      "graceful_rate": 100.0,
+      "results": [
+        {
+          "description": "Empty query",
+          "query": "",
+          "status": "success",
+          "action_taken": "help",
+          "response": "I'm here to help you manage your email marketing! I can help you with:\n\n\u2022 **Prospects**: 'Add John S...",
+          "handled_gracefully": true
+        },
+        {
+          "description": "Very vague query",
+          "query": "find people",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attr...",
+          "handled_gracefully": true
+        },
+        {
+          "description": "Non-prospecting query",
+          "query": "What's the weather today?",
+          "status": "success",
+          "action_taken": "help",
+          "response": "I'm here to help you manage your email marketing! I can help you with:\n\n\u2022 **Prospects**: 'Add John S...",
+          "handled_gracefully": true
+        },
+        {
+          "description": "Query with special characters",
+          "query": "Find C++ developers @ tech companies (remote)",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attr...",
+          "handled_gracefully": true
+        },
+        {
+          "description": "Very long query",
+          "query": "Find senior software engineers with 10+ years experience in Python, JavaScript, and React who work at technology companies with 100-500 employees located in California, New York, or Texas and have verified email addresses",
+          "status": "success",
+          "action_taken": "error",
+          "response": "I apologize, but I encountered an error while processing your request: 'NoneType' object has no attr...",
+          "handled_gracefully": true
+        }
+      ]
+    },
+    {
+      "test_name": "Database Verification",
+      "status": "warning",
+      "message": "AI prospecting was not triggered",
+      "verification_passed": false
+    }
+  ],
+  "summary": {
+    "total_test_suites": 5,
+    "successful_test_suites": 2,
+    "overall_success_rate": 40.0,
+    "total_queries_tested": 16,
+    "successful_queries": 8,
+    "query_success_rate": 50.0,
+    "ai_prospecting_recognition_count": 2,
+    "ai_prospecting_recognition_rate": 40.0,
+    "key_findings": [
+      "AI prospecting queries recognized: 2/5",
+      "Overall query success rate: 8/16",
+      "Test suites passed: 2/5"
+    ]
+  }
+}
