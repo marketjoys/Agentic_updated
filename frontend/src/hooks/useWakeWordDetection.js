@@ -598,11 +598,16 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
 
   // Handle wake word listening restart when isAwake changes
   useEffect(() => {
-    if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
-      // Small delay before restarting wake word listening
+    if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && !isStabilizingRef.current) {
+      // Reset retry count when manually restarting
+      retryCountRef.current = 0;
+      
+      // Longer delay before restarting wake word listening to prevent rapid cycling
       const restartTimeout = setTimeout(() => {
-        startWakeWordListening();
-      }, 1000);
+        if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && !isStabilizingRef.current) {
+          startWakeWordListening();
+        }
+      }, 3000); // Increased delay
       
       return () => clearTimeout(restartTimeout);
     }
