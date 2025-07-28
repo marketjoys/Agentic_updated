@@ -15,6 +15,9 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
   const retryCountRef = useRef(0);
   const permissionRequestInProgressRef = useRef(false);
   const lastPermissionRequestTime = useRef(0);
+  const lastErrorToastTime = useRef(0);
+  const consecutiveErrorsRef = useRef(0);
+  const isStabilizingRef = useRef(false); // New flag to prevent rapid restarts
 
   const MAX_RETRIES = 2; // Allow 2 retries for better reliability
   const WAKE_WORDS = ['hello joy', 'hello, joy', 'helo joy', 'helo, joy', 'hey joy', 'hey, joy'];
