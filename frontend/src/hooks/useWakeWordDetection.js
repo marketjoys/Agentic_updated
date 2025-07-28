@@ -299,78 +299,90 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       };
 
       recognitionRef.current.onerror = (event) => {
-        console.error('Wake word recognition error:', event.error);
+        console.log('Wake word recognition error:', event.error);
         setError(event.error);
         
-        // Handle different error types with improved logic
+        // Increment consecutive errors
+        consecutiveErrorsRef.current++;
+        
+        // Handle different error types with improved logic and reduced noise
         switch (event.error) {
           case 'not-allowed':
             setError('Microphone permission denied');
             setPermissionGranted(false);
             setPermissionDeniedPermanently(true);
-            toast.error('Microphone permission required for wake word detection');
+            displayError('Microphone permission required for wake word detection', 5000, true);
             return;
             
           case 'no-speech':
-            // Don't treat no-speech as a critical error, just retry once
+            // Don't treat no-speech as a critical error - this is normal
+            console.log('No speech detected, will retry automatically');
             if (retryCountRef.current < MAX_RETRIES) {
               retryCountRef.current++;
-              console.log(`No speech detected, retrying (${retryCountRef.current}/${MAX_RETRIES})`);
               setTimeout(() => {
-                if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+                if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && !isStabilizingRef.current) {
                   startWakeWordListening();
                 }
-              }, 3000);
+              }, 5000); // Longer delay to stabilize
             }
             break;
             
           case 'network':
             console.log('Network error in speech recognition, will retry');
+            if (consecutiveErrorsRef.current <= 3) { // Only show error for first few attempts
+              displayError('Voice recognition network error, retrying...', 2000);
+            }
             setTimeout(() => {
-              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && !isStabilizingRef.current) {
                 startWakeWordListening();
               }
-            }, 5000);
+            }, 8000);
             break;
             
           case 'audio-capture':
             setError('Audio capture failed - microphone may be in use');
-            toast.error('Microphone is being used by another application', {
-              duration: 4000
-            });
+            if (consecutiveErrorsRef.current <= 2) {
+              displayError('Microphone is being used by another application', 4000);
+            }
             break;
             
           case 'service-not-allowed':
             setError('Speech recognition service not allowed');
-            toast.error('Speech recognition service is not available', {
-              duration: 4000
-            });
+            if (consecutiveErrorsRef.current === 1) { // Only show once
+              displayError('Speech recognition service is not available', 4000);
+            }
             break;
             
           case 'bad-grammar':
-            setError('Speech recognition grammar error');
+            // Don't show error for grammar issues - just retry silently
             console.log('Grammar error - will retry with basic settings');
             setTimeout(() => {
-              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently) {
+              if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && !isStabilizingRef.current) {
                 startWakeWordListening();
               }
-            }, 2000);
+            }, 3000);
             break;
             
           default:
             console.log(`Speech recognition error: ${event.error}`);
             setError(`Voice recognition error: ${event.error}`);
             
-            // For unknown errors, show a user-friendly message with troubleshooting
-            const isWindows = navigator.platform.toLowerCase().includes('win');
-            if (isWindows) {
-              toast.error('Voice recognition failed. Try: 1) Check microphone permissions, 2) Use Chrome browser, 3) Restart browser', {
-                duration: 8000
-              });
-            } else {
-              toast.error('Voice recognition failed. Please check your microphone and try again.', {
-                duration: 4000
-              });
+            // Only show Windows-specific troubleshooting after multiple consecutive errors
+            if (consecutiveErrorsRef.current >= 3) {
+              const isWindows = navigator.platform.toLowerCase().includes('win');
+              const isChrome = navigator.userAgent.toLowerCase().includes('chrome');
+              
+              if (isWindows && !isChrome) {
+                displayError('Voice recognition works best on Chrome browser on Windows.', 6000, true);
+              } else if (isWindows && consecutiveErrorsRef.current >= 5) {
+                // Only show the full troubleshooting message after 5+ consecutive errors
+                displayError('Multiple voice recognition failures. Try: 1) Restart browser, 2) Check microphone privacy settings, 3) Test microphone in other apps.', 8000, true);
+                
+                // Reset counter after showing troubleshooting message
+                consecutiveErrorsRef.current = 0;
+              } else {
+                displayError('Voice recognition failed. Please check your microphone.', 3000);
+              }
             }
             break;
         }
