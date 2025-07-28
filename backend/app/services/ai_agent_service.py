@@ -501,6 +501,51 @@ Analyze this message and extract the intent and parameters.
         
         return params
     
+    def extract_prospecting_params(self, message: str) -> Dict[str, Any]:
+        """Extract AI prospecting parameters from message"""
+        params = {}
+        
+        # Extract the query - everything after key prospecting phrases
+        prospecting_triggers = ['suggest prospects', 'recommend prospects', 'ai prospects', 'find similar', 
+                               'auto prospect', 'ai prospecting', 'find prospects using ai', 'find prospects']
+        
+        for trigger in prospecting_triggers:
+            if trigger in message.lower():
+                # Extract everything after the trigger as the query
+                trigger_index = message.lower().find(trigger)
+                query_part = message[trigger_index + len(trigger):].strip()
+                
+                # Remove common starting words
+                query_part = re.sub(r'^(for|like|that|who|are)', '', query_part, flags=re.IGNORECASE).strip()
+                
+                if query_part:
+                    params['query'] = query_part
+                else:
+                    params['query'] = message  # Use full message if nothing after trigger
+                break
+        
+        if 'query' not in params:
+            params['query'] = message
+        
+        # Extract target list if mentioned
+        list_patterns = [
+            r'(?:to|for|in) (?:the )?([A-Z][A-Za-z\s]+?) (?:list|group)',
+            r'add (?:them |these )?to (?:the )?([A-Z][A-Za-z\s]+)',
+            r'save (?:them |these )?to (?:the )?([A-Z][A-Za-z\s]+)'
+        ]
+        
+        for pattern in list_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                list_name = match.group(1).strip()
+                params['target_list'] = list_name
+                break
+        
+        # Default settings for AI prospecting
+        params['max_results'] = 25
+        
+        return params
+    
     def extract_scheduling_params(self, message: str) -> Dict[str, Any]:
         """Extract scheduling parameters from message"""
         params = {}
