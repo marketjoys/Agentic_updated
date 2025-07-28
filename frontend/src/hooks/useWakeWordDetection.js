@@ -391,13 +391,35 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       recognitionRef.current.onend = () => {
         setIsListeningForWakeWord(false);
         
-        // Only restart if conditions are met and we haven't exceeded retries
-        if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && retryCountRef.current < MAX_RETRIES) {
+        // Add stabilization period to prevent rapid restarts
+        if (!isStabilizingRef.current) {
+          isStabilizingRef.current = true;
           setTimeout(() => {
-            if (!isAwake && enabled && permissionGranted) {
+            isStabilizingRef.current = false;
+          }, 3000); // 3 second stabilization period
+        }
+        
+        // Only restart if conditions are met and we haven't exceeded retries
+        if (!isAwake && enabled && permissionGranted && !permissionDeniedPermanently && 
+            retryCountRef.current < MAX_RETRIES && !isStabilizingRef.current) {
+          setTimeout(() => {
+            if (!isAwake && enabled && permissionGranted && !isStabilizingRef.current) {
               startWakeWordListening();
             }
-          }, 2000); // Longer delay to prevent rapid restarts
+          }, 5000); // Longer delay to prevent rapid restarts
+        } else if (retryCountRef.current >= MAX_RETRIES) {
+          console.log('Maximum retries reached for wake word detection');
+          setError('Wake word detection paused after multiple failures');
+          
+          // Reset after a longer period
+          setTimeout(() => {
+            if (!isAwake && enabled && permissionGranted) {
+              retryCountRef.current = 0;
+              consecutiveErrorsRef.current = 0;
+              setError(null);
+              startWakeWordListening();
+            }
+          }, 30000); // Wait 30 seconds before trying again
         }
       };
 
