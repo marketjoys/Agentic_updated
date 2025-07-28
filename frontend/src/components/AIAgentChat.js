@@ -410,6 +410,7 @@ Please try again or ask for help.`,
           onGoToSleep={goToSleep}
           onRequestPermission={requestPermission}
           onForceRestart={forceRestartListening}
+          onShowHelp={() => setShowTroubleshootingModal(true)}
         />
         
         <div className="flex items-center space-x-2">
