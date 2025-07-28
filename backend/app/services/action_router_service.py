@@ -594,6 +594,63 @@ class ActionRouterService:
             logger.error(f"Error in analytics action: {e}")
             return {"success": False, "error": str(e), "data": None}
     
+    async def handle_ai_prospecting_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle AI prospecting actions"""
+        try:
+            if operation == 'search' or action == 'ai_prospecting_search':
+                # Import AI prospecting service
+                from app.services.ai_prospecting_service import ai_prospecting_service
+                
+                # Extract parameters
+                query = parameters.get('query', '')
+                target_list = parameters.get('target_list')
+                max_results = parameters.get('max_results', 25)
+                
+                if not query:
+                    return {
+                        "success": False,
+                        "error": "Please provide a search query for AI prospecting",
+                        "data": None,
+                        "follow_up_questions": [
+                            "What type of prospects are you looking for?",
+                            "Which industry or job titles should I search for?",
+                            "What company size or location would you prefer?"
+                        ]
+                    }
+                
+                # Execute AI prospecting search
+                result = await ai_prospecting_service.complete_ai_prospecting(
+                    query=query,
+                    target_list=target_list,
+                    db_service=self.db
+                )
+                
+                if result.get('success'):
+                    return {
+                        "success": True,
+                        "data": {
+                            "prospects_count": result.get('prospects_count', 0),
+                            "failed_count": result.get('failed_count', 0),
+                            "target_list": result.get('target_list'),
+                            "search_query": query,
+                            "prospects": result.get('prospects', [])
+                        },
+                        "message": result.get('message', f"AI prospecting completed for: {query}")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": result.get('error', 'AI prospecting search failed'),
+                        "data": None
+                    }
+            
+            else:
+                return {"success": False, "error": f"Unknown AI prospecting operation: {operation}", "data": None}
+                
+        except Exception as e:
+            logger.error(f"Error in AI prospecting action: {e}")
+            return {"success": False, "error": str(e), "data": None}
+    
     async def handle_email_processing_actions(self, action: str, operation: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Handle email processing actions"""
         try:
