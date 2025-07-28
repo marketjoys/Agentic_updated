@@ -346,6 +346,9 @@ async def create_campaign(campaign: Campaign):
         else:
             raise HTTPException(status_code=500, detail="Failed to create campaign")
             
+    except HTTPException:
+        # Re-raise HTTPException so it's not caught by the generic handler
+        raise
     except Exception as e:
         logging.error(f"Error creating campaign: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating campaign: {str(e)}")
