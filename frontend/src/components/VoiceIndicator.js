@@ -1,6 +1,6 @@
 // Voice Activity Indicator Component
 import React from 'react';
-import { Mic, MicOff, Volume2, VolumeX, Waves, Moon, Sun, Shield } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Waves, Moon, Sun, Shield, HelpCircle } from 'lucide-react';
 
 const VoiceIndicator = ({ 
   isListeningForWakeWord, 
