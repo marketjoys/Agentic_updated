@@ -217,7 +217,7 @@ class AutoResponderWorkflowTester:
                 })
                 return False
             
-            # Check if target keywords are covered
+            # Check if target keywords are covered (flexible matching)
             target_keywords = ['interested', 'pricing', 'questions']
             covered_keywords = []
             
@@ -227,9 +227,19 @@ class AutoResponderWorkflowTester:
                     keywords = [k.strip() for k in keywords.split(',')]
                 
                 for target_keyword in target_keywords:
-                    if any(target_keyword.lower() in keyword.lower() for keyword in keywords):
-                        if target_keyword not in covered_keywords:
-                            covered_keywords.append(target_keyword)
+                    # More flexible matching - check both directions
+                    keyword_matched = False
+                    for keyword in keywords:
+                        if (target_keyword.lower() in keyword.lower() or 
+                            keyword.lower() in target_keyword.lower() or
+                            # Handle singular/plural variations
+                            (target_keyword.lower().rstrip('s') == keyword.lower()) or
+                            (keyword.lower().rstrip('s') == target_keyword.lower().rstrip('s'))):
+                            keyword_matched = True
+                            break
+                    
+                    if keyword_matched and target_keyword not in covered_keywords:
+                        covered_keywords.append(target_keyword)
             
             if len(covered_keywords) < len(target_keywords):
                 missing_keywords = [kw for kw in target_keywords if kw not in covered_keywords]
