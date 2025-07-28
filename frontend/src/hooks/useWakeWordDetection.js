@@ -627,7 +627,18 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     activateVoiceMode,
     // Additional utility methods for better integration
     requestPermission: checkMicrophonePermission,
-    hasSupport: checkWakeWordSupport()
+    hasSupport: checkWakeWordSupport(),
+    // New methods for better user control
+    forceRestartListening: () => {
+      retryCountRef.current = 0;
+      consecutiveErrorsRef.current = 0;
+      isStabilizingRef.current = false;
+      setError(null);
+      if (!isAwake && enabled && permissionGranted) {
+        startWakeWordListening();
+      }
+    },
+    getErrorCount: () => consecutiveErrorsRef.current
   };
 };
 
