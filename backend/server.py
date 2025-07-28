@@ -727,10 +727,43 @@ async def update_email_provider(provider_id: str, provider: EmailProvider):
 
 @app.delete("/api/email-providers/{provider_id}")
 async def delete_email_provider(provider_id: str):
-    return {
-        "id": provider_id,
-        "message": "Email provider deleted successfully"
-    }
+    try:
+        from app.services.database import db_service
+        from app.services.email_processor import email_processor
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Check if provider exists
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        # Stop IMAP monitoring if it's enabled for this provider
+        if provider.get("imap_enabled", False):
+            try:
+                await email_processor.remove_provider_from_monitoring(provider_id)
+                logging.info(f"Stopped IMAP monitoring for provider: {provider.get('name', 'Unknown')}")
+            except Exception as imap_error:
+                logging.warning(f"Failed to stop IMAP monitoring: {str(imap_error)}")
+        
+        # Delete from database
+        result = await db_service.delete_email_provider(provider_id)
+        
+        if result.deleted_count > 0:
+            return {
+                "id": provider_id,
+                "message": "Email provider deleted successfully",
+                "deleted": True
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error deleting email provider: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting email provider: {str(e)}")
 
 @app.post("/api/email-providers/{provider_id}/test")
 async def test_email_provider(provider_id: str):
