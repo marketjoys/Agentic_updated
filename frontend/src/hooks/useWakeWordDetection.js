@@ -33,7 +33,18 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
     return true; // Remove Windows-specific restrictions - let users try
   }, []);
 
-  // Enhanced microphone permission check with better Windows support
+  // Enhanced error display with cooldown to prevent spam
+  const displayError = useCallback((message, duration = 4000, force = false) => {
+    const now = Date.now();
+    
+    // Only show error if cooldown has passed or it's a forced display
+    if (force || now - lastErrorToastTime.current > ERROR_DISPLAY_COOLDOWN) {
+      toast.error(message, { duration });
+      lastErrorToastTime.current = now;
+    } else {
+      console.log('Error suppressed (cooldown active):', message);
+    }
+  }, []);
   const checkMicrophonePermission = useCallback(async () => {
     // If permission was permanently denied, don't retry
     if (permissionDeniedPermanently) {
