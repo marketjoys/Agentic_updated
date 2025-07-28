@@ -1006,6 +1006,33 @@ Analyze this message and extract the intent and parameters.
                     return f"CSV upload completed! Successfully added {len(successful)} prospects to your database." + (f" {len(failed)} entries had issues and were skipped." if failed else "")
                 return "Your prospects have been uploaded successfully!"
             
+            elif action == 'ai_prospecting_search':
+                if data:
+                    prospects_count = data.get('prospects_count', 0)
+                    target_list = data.get('target_list')
+                    failed_count = data.get('failed_count', 0)
+                    search_query = data.get('search_query', 'your search')
+                    
+                    if prospects_count > 0:
+                        response = f"Excellent! I found {prospects_count} prospects matching your criteria"
+                        if search_query:
+                            response += f" for '{search_query}'"
+                        
+                        if target_list:
+                            response += f" and added them to the '{target_list}' list."
+                        else:
+                            response += " and added them to your prospects database."
+                        
+                        if failed_count > 0:
+                            response += f" Note: {failed_count} prospects couldn't be saved due to validation issues."
+                        
+                        response += " You can now use these prospects in your campaigns or add them to specific lists!"
+                        return response
+                    else:
+                        return f"I searched for prospects matching '{search_query}' but couldn't find any results. Try adjusting your search criteria - perhaps broaden the job titles, industries, or locations you're targeting."
+                else:
+                    return "I've completed the AI prospecting search for you!"
+            
             elif action == 'ai_suggest_prospects':
                 return "I'm analyzing your existing prospects to suggest similar ones. This feature is coming soon! For now, you can search existing prospects or add new ones manually."
             
