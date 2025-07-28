@@ -771,12 +771,111 @@ async def delete_email_provider(provider_id: str):
 
 @app.post("/api/email-providers/{provider_id}/test")
 async def test_email_provider(provider_id: str):
-    return {
-        "id": provider_id,
-        "message": "Connection test successful",
-        "smtp_test": "passed",
-        "imap_test": "passed"
-    }
+    try:
+        from app.services.database import db_service
+        import imaplib
+        import smtplib
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get provider data
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        test_results = {
+            "id": provider_id,
+            "name": provider.get("name", "Unknown"),
+            "smtp_test": "not_tested",
+            "imap_test": "not_tested",
+            "overall_status": "passed"
+        }
+        
+        # Test SMTP connection
+        try:
+            if provider.get("smtp_host") and provider.get("smtp_username") and provider.get("smtp_password"):
+                smtp_server = smtplib.SMTP(provider["smtp_host"], provider.get("smtp_port", 587))
+                smtp_server.starttls()
+                smtp_server.login(provider["smtp_username"], provider["smtp_password"])
+                smtp_server.quit()
+                test_results["smtp_test"] = "passed"
+                logging.info(f"SMTP test passed for provider: {provider['name']}")
+            else:
+                test_results["smtp_test"] = "skipped - missing SMTP credentials"
+        except Exception as smtp_error:
+            test_results["smtp_test"] = f"failed - {str(smtp_error)}"
+            test_results["overall_status"] = "failed"
+            logging.error(f"SMTP test failed for provider {provider['name']}: {str(smtp_error)}")
+        
+        # Test IMAP connection
+        try:
+            if provider.get("imap_host") and provider.get("imap_username") and provider.get("imap_password"):
+                mail = imaplib.IMAP4_SSL(provider["imap_host"], provider.get("imap_port", 993))
+                mail.login(provider["imap_username"], provider["imap_password"])
+                mail.select("inbox")
+                # Test if we can search for emails
+                status, messages = mail.search(None, "ALL")
+                if status == "OK":
+                    message_count = len(messages[0].split()) if messages[0] else 0
+                    test_results["imap_test"] = f"passed - {message_count} emails found in inbox"
+                else:
+                    test_results["imap_test"] = "failed - could not search inbox"
+                    test_results["overall_status"] = "failed"
+                mail.close()
+                mail.logout()
+                logging.info(f"IMAP test passed for provider: {provider['name']}")
+            else:
+                test_results["imap_test"] = "skipped - missing IMAP credentials"
+        except Exception as imap_error:
+            test_results["imap_test"] = f"failed - {str(imap_error)}"
+            test_results["overall_status"] = "failed"
+            logging.error(f"IMAP test failed for provider {provider['name']}: {str(imap_error)}")
+        
+        return test_results
+        
+    except Exception as e:
+        logging.error(f"Error testing email provider: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error testing email provider: {str(e)}")
+
+@app.get("/api/email-providers/{provider_id}/imap-status")
+async def get_provider_imap_status(provider_id: str):
+    """Get IMAP monitoring status for a specific provider"""
+    try:
+        from app.services.database import db_service
+        from app.services.email_processor import email_processor
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Get provider data
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        # Check if provider is being monitored
+        is_being_monitored = email_processor.is_provider_being_monitored(provider_id)
+        
+        # Get monitoring details if available
+        monitoring_info = None
+        if is_being_monitored:
+            monitoring_info = email_processor.monitored_providers.get(provider_id, {})
+        
+        return {
+            "provider_id": provider_id,
+            "provider_name": provider.get("name", "Unknown"),
+            "imap_enabled": provider.get("imap_enabled", False),
+            "email_processor_running": email_processor.processing,
+            "is_being_monitored": is_being_monitored,
+            "last_scan": monitoring_info.get("last_scan") if monitoring_info else None,
+            "imap_host": provider.get("imap_host", ""),
+            "imap_port": provider.get("imap_port", 993),
+            "status": "active" if is_being_monitored else "inactive"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error getting IMAP status for provider {provider_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting IMAP status: {str(e)}")
 
 @app.post("/api/email-providers/{provider_id}/set-default")
 async def set_default_email_provider(provider_id: str):
