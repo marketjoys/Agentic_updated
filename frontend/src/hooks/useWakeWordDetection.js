@@ -590,8 +590,9 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
         timeoutRef.current = null;
       }
       
-      // Reset permission request flag
+      // Reset permission request flag and stabilization flag
       permissionRequestInProgressRef.current = false;
+      isStabilizingRef.current = false;
     };
   }, []);
 
