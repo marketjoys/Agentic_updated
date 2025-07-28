@@ -66,7 +66,7 @@ const VoiceIndicator = ({
       {/* Voice Status Indicator */}
       <div 
         className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${getStatusColor()} transition-all duration-300 ${
-          (error && error.includes('permission')) ? 'cursor-pointer hover:opacity-80' : ''
+          ((error && error.includes('permission')) || (error && onForceRestart)) ? 'cursor-pointer hover:opacity-80' : ''
         }`}
         onClick={handleStatusClick}
         title={getStatusText()}
