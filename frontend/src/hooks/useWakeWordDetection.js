@@ -551,11 +551,13 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       // Initial permission check without starting listening immediately
       checkMicrophonePermission().then((hasPermission) => {
         if (hasPermission && !permissionDeniedPermanently) {
-          console.log('Microphone permission available, starting wake word detection...');
-          // Small delay to ensure state is properly set
+          console.log('Microphone permission available, starting wake word detection after delay...');
+          // Longer delay to ensure state is properly set and reduce startup errors
           setTimeout(() => {
-            startWakeWordListening();
-          }, 500);
+            if (enabled && !isAwake) { // Only start if still enabled and not awake
+              startWakeWordListening();
+            }
+          }, 2000); // Increased delay
         } else {
           console.log('Microphone permission not available or denied permanently');
         }
