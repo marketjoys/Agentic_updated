@@ -115,6 +115,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
         
         console.log('Microphone permission granted successfully');
         toast.success('🎤 Voice commands enabled!', { duration: 2000 });
+        consecutiveErrorsRef.current = 0; // Reset error count on success
         return true;
         
       } catch (mediaError) {
