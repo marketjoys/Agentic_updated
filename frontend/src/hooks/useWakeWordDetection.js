@@ -152,20 +152,16 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
         
         if (isPermanent) {
           setPermissionDeniedPermanently(true);
-          toast.error(`${errorMessage}. Voice commands are disabled.`, {
-            duration: 5000
-          });
+          displayError(`${errorMessage}. Voice commands are disabled.`, 5000, true);
         } else {
-          // For temporary issues, don't set permanently denied
+          // For temporary issues, don't set permanently denied and reduce error frequency
           setPermissionDeniedPermanently(false);
-          toast.error(`${errorMessage}. Click to retry voice commands.`, { 
-            duration: 3000,
-            onClick: () => {
-              setPermissionDeniedPermanently(false);
-              setPermissionChecked(false);
-              setError(null);
-            }
-          });
+          consecutiveErrorsRef.current++;
+          
+          // Only show error message if we haven't had too many consecutive errors
+          if (consecutiveErrorsRef.current <= 2) {
+            displayError(`${errorMessage}. Will retry automatically.`, 3000);
+          }
         }
         
         permissionRequestInProgressRef.current = false;
