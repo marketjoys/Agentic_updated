@@ -222,9 +222,40 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
         
-        # Search/Find patterns - HIGH PRIORITY for AI prospecting
+        # AI Prospecting/Suggestions - MOVED TO HIGH PRIORITY BEFORE SEARCH
+        elif any(phrase in message_lower for phrase in [
+            'suggest prospects', 'recommend prospects', 'ai prospects', 'find similar', 
+            'auto prospect', 'ai prospecting', 'find prospects using ai', 'find prospects like',
+            'ai prospect search', 'prospect search for', 'find ceos at', 'find ctos at',
+            'find marketing directors', 'find founders', 'find executives', 'find managers at'
+        ]):
+            # Extract prospecting parameters
+            prospecting_params = self.extract_prospecting_params(message)
+            return {
+                "action": "ai_prospecting_search",
+                "entity": "ai_prospecting",
+                "operation": "search",
+                "parameters": prospecting_params,
+                "confidence": 0.9,
+                "requires_clarification": False
+            }
+        
+        # Search/Find patterns - MOVED AFTER AI PROSPECTING
         elif any(word in message_lower for word in ['search', 'find', 'look for', 'locate']):
             if any(word in message_lower for word in ['prospect', 'prospects', 'contact', 'contacts', 'lead', 'leads']):
+                # Check if this should be AI prospecting instead of regular search
+                if any(phrase in message_lower for phrase in ['like', 'similar to', 'at tech', 'at software', 'at startup']):
+                    # This looks like AI prospecting, route there instead
+                    prospecting_params = self.extract_prospecting_params(message)
+                    return {
+                        "action": "ai_prospecting_search",
+                        "entity": "ai_prospecting",
+                        "operation": "search",
+                        "parameters": prospecting_params,
+                        "confidence": 0.8,
+                        "requires_clarification": False
+                    }
+                
                 search_params = {}
                 
                 # Extract search criteria
