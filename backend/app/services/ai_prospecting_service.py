@@ -318,21 +318,41 @@ Example:
                         
                         # Add to specified list if provided
                         if target_list:
-                            # Check if list exists, create if not
+                            # Check if list exists first
                             existing_list = await db_service.get_list_by_name(target_list)
-                            if not existing_list:
-                                list_data = {
-                                    'name': target_list,
-                                    'description': f'AI-generated list for prospects',
-                                    'color': '#3B82F6',
-                                    'tags': ['ai-generated']
-                                }
-                                await db_service.create_list(list_data)
-                                existing_list = await db_service.get_list_by_name(target_list)
-                            
-                            # Add prospect to list
                             if existing_list:
+                                # Add to existing list
                                 await db_service.add_prospects_to_list(existing_list['id'], [prospect_id])
+                                logger.info(f"Added prospect {prospect_id} to existing list: {target_list}")
+                            else:
+                                # List doesn't exist - check if user wants us to create it
+                                # For now, let's be conservative and NOT auto-create lists
+                                # Instead, add to a default "AI Prospecting" list or leave unassigned
+                                default_list_name = "AI Prospecting Results"
+                                default_list = await db_service.get_list_by_name(default_list_name)
+                                
+                                if not default_list:
+                                    # Create the default AI prospecting list only if it doesn't exist
+                                    list_data = {
+                                        'id': generate_id(),
+                                        'name': default_list_name,
+                                        'description': f'Prospects found through AI prospecting when target list doesn\'t exist',
+                                        'color': '#9333EA',  # Purple color for AI prospecting
+                                        'tags': ['ai-generated', 'default-prospecting']
+                                    }
+                                    await db_service.create_list(list_data)
+                                    default_list = await db_service.get_list_by_name(default_list_name)
+                                
+                                if default_list:
+                                    await db_service.add_prospects_to_list(default_list['id'], [prospect_id])
+                                    logger.warning(f"Target list '{target_list}' not found. Added prospect {prospect_id} to default AI Prospecting Results list")
+                                
+                                # Also track this issue in failed prospects with a warning
+                                failed_prospects.append({
+                                    'prospect': prospect_data,
+                                    'error': f"Target list '{target_list}' not found. Added to 'AI Prospecting Results' instead.",
+                                    'type': 'warning'
+                                })
                     else:
                         failed_prospects.append({
                             'prospect': prospect_data,
