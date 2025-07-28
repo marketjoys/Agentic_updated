@@ -396,9 +396,25 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       setError('Failed to start voice recognition');
       setIsListeningForWakeWord(false);
       
-      // Show user-friendly error message
-      toast.error('Voice recognition failed to start. Please check your microphone.', {
-        duration: 4000
+      // Show user-friendly error message with Windows-specific guidance
+      const isWindows = navigator.platform.toLowerCase().includes('win');
+      const isChrome = navigator.userAgent.toLowerCase().includes('chrome');
+      
+      let errorMessage = 'Voice recognition failed to start. Please check your microphone.';
+      let duration = 4000;
+      
+      if (isWindows) {
+        if (!isChrome) {
+          errorMessage = 'Voice recognition works best on Chrome browser on Windows. Please switch to Chrome and try again.';
+          duration = 8000;
+        } else {
+          errorMessage = 'Voice recognition failed on Windows. Try: 1) Check microphone permissions in Chrome settings, 2) Restart Chrome, 3) Check Windows microphone privacy settings.';
+          duration = 10000;
+        }
+      }
+      
+      toast.error(errorMessage, {
+        duration: duration
       });
     }
   }, [enabled, isAwake, containsWakeWord, checkWakeWordSupport, checkMicrophonePermission, permissionGranted, permissionDeniedPermanently]);
