@@ -333,6 +333,7 @@ Example:
                                 
                                 if not default_list:
                                     # Create the default AI prospecting list only if it doesn't exist
+                                    from app.utils.helpers import generate_id
                                     list_data = {
                                         'id': generate_id(),
                                         'name': default_list_name,
