@@ -45,6 +45,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
       console.log('Error suppressed (cooldown active):', message);
     }
   }, []);
+  // Enhanced microphone permission check with better Windows support
   const checkMicrophonePermission = useCallback(async () => {
     // If permission was permanently denied, don't retry
     if (permissionDeniedPermanently) {
