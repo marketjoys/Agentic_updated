@@ -601,7 +601,11 @@ async def create_email_provider(provider: EmailProvider):
             await db_service.unset_default_email_providers()
         
         # Create email provider in database
-        result = await db_service.create_email_provider(provider_data)
+        try:
+            result = await db_service.create_email_provider(provider_data)
+        except ValueError as ve:
+            # Handle duplicate provider error
+            raise HTTPException(status_code=400, detail=str(ve))
         
         if result:
             # Auto-start IMAP monitoring if enabled and email processor is running
