@@ -26,11 +26,12 @@ const VoiceIndicator = ({
 
   const getStatusText = () => {
     if (error && error.includes('permission')) return 'Permission needed - Click to grant';
-    if (error) return error;
+    if (error && error.includes('failed')) return 'Voice paused - Click to retry';
+    if (error) return 'Voice issue - Click to retry';
     if (isSpeaking) return 'Speaking';
     if (isListening) return 'Listening';
     if (isAwake) return 'Awake - Say something or "sleep"';
-    if (isListeningForWakeWord) return 'Sleeping - Say "Hello Joy" to wake';
+    if (isListeningForWakeWord) return 'Listening for "Hello Joy"';
     if (!permissionGranted) return 'Click to enable microphone';
     return 'Voice disabled';
   };
