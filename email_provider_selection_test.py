@@ -511,40 +511,65 @@ class EmailProviderSelectionTester:
         try:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
             
-            # Test 5.1: Try to send campaign with non-existent provider ID
+            # Test 5.1: Create fresh campaign for error handling test
             fake_provider_id = "non-existent-provider-id-12345"
             
-            async with self.session.get(f"{BACKEND_URL}/campaigns", headers=headers) as response:
+            # Get templates and lists for fresh campaign creation
+            async with self.session.get(f"{BACKEND_URL}/templates", headers=headers) as response:
                 if response.status == 200:
-                    campaigns = await response.json()
-                    if campaigns:
-                        test_campaign = campaigns[0]
-                        campaign_id = test_campaign.get("id")
-                        
-                        # Try to send with fake provider ID
-                        send_data = {
-                            "send_immediately": False,
-                            "email_provider_id": fake_provider_id,
-                            "max_emails": 1,
-                            "schedule_type": "immediate"
-                        }
-                        
-                        async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
-                            if send_response.status in [400, 404]:
-                                error_text = await send_response.text()
-                                test_details.append(f"✅ Proper error handling for invalid provider ID")
-                                test_details.append(f"   - Status Code: {send_response.status}")
-                                test_details.append(f"   - Error Message: {error_text[:100]}")
-                            elif send_response.status == 200:
-                                test_details.append(f"⚠️ Campaign accepted invalid provider ID (may use default)")
-                                send_result = await send_response.json()
-                                test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
+                    templates = await response.json()
+                    if templates:
+                        async with self.session.get(f"{BACKEND_URL}/lists", headers=headers) as response:
+                            if response.status == 200:
+                                lists = await response.json()
+                                if lists:
+                                    # Create fresh campaign for error handling test
+                                    campaign_data = {
+                                        "name": f"Error Handling Test Campaign {datetime.now().strftime('%H:%M:%S')}",
+                                        "template_id": templates[0].get("id"),
+                                        "list_ids": [lists[0].get("id")],
+                                        "max_emails": 1,
+                                        "follow_up_enabled": False
+                                    }
+                                    
+                                    async with self.session.post(f"{BACKEND_URL}/campaigns", json=campaign_data, headers=headers) as response:
+                                        if response.status == 200:
+                                            campaign = await response.json()
+                                            campaign_id = campaign.get("id")
+                                            self.created_campaign_ids.append(campaign_id)
+                                            
+                                            # Try to send with fake provider ID
+                                            send_data = {
+                                                "send_immediately": False,
+                                                "email_provider_id": fake_provider_id,
+                                                "max_emails": 1,
+                                                "schedule_type": "immediate"
+                                            }
+                                            
+                                            async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
+                                                if send_response.status in [400, 404]:
+                                                    error_text = await send_response.text()
+                                                    test_details.append(f"✅ Proper error handling for invalid provider ID")
+                                                    test_details.append(f"   - Status Code: {send_response.status}")
+                                                    test_details.append(f"   - Error Message: {error_text[:100]}")
+                                                elif send_response.status == 200:
+                                                    test_details.append(f"⚠️ Campaign accepted invalid provider ID (may use default)")
+                                                    send_result = await send_response.json()
+                                                    test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
+                                                else:
+                                                    test_details.append(f"❌ Unexpected response for invalid provider: HTTP {send_response.status}")
+                                                    error_text = await send_response.text()
+                                                    test_details.append(f"   - Error: {error_text[:100]}")
+                                        else:
+                                            test_details.append(f"❌ Failed to create fresh campaign: HTTP {response.status}")
+                                else:
+                                    test_details.append("❌ No lists available for fresh campaign creation")
                             else:
-                                test_details.append(f"❌ Unexpected response for invalid provider: HTTP {send_response.status}")
+                                test_details.append(f"❌ Failed to get lists: HTTP {response.status}")
                     else:
-                        test_details.append("❌ No campaigns available for error handling test")
+                        test_details.append("❌ No templates available for fresh campaign creation")
                 else:
-                    test_details.append(f"❌ Failed to get campaigns: HTTP {response.status}")
+                    test_details.append(f"❌ Failed to get templates: HTTP {response.status}")
             
             # Test 5.2: Try to create duplicate email provider
             async with self.session.get(f"{BACKEND_URL}/email-providers", headers=headers) as response:
