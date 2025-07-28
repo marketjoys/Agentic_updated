@@ -567,6 +567,12 @@ Please try again or ask for help.`,
           }
         </div>
       </div>
+
+      {/* Voice Troubleshooting Modal */}
+      <VoiceTroubleshootingModal
+        isOpen={showTroubleshootingModal}
+        onClose={() => setShowTroubleshootingModal(false)}
+      />
     </div>
   );
 };
