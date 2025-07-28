@@ -56,6 +56,8 @@ const VoiceIndicator = ({
   const handleStatusClick = () => {
     if (error && error.includes('permission') && onRequestPermission) {
       onRequestPermission();
+    } else if (error && onForceRestart) {
+      onForceRestart();
     }
   };
 
