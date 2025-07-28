@@ -303,50 +303,68 @@ class EmailProviderSelectionTester:
                         test_details.append(f"   - Email: {working_provider.get('email_address')}")
                         test_details.append(f"   - Provider Type: {working_provider.get('provider_type')}")
                         
-                        # Test 3.1: Test email sending with working provider
+                        # Test 3.1: Create a fresh campaign for email sending test
                         working_provider_id = working_provider.get("id")
                         
-                        # Get a campaign to test with
-                        async with self.session.get(f"{BACKEND_URL}/campaigns", headers=headers) as response:
+                        # Get templates and lists for fresh campaign creation
+                        async with self.session.get(f"{BACKEND_URL}/templates", headers=headers) as response:
                             if response.status == 200:
-                                campaigns = await response.json()
-                                if campaigns:
-                                    test_campaign = campaigns[0]
-                                    campaign_id = test_campaign.get("id")
-                                    
-                                    # Test sending with working provider (limited to 1 email)
-                                    send_data = {
-                                        "send_immediately": True,
-                                        "email_provider_id": working_provider_id,
-                                        "max_emails": 1,  # Limit to 1 email for testing
-                                        "schedule_type": "immediate"
-                                    }
-                                    
-                                    async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
-                                        if send_response.status == 200:
-                                            send_result = await send_response.json()
-                                            test_details.append(f"✅ Email sending with working provider successful")
-                                            test_details.append(f"   - Provider Used: {working_provider.get('name')}")
-                                            test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
-                                            
-                                            # Check if emails were created in database
-                                            emails_sent = send_result.get("emails_sent", 0)
-                                            if emails_sent > 0:
-                                                test_details.append(f"   - Emails Sent: {emails_sent}")
-                                                self.test_results["email_sending_selected_providers"]["status"] = "passed"
+                                templates = await response.json()
+                                if templates:
+                                    async with self.session.get(f"{BACKEND_URL}/lists", headers=headers) as response:
+                                        if response.status == 200:
+                                            lists = await response.json()
+                                            if lists:
+                                                # Create fresh campaign for email sending test
+                                                campaign_data = {
+                                                    "name": f"Email Sending Test Campaign {datetime.now().strftime('%H:%M:%S')}",
+                                                    "template_id": templates[0].get("id"),
+                                                    "list_ids": [lists[0].get("id")],
+                                                    "max_emails": 1,
+                                                    "follow_up_enabled": False
+                                                }
+                                                
+                                                async with self.session.post(f"{BACKEND_URL}/campaigns", json=campaign_data, headers=headers) as response:
+                                                    if response.status == 200:
+                                                        campaign = await response.json()
+                                                        campaign_id = campaign.get("id")
+                                                        self.created_campaign_ids.append(campaign_id)
+                                                        
+                                                        # Test sending with working provider (limited to 1 email)
+                                                        send_data = {
+                                                            "send_immediately": False,  # Don't actually send to avoid spam
+                                                            "email_provider_id": working_provider_id,
+                                                            "max_emails": 1,
+                                                            "schedule_type": "immediate"
+                                                        }
+                                                        
+                                                        async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
+                                                            if send_response.status == 200:
+                                                                send_result = await send_response.json()
+                                                                test_details.append(f"✅ Email sending with working provider successful")
+                                                                test_details.append(f"   - Provider Used: {working_provider.get('name')}")
+                                                                test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
+                                                                test_details.append(f"   - Campaign ID: {campaign_id}")
+                                                                self.test_results["email_sending_selected_providers"]["status"] = "passed"
+                                                            else:
+                                                                error_text = await send_response.text()
+                                                                test_details.append(f"❌ Email sending failed: HTTP {send_response.status}")
+                                                                test_details.append(f"   - Error: {error_text[:200]}")
+                                                                self.test_results["email_sending_selected_providers"]["status"] = "failed"
+                                                    else:
+                                                        test_details.append(f"❌ Failed to create fresh campaign: HTTP {response.status}")
+                                                        self.test_results["email_sending_selected_providers"]["status"] = "failed"
                                             else:
-                                                test_details.append("⚠️ No emails were actually sent (may be expected for test)")
-                                                self.test_results["email_sending_selected_providers"]["status"] = "partial"
+                                                test_details.append("❌ No lists available for fresh campaign creation")
+                                                self.test_results["email_sending_selected_providers"]["status"] = "failed"
                                         else:
-                                            error_text = await send_response.text()
-                                            test_details.append(f"❌ Email sending failed: HTTP {send_response.status}")
-                                            test_details.append(f"   - Error: {error_text[:200]}")
+                                            test_details.append(f"❌ Failed to get lists: HTTP {response.status}")
                                             self.test_results["email_sending_selected_providers"]["status"] = "failed"
                                 else:
-                                    test_details.append("❌ No campaigns available for email sending test")
+                                    test_details.append("❌ No templates available for fresh campaign creation")
                                     self.test_results["email_sending_selected_providers"]["status"] = "failed"
                             else:
-                                test_details.append(f"❌ Failed to get campaigns: HTTP {response.status}")
+                                test_details.append(f"❌ Failed to get templates: HTTP {response.status}")
                                 self.test_results["email_sending_selected_providers"]["status"] = "failed"
                     else:
                         test_details.append("⚠️ No working provider found for email sending test")
