@@ -410,39 +410,65 @@ class EmailProviderSelectionTester:
                         test_details.append(f"   - Email: {default_provider.get('email_address')}")
                         test_details.append(f"   - Provider Type: {default_provider.get('provider_type')}")
                         
-                        # Test 4.1: Send campaign without specifying provider (should use default)
-                        async with self.session.get(f"{BACKEND_URL}/campaigns", headers=headers) as response:
+                        # Test 4.1: Create fresh campaign for default provider test
+                        async with self.session.get(f"{BACKEND_URL}/templates", headers=headers) as response:
                             if response.status == 200:
-                                campaigns = await response.json()
-                                if campaigns:
-                                    test_campaign = campaigns[0]
-                                    campaign_id = test_campaign.get("id")
-                                    
-                                    # Send without specifying email_provider_id
-                                    send_data = {
-                                        "send_immediately": False,  # Don't actually send
-                                        # No email_provider_id specified - should use default
-                                        "max_emails": 1,
-                                        "schedule_type": "immediate"
-                                    }
-                                    
-                                    async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
-                                        if send_response.status == 200:
-                                            send_result = await send_response.json()
-                                            test_details.append(f"✅ Campaign sending without provider selection successful")
-                                            test_details.append(f"   - Should use default provider: {default_provider.get('name')}")
-                                            test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
-                                            self.test_results["default_provider_functionality"]["status"] = "passed"
+                                templates = await response.json()
+                                if templates:
+                                    async with self.session.get(f"{BACKEND_URL}/lists", headers=headers) as response:
+                                        if response.status == 200:
+                                            lists = await response.json()
+                                            if lists:
+                                                # Create fresh campaign for default provider test
+                                                campaign_data = {
+                                                    "name": f"Default Provider Test Campaign {datetime.now().strftime('%H:%M:%S')}",
+                                                    "template_id": templates[0].get("id"),
+                                                    "list_ids": [lists[0].get("id")],
+                                                    "max_emails": 1,
+                                                    "follow_up_enabled": False
+                                                }
+                                                
+                                                async with self.session.post(f"{BACKEND_URL}/campaigns", json=campaign_data, headers=headers) as response:
+                                                    if response.status == 200:
+                                                        campaign = await response.json()
+                                                        campaign_id = campaign.get("id")
+                                                        self.created_campaign_ids.append(campaign_id)
+                                                        
+                                                        # Send without specifying email_provider_id
+                                                        send_data = {
+                                                            "send_immediately": False,  # Don't actually send
+                                                            # No email_provider_id specified - should use default
+                                                            "max_emails": 1,
+                                                            "schedule_type": "immediate"
+                                                        }
+                                                        
+                                                        async with self.session.post(f"{BACKEND_URL}/campaigns/{campaign_id}/send", json=send_data, headers=headers) as send_response:
+                                                            if send_response.status == 200:
+                                                                send_result = await send_response.json()
+                                                                test_details.append(f"✅ Campaign sending without provider selection successful")
+                                                                test_details.append(f"   - Should use default provider: {default_provider.get('name')}")
+                                                                test_details.append(f"   - Response: {send_result.get('message', 'No message')[:100]}")
+                                                                test_details.append(f"   - Campaign ID: {campaign_id}")
+                                                                self.test_results["default_provider_functionality"]["status"] = "passed"
+                                                            else:
+                                                                error_text = await send_response.text()
+                                                                test_details.append(f"❌ Campaign sending without provider failed: HTTP {send_response.status}")
+                                                                test_details.append(f"   - Error: {error_text[:200]}")
+                                                                self.test_results["default_provider_functionality"]["status"] = "failed"
+                                                    else:
+                                                        test_details.append(f"❌ Failed to create fresh campaign: HTTP {response.status}")
+                                                        self.test_results["default_provider_functionality"]["status"] = "failed"
+                                            else:
+                                                test_details.append("❌ No lists available for fresh campaign creation")
+                                                self.test_results["default_provider_functionality"]["status"] = "failed"
                                         else:
-                                            error_text = await send_response.text()
-                                            test_details.append(f"❌ Campaign sending without provider failed: HTTP {send_response.status}")
-                                            test_details.append(f"   - Error: {error_text[:200]}")
+                                            test_details.append(f"❌ Failed to get lists: HTTP {response.status}")
                                             self.test_results["default_provider_functionality"]["status"] = "failed"
                                 else:
-                                    test_details.append("❌ No campaigns available for default provider test")
+                                    test_details.append("❌ No templates available for fresh campaign creation")
                                     self.test_results["default_provider_functionality"]["status"] = "failed"
                             else:
-                                test_details.append(f"❌ Failed to get campaigns: HTTP {response.status}")
+                                test_details.append(f"❌ Failed to get templates: HTTP {response.status}")
                                 self.test_results["default_provider_functionality"]["status"] = "failed"
                     else:
                         test_details.append("⚠️ No default provider found")
