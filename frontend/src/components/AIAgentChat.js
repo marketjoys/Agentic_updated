@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import apiService from '../services/api';
 import useWakeWordDetection from '../hooks/useWakeWordDetection';
 import VoiceIndicator from './VoiceIndicator';
+import VoiceTroubleshootingModal from './VoiceTroubleshootingModal';
 
 const AIAgentChat = () => {
   const [messages, setMessages] = useState([]);
