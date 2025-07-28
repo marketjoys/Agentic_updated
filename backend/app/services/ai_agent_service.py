@@ -413,19 +413,6 @@ Analyze this message and extract the intent and parameters.
                     "requires_clarification": False
                 }
         
-        # AI Prospecting/Suggestions - ENHANCED FUNCTIONALITY
-        elif any(phrase in message_lower for phrase in ['suggest prospects', 'recommend prospects', 'ai prospects', 'find similar', 'auto prospect', 'ai prospecting', 'find prospects using ai']):
-            # Extract prospecting parameters
-            prospecting_params = self.extract_prospecting_params(message)
-            return {
-                "action": "ai_prospecting_search",
-                "entity": "ai_prospecting",
-                "operation": "search",
-                "parameters": prospecting_params,
-                "confidence": 0.9,
-                "requires_clarification": False
-            }
-        
         # Default fallback
         else:
             return {
