@@ -35,6 +35,8 @@ class ActionRouterService:
                 return await self.handle_analytics_actions(action, operation, parameters)
             elif entity == 'email_processing':
                 return await self.handle_email_processing_actions(action, operation, parameters)
+            elif entity == 'ai_prospecting':
+                return await self.handle_ai_prospecting_actions(action, operation, parameters)
             elif entity == 'general':
                 return await self.handle_general_actions(action, operation, parameters)
             else:
