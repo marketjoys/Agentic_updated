@@ -87,9 +87,7 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
             setPermissionChecked(true);
             setPermissionDeniedPermanently(true);
             permissionRequestInProgressRef.current = false;
-            toast.error('Voice commands disabled. Please enable microphone access in browser settings.', {
-              duration: 5000
-            });
+            displayError('Voice commands disabled. Please enable microphone access in browser settings.', 5000, true);
             return false;
           }
         } catch (permError) {
