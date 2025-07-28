@@ -556,7 +556,10 @@ Please try again or ask for help.`,
           {isAwake 
             ? "🎙️ Voice activated! Say 'sleep' to deactivate • Try: \"Show my campaigns\" • \"Create prospect John Doe from TechCorp\""
             : permissionGranted
-            ? "💤 Say \"Hello Joy\" to activate voice mode or click the microphone • Try: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
+            ? (wakeWordError 
+              ? "⚠️ Voice temporarily paused. Click the status indicator to retry • Or type: \"Show campaigns\" • \"Create prospect\""
+              : "💤 Say \"Hello Joy\" to activate voice mode or click the microphone • Try: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
+            )
             : "🎤 Click the microphone to enable voice commands • Or type: \"Show campaigns\" • \"Create prospect\" • \"Analytics\""
           }
         </div>
