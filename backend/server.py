@@ -559,6 +559,76 @@ async def get_email_providers():
         # Return empty list on error instead of mock data
         return []
 
+async def _auto_configure_provider(provider_id: str, provider: EmailProvider) -> dict:
+    """Auto-configure provider based on type for production readiness"""
+    provider_data = {
+        "id": provider_id,
+        "name": provider.name,
+        "provider_type": provider.provider_type,
+        "email_address": provider.email_address,
+        "display_name": provider.display_name,
+        "smtp_host": provider.smtp_host,
+        "smtp_port": provider.smtp_port,
+        "smtp_username": provider.smtp_username,
+        "smtp_password": provider.smtp_password,
+        "smtp_use_tls": provider.smtp_use_tls,
+        "imap_host": provider.imap_host,
+        "imap_port": provider.imap_port,
+        "imap_username": provider.imap_username,
+        "imap_password": provider.imap_password,
+        "imap_enabled": bool(provider.imap_host and provider.imap_username and provider.imap_password),
+        "daily_send_limit": provider.daily_send_limit,
+        "hourly_send_limit": provider.hourly_send_limit,
+        "is_default": provider.is_default,
+        "is_active": True,
+        "skip_connection_test": provider.skip_connection_test,
+        "current_daily_count": 0,
+        "current_hourly_count": 0,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "last_sync": datetime.utcnow()
+    }
+    
+    # Auto-configure based on provider type
+    if provider.provider_type.lower() == "gmail":
+        if not provider_data["smtp_host"]:
+            provider_data["smtp_host"] = "smtp.gmail.com"
+        if not provider_data["imap_host"]:
+            provider_data["imap_host"] = "imap.gmail.com"
+    elif provider.provider_type.lower() == "outlook":
+        if not provider_data["smtp_host"]:
+            provider_data["smtp_host"] = "smtp-mail.outlook.com"
+        if not provider_data["imap_host"]:
+            provider_data["imap_host"] = "outlook.office365.com"
+    
+    return provider_data
+
+async def _validate_provider_configuration(provider_data: dict) -> str:
+    """Validate provider configuration and return error message if invalid"""
+    # Check required fields
+    if not provider_data.get("name"):
+        return "Provider name is required"
+    
+    if not provider_data.get("email_address"):
+        return "Email address is required"
+    
+    # Validate email format
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, provider_data.get("email_address", "")):
+        return "Invalid email address format"
+    
+    # Check SMTP configuration if not skipping connection test
+    if not provider_data.get("skip_connection_test", False):
+        if not provider_data.get("smtp_host"):
+            return "SMTP host is required"
+        if not provider_data.get("smtp_username"):
+            return "SMTP username is required"
+        if not provider_data.get("smtp_password"):
+            return "SMTP password is required"
+    
+    return None  # No validation errors
+
 @app.post("/api/email-providers")
 async def create_email_provider(provider: EmailProvider):
     try:
