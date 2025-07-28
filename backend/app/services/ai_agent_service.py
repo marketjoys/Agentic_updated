@@ -1037,7 +1037,7 @@ Analyze this message and extract the intent and parameters.
                 return "I'm analyzing your existing prospects to suggest similar ones. This feature is coming soon! For now, you can search existing prospects or add new ones manually."
             
             elif action == 'help':
-                return "I'm here to help you manage your email marketing! I can help you with:\n\n• **Prospects**: 'Add John Smith from TechCorp', 'Search prospects in technology', 'Show all prospects'\n• **Lists**: 'Create a VIP list', 'Add John to VIP list', 'Show my lists'\n• **Campaigns**: 'Create a campaign', 'Send campaign to VIP list', 'Show campaigns'\n• **Templates**: 'Create a template', 'Show templates'\n• **Analytics**: 'Show my analytics', 'Dashboard performance'\n\nJust tell me what you'd like to do in natural language!"
+                return "I'm here to help you manage your email marketing! I can help you with:\n\n• **Prospects**: 'Add John Smith from TechCorp', 'Search prospects in technology', 'Show all prospects'\n• **Lists**: 'Create a VIP list', 'Add John to VIP list', 'Show my lists'\n• **Campaigns**: 'Create a campaign', 'Send campaign to VIP list', 'Show campaigns'\n• **Templates**: 'Create a template', 'Show templates'\n• **Analytics**: 'Show my analytics', 'Dashboard performance'\n• **AI Prospecting**: 'Find prospects like CEOs at tech companies', 'AI prospect search for marketing directors', 'Suggest prospects for my campaign'\n\nJust tell me what you'd like to do in natural language!"
             
             else:
                 return f"I've completed the {action.replace('_', ' ')} action successfully! Is there anything else I can help you with?"
