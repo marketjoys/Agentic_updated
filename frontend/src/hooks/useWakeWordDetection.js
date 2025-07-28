@@ -16,10 +16,11 @@ const useWakeWordDetection = (onWakeWordDetected, enabled = true) => {
   const permissionRequestInProgressRef = useRef(false);
   const lastPermissionRequestTime = useRef(0);
 
-  const MAX_RETRIES = 1; // Single retry to prevent loops
+  const MAX_RETRIES = 2; // Allow 2 retries for better reliability
   const WAKE_WORDS = ['hello joy', 'hello, joy', 'helo joy', 'helo, joy', 'hey joy', 'hey, joy'];
   const SLEEP_TIMEOUT = 30000; // 30 seconds of inactivity before going back to wake word listening
-  const PERMISSION_REQUEST_COOLDOWN = 5000; // 5 seconds cooldown between permission requests
+  const PERMISSION_REQUEST_COOLDOWN = 10000; // 10 seconds cooldown between permission requests
+  const ERROR_DISPLAY_COOLDOWN = 30000; // 30 seconds cooldown between error toasts to prevent spam
 
   const checkWakeWordSupport = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
