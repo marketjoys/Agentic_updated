@@ -797,7 +797,7 @@ class DatabaseService:
         await self.connect()
         campaigns = await self.db.campaigns.find({
             "follow_up_enabled": True,
-            "status": {"$in": ["active", "running"]}
+            "status": {"$in": ["active", "running", "sent"]}
         }).to_list(length=100)
         return clean_document(campaigns)
 
