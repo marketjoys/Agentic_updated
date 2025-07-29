@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import pytz
 
 # Configuration
-BACKEND_URL = "https://a2cf20e7-0102-4953-931a-e6460447038f.preview.emergentagent.com/api"
+BACKEND_URL = "https://5ba57396-54ea-41e4-af17-91b63f2e5cf0.preview.emergentagent.com/api"
 LOGIN_CREDENTIALS = {"username": "testuser", "password": "testpass123"}
 
 class AdvancedSchedulingTester:
