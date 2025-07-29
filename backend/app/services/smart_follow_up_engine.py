@@ -202,7 +202,24 @@ class SmartFollowUpEngine:
             reference_time = reference_time.astimezone(tz)
             time_since_last = current_time - reference_time
             
-            if time_since_last.days >= interval_days:
+            # Support both minute-based and day-based intervals
+            # Intervals < 60 are treated as minutes, >= 60 as days
+            if interval_days < 60:
+                # Minute-based intervals
+                minutes_since_last = time_since_last.total_seconds() / 60
+                if minutes_since_last >= interval_days:
+                    logger.info(f"Minute-based follow-up ready: {minutes_since_last:.1f} minutes >= {interval_days} minutes")
+                    time_check_passed = True
+                else:
+                    time_check_passed = False
+            else:
+                # Day-based intervals (existing logic)
+                if time_since_last.days >= interval_days:
+                    time_check_passed = True
+                else:
+                    time_check_passed = False
+            
+            if time_check_passed:
                 # Check time window if specified
                 if follow_up_rule and not await self._is_in_time_window(follow_up_rule):
                     return False
