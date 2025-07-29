@@ -1772,8 +1772,17 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                 
                 await db_service.create_email_record(email_record)
                 
-                # Update prospect last contact
+                # Update prospect last contact and follow-up status
                 await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
+                
+                # Set up prospect for follow-up if campaign has follow-up enabled
+                if campaign.get("follow_up_enabled", False) and success:
+                    await db_service.update_prospect(prospect["id"], {
+                        "campaign_id": campaign_id,
+                        "follow_up_status": "active",
+                        "follow_up_count": 0,
+                        "last_follow_up": None
+                    })
                 
                 email_results.append({
                     "recipient": prospect["email"],
