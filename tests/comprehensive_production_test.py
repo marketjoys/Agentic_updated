@@ -23,7 +23,7 @@ import time
 import os
 
 # Backend URL from environment
-BACKEND_URL = "https://9f8a7167-d7f1-4045-b864-65d30ef37460.preview.emergentagent.com"
+BACKEND_URL = "https://1e08e58e-1080-4fe8-bd99-54911ebc72f3.preview.emergentagent.com"
 AUTH_TOKEN = None
 
 class ComprehensiveBackendTester:
