@@ -110,8 +110,8 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Campaign Creation with Precise Timing"
     - "Email campaign system baseline testing"
-    - "Email Campaign Scenario Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
