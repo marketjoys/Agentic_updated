@@ -23,7 +23,7 @@ import pytz
 from typing import Dict, Any, List
 
 # Configuration
-BACKEND_URL = "https://5f33b0de-2474-4f94-a9e0-dac40fa9173f.preview.emergentagent.com/api"
+BACKEND_URL = "https://e6eebaf1-246b-4a7c-91b7-546e63e98666.preview.emergentagent.com/api"
 LOGIN_CREDENTIALS = {"username": "testuser", "password": "testpass123"}
 
 class SchedulingTaskTester:

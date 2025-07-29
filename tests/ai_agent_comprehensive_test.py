@@ -367,7 +367,7 @@ class AIAgentTester:
 async def main():
     """Main test execution"""
     # Use the backend URL from frontend/.env
-    BASE_URL = "https://5f33b0de-2474-4f94-a9e0-dac40fa9173f.preview.emergentagent.com"
+    BASE_URL = "https://e6eebaf1-246b-4a7c-91b7-546e63e98666.preview.emergentagent.com"
     USERNAME = "testuser"
     PASSWORD = "testpass123"
     
