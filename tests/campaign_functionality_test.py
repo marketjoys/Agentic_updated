@@ -26,7 +26,7 @@ import time
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://1e08e58e-1080-4fe8-bd99-54911ebc72f3.preview.emergentagent.com"
+BACKEND_URL = "https://9875c261-7164-46da-a66e-4f7aea2c987d.preview.emergentagent.com"
 
 class CampaignFunctionalityTester:
     def __init__(self):
@@ -660,7 +660,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://1e08e58e-1080-4fe8-bd99-54911ebc72f3.preview.emergentagent.com"
+BACKEND_URL = "https://9875c261-7164-46da-a66e-4f7aea2c987d.preview.emergentagent.com"
 
 class CampaignFunctionalityTester:
     def __init__(self):

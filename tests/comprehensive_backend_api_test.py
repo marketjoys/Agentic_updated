@@ -23,7 +23,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://1e08e58e-1080-4fe8-bd99-54911ebc72f3.preview.emergentagent.com/api"
+BASE_URL = "https://9875c261-7164-46da-a66e-4f7aea2c987d.preview.emergentagent.com/api"
 USERNAME = "testuser"
 PASSWORD = "testpass123"
 
