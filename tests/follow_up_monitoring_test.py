@@ -11,7 +11,7 @@ import time
 import os
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://5ba57396-54ea-41e4-af17-91b63f2e5cf0.preview.emergentagent.com"
+BACKEND_URL = "https://bc0f5eb1-9f0c-4a91-a56f-4141def510e7.preview.emergentagent.com"
 AUTH_TOKEN = "test_token_12345"
 
 class FollowUpMonitoringTester:
