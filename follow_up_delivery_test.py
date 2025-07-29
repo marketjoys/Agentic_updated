@@ -76,7 +76,40 @@ class FollowUpDeliveryTester:
         print("1. 📮 SETTING UP EMAIL PROVIDER")
         print("="*60)
         
-        # Create email provider with the credentials from .env
+        # First, check if rohushanshinde@gmail.com provider already exists
+        providers_result = await self.make_request("GET", "/email-providers")
+        if providers_result["success"]:
+            providers = providers_result["data"]
+            existing_provider = None
+            
+            for provider in providers:
+                if provider.get("email_address") == "rohushanshinde@gmail.com":
+                    existing_provider = provider
+                    break
+            
+            if existing_provider:
+                self.test_data["email_provider_id"] = existing_provider["id"]
+                print(f"✅ Using existing email provider: {existing_provider['id']}")
+                print(f"   Name: {existing_provider.get('name', 'Unknown')}")
+                print(f"   Email: {existing_provider.get('email_address', 'Unknown')}")
+                print(f"   Active: {existing_provider.get('is_active', False)}")
+                print(f"   Default: {existing_provider.get('is_default', False)}")
+                
+                # Test the provider
+                test_result = await self.make_request("POST", f"/email-providers/{self.test_data['email_provider_id']}/test")
+                if test_result["success"]:
+                    test_data = test_result["data"]
+                    print(f"📧 Provider test results:")
+                    print(f"   SMTP: {test_data.get('smtp_test', 'unknown')}")
+                    print(f"   IMAP: {test_data.get('imap_test', 'unknown')}")
+                    print(f"   Overall: {test_data.get('overall_status', 'unknown')}")
+                    
+                    if test_data.get('overall_status') != 'passed':
+                        self.results["provider_issues"].append("Provider connection test failed")
+                
+                return True
+        
+        # If no existing provider, create new one
         provider_data = {
             "name": "Test Provider for Follow-up Investigation",
             "provider_type": "gmail",
