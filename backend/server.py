@@ -1791,8 +1791,9 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
                     "subject": template["subject"]
                 })
         
-        # Update campaign status
-        await db_service.update_campaign(campaign_id, {"status": "sent"})
+        # Update campaign status - keep active if follow-up enabled
+        campaign_status = "active" if campaign.get("follow_up_enabled", False) else "sent"
+        await db_service.update_campaign(campaign_id, {"status": campaign_status})
         
         return {
             "campaign_id": campaign_id,
