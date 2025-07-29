@@ -15,7 +15,7 @@ import json
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://e6eebaf1-246b-4a7c-91b7-546e63e98666.preview.emergentagent.com"
+BACKEND_URL = "https://a2cf20e7-0102-4953-931a-e6460447038f.preview.emergentagent.com"
 
 class ListProspectTester:
     def __init__(self):
