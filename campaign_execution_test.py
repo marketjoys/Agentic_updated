@@ -94,7 +94,7 @@ class CampaignExecutionTester:
         # Prepare campaign send request
         send_data = {
             "send_immediately": True,
-            "email_provider_id": "rohushanshinde@gmail.com",  # Use the configured provider
+            "email_provider_id": "90e8c90e-770c-42ef-9bb9-78631b77d793",  # Use the correct provider ID
             "max_emails": 1000,
             "schedule_type": "immediate",
             "follow_up_enabled": True,
