@@ -45,26 +45,30 @@ const ProtectedRoutes = () => {
   }
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/real-time" element={<RealTimeDashboard />} />
-        <Route path="/campaigns" element={<Campaigns />} />
-        <Route path="/prospects" element={<Prospects />} />
-        <Route path="/lists" element={<Lists />} />
-        <Route path="/lists/:listId" element={<ListsDetail />} />
-        <Route path="/templates" element={<Templates />} />
-        <Route path="/intents" element={<Intents />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/email-processing" element={<EmailProcessing />} />
-        <Route path="/email-providers" element={<EmailProviders />} />
-        <Route path="/knowledge-base" element={<KnowledgeBase />} />
-        <Route path="/system-prompts" element={<SystemPrompts />} />
-        <Route path="/response-verification" element={<ResponseVerification />} />
-        <Route path="/ai-agent" element={<AIAgentChat />} />
-        <Route path="/ai-agent-enhanced" element={<EnhancedAIAgentChat />} />
-      </Routes>
-    </Layout>
+    <ErrorBoundary>
+      <Layout>
+        <Suspense fallback={<LoadingSpinner message="Loading page..." />}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/real-time" element={<RealTimeDashboard />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/prospects" element={<Prospects />} />
+            <Route path="/lists" element={<Lists />} />
+            <Route path="/lists/:listId" element={<ListsDetail />} />
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/intents" element={<Intents />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/email-processing" element={<EmailProcessing />} />
+            <Route path="/email-providers" element={<EmailProviders />} />
+            <Route path="/knowledge-base" element={<KnowledgeBase />} />
+            <Route path="/system-prompts" element={<SystemPrompts />} />
+            <Route path="/response-verification" element={<ResponseVerification />} />
+            <Route path="/ai-agent" element={<AIAgentChat />} />
+            <Route path="/ai-agent-enhanced" element={<EnhancedAIAgentChat />} />
+          </Routes>
+        </Suspense>
+      </Layout>
+    </ErrorBoundary>
   );
 };
 
