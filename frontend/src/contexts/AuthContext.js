@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [checkAuth]);
 
-  const login = async (username, password) => {
+  const login = useCallback(async (username, password) => {
     try {
       console.log('🔐 AuthContext: Starting login process for username:', username);
       const response = await axios.post(`${backendUrl}/api/auth/login`, {
@@ -127,9 +127,9 @@ export const AuthProvider = ({ children }) => {
         error: error.response?.data?.detail || 'Login failed' 
       };
     }
-  };
+  }, [backendUrl]);
 
-  const register = async (username, email, password, fullName) => {
+  const register = useCallback(async (username, email, password, fullName) => {
     try {
       const response = await axios.post(`${backendUrl}/api/auth/register`, {
         username,
@@ -159,9 +159,9 @@ export const AuthProvider = ({ children }) => {
         error: error.response?.data?.detail || 'Registration failed' 
       };
     }
-  };
+  }, [backendUrl]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       if (token) {
         await axios.post(`${backendUrl}/api/auth/logout`);
@@ -173,23 +173,7 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
     }
-  };
-
-  const refreshToken = async () => {
-    try {
-      const response = await axios.post(`${backendUrl}/api/auth/refresh`);
-      const { access_token } = response.data;
-      
-      localStorage.setItem('token', access_token);
-      setToken(access_token);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      logout();
-      return { success: false };
-    }
-  };
+  }, [backendUrl, token]);
 
   const value = {
     user,
