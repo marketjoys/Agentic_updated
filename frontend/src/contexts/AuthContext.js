@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
@@ -14,11 +14,13 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const isInitialized = useRef(false);
+  const isCheckingAuth = useRef(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
-  // Set axios defaults
+  // Set axios defaults when token changes
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -27,10 +29,35 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Check if user is logged in on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      console.log('🔍 AuthContext: Checking authentication, token:', token ? 'present' : 'absent');
+  // Stable refresh token function
+  const refreshToken = useCallback(async () => {
+    try {
+      console.log('🔄 AuthContext: Attempting token refresh...');
+      const response = await axios.post(`${backendUrl}/api/auth/refresh`);
+      const { access_token } = response.data;
+      
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('❌ AuthContext: Token refresh error:', error);
+      return { success: false };
+    }
+  }, [backendUrl]);
+
+  // Stable check auth function
+  const checkAuth = useCallback(async () => {
+    // Prevent multiple simultaneous auth checks
+    if (isCheckingAuth.current) {
+      console.log('🔍 AuthContext: Auth check already in progress, skipping');
+      return;
+    }
+
+    isCheckingAuth.current = true;
+    console.log('🔍 AuthContext: Checking authentication, token:', token ? 'present' : 'absent');
+    
+    try {
       if (token) {
         try {
           console.log('🔍 AuthContext: Making request to /api/auth/me');
@@ -40,7 +67,6 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error('❌ AuthContext: Token validation failed:', error);
           // Token is invalid - try to refresh first
-          console.log('🔄 AuthContext: Attempting token refresh...');
           const refreshResult = await refreshToken();
           if (!refreshResult.success) {
             console.log('❌ AuthContext: Token refresh failed, clearing auth');
@@ -52,12 +78,20 @@ export const AuthProvider = ({ children }) => {
       } else {
         console.log('🔍 AuthContext: No token present');
       }
+    } finally {
       console.log('✅ AuthContext: Authentication check complete, setting loading to false');
       setLoading(false);
-    };
+      isCheckingAuth.current = false;
+    }
+  }, [token, backendUrl, refreshToken]);
 
-    checkAuth();
-  }, [token, backendUrl]);
+  // Initialize auth check only once on mount
+  useEffect(() => {
+    if (!isInitialized.current) {
+      isInitialized.current = true;
+      checkAuth();
+    }
+  }, [checkAuth]);
 
   const login = async (username, password) => {
     try {
