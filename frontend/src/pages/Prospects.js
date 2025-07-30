@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle, X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle, X, Sparkles, CheckSquare, Square } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 import AIProspectorModal from '../components/AIProspectorModal';
@@ -12,6 +12,10 @@ const Prospects = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAIProspector, setShowAIProspector] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Selection state
+  const [selectedProspects, setSelectedProspects] = useState(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     loadProspects();
