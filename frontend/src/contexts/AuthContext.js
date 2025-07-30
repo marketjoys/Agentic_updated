@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
 
   // Set axios defaults
   useEffect(() => {
