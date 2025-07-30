@@ -237,7 +237,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     } finally {
       setLoading(false);
     }
-  }, [query, targetList, resetActivity, voiceEnabled, isAwake, onProspectsAdded]);
+  }, [query, targetList, resetActivity, voiceEnabled, isAwake, onProspectsAdded, speakResponse]);
 
   const handleClarificationSubmit = async () => {
     if (clarificationQuestions.some(q => !clarifications[q])) {
