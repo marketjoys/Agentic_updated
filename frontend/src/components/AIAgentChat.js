@@ -45,10 +45,10 @@ const AIAgentChat = () => {
   );
   
   useEffect(() => {
-    // Generate session ID
+    // Generate session ID only once on component mount
     setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
     
-    // Add welcome message
+    // Add welcome message only once
     setMessages([{
       id: 'welcome',
       type: 'agent',
@@ -70,14 +70,17 @@ const AIAgentChat = () => {
       "What are my analytics?",
       "Upload prospects from CSV"
     ]);
+  }, []); // Empty dependency array to run only once
 
-    // Auto-speak welcome message if voice is enabled
-    if (voiceEnabled) {
+  // Separate effect for voice-related functionality
+  useEffect(() => {
+    // Auto-speak welcome message if voice is enabled - only when voice is first enabled
+    if (voiceEnabled && messages.length === 1 && messages[0].id === 'welcome') {
       setTimeout(() => {
         speakResponse("Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to wake me up anytime.");
       }, 1000);
     }
-  }, [voiceEnabled]);
+  }, [voiceEnabled, messages.length]); // Controlled dependencies
   
   useEffect(() => {
     scrollToBottom();
