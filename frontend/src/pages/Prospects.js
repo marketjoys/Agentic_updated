@@ -3,6 +3,7 @@ import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 import AIProspectorModal from '../components/AIProspectorModal';
+import useEscapeKey from '../hooks/useEscapeKey';
 
 const Prospects = () => {
   const [prospects, setProspects] = useState([]);
