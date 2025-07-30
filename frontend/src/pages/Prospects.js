@@ -94,11 +94,53 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
     toast.success(`${count} prospects added via AI prospecting!`);
   };
 
+  // Selection handlers
+  const handleSelectProspect = useCallback((prospectId) => {
+    setSelectedProspects(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(prospectId)) {
+        newSelection.delete(prospectId);
+      } else {
+        newSelection.add(prospectId);
+      }
+      setShowBulkActions(newSelection.size > 0);
+      return newSelection;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedProspects.size === filteredProspects.length) {
+      // Deselect all
+      setSelectedProspects(new Set());
+      setShowBulkActions(false);
+    } else {
+      // Select all filtered prospects
+      const allIds = new Set(filteredProspects.map(p => p.id));
+      setSelectedProspects(allIds);
+      setShowBulkActions(true);
+    }
+  }, [selectedProspects.size, filteredProspects]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedProspects(new Set());
+    setShowBulkActions(false);
+  }, []);
+
+  const handleBulkAddToList = useCallback(async (listId) => {
+    try {
+      await apiService.addProspectsToList(listId, Array.from(selectedProspects));
+      toast.success(`Added ${selectedProspects.size} prospects to list`);
+      clearSelection();
+    } catch (error) {
+      toast.error('Failed to add prospects to list');
+    }
+  }, [selectedProspects, clearSelection]);
+
   const filteredProspects = prospects.filter(prospect =>
-    prospect.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.company.toLowerCase().includes(searchTerm.toLowerCase())
+    prospect.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    prospect.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    prospect.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    prospect.company?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
