@@ -344,6 +344,41 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {showBulkActions && (
+        <div className="card bg-blue-50 border-blue-200">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <span className="font-medium text-blue-900">
+                  {selectedProspects.size} prospect{selectedProspects.size !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={clearSelection}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Clear selection
+                </button>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleBulkAddToList('default')}
+                  className="btn btn-primary text-sm"
+                >
+                  Add to List
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="btn btn-secondary text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Prospects Table */}
       <div className="card">
         <div className="card-header">
