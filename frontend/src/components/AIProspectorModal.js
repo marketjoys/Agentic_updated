@@ -131,7 +131,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
-  }, [resetActivity, goToSleep, handleSearch]);
+  }, [resetActivity, goToSleep, speakResponse, handleSearch]);
 
   const speakResponse = useCallback((text) => {
     if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
