@@ -94,6 +94,16 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
     toast.success(`${count} prospects added via AI prospecting!`);
   };
 
+  // Memoized filtered prospects to prevent re-render loops
+  const filteredProspects = useMemo(() => {
+    return prospects.filter(prospect =>
+      prospect.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prospect.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prospect.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prospect.company?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [prospects, searchTerm]);
+
   // Selection handlers
   const handleSelectProspect = useCallback((prospectId) => {
     setSelectedProspects(prev => {
@@ -103,45 +113,40 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
       } else {
         newSelection.add(prospectId);
       }
-      setShowBulkActions(newSelection.size > 0);
       return newSelection;
     });
   }, []);
 
+  // Update bulk actions when selection changes
+  useEffect(() => {
+    setShowBulkActions(selectedProspects.size > 0);
+  }, [selectedProspects.size]);
+
   const handleSelectAll = useCallback(() => {
-    if (selectedProspects.size === filteredProspects.length) {
+    if (selectedProspects.size === filteredProspects.length && filteredProspects.length > 0) {
       // Deselect all
       setSelectedProspects(new Set());
-      setShowBulkActions(false);
     } else {
       // Select all filtered prospects
       const allIds = new Set(filteredProspects.map(p => p.id));
       setSelectedProspects(allIds);
-      setShowBulkActions(true);
     }
-  }, [selectedProspects.size, filteredProspects]);
+  }, [selectedProspects.size, filteredProspects.length, filteredProspects]);
 
   const clearSelection = useCallback(() => {
     setSelectedProspects(new Set());
-    setShowBulkActions(false);
   }, []);
 
   const handleBulkAddToList = useCallback(async (listId) => {
     try {
-      await apiService.addProspectsToList(listId, Array.from(selectedProspects));
-      toast.success(`Added ${selectedProspects.size} prospects to list`);
+      const selectedArray = Array.from(selectedProspects);
+      await apiService.addProspectsToList(listId, selectedArray);
+      toast.success(`Added ${selectedArray.length} prospects to list`);
       clearSelection();
     } catch (error) {
       toast.error('Failed to add prospects to list');
     }
   }, [selectedProspects, clearSelection]);
-
-  const filteredProspects = prospects.filter(prospect =>
-    prospect.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.company?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (loading) {
     return (
