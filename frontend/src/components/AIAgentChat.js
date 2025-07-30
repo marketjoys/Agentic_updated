@@ -1,5 +1,5 @@
 // Voice/Chat Interface for AI Agent - React Component with Wake Word
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, Mic, MicOff, MessageCircle, Headphones, Volume2, VolumeX, Settings } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import apiService from '../services/api';
@@ -18,6 +18,7 @@ const AIAgentChat = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true); // Default to enabled for wake word
   const [suggestions, setSuggestions] = useState([]);
   const [showTroubleshootingModal, setShowTroubleshootingModal] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
