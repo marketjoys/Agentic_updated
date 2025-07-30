@@ -162,7 +162,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     speechSynthesis.speak(utterance);
   };
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!query.trim()) {
       toast.error('Please enter a search query');
       return;
@@ -237,7 +237,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query, targetList, resetActivity, voiceEnabled, isAwake, onProspectsAdded]);
 
   const handleClarificationSubmit = async () => {
     if (clarificationQuestions.some(q => !clarifications[q])) {
