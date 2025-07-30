@@ -415,17 +415,35 @@ ${htmlContent}
                 </div>
               </div>
 
-              <textarea
-                data-field="html_content"
-                value={templateData.is_html_enabled ? templateData.html_content : templateData.content}
-                onChange={(e) => handleInputChange(templateData.is_html_enabled ? 'html_content' : 'content', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                rows={templateData.is_html_enabled ? 15 : 10}
-                placeholder={templateData.is_html_enabled ? 
-                  "Enter HTML content..." : 
-                  "Enter text content..."
-                }
-              />
+              {templateData.is_html_enabled ? (
+                <textarea
+                  data-field="html_content"
+                  value={templateData.html_content}
+                  onChange={(e) => handleInputChange('html_content', e.target.value)}
+                  onKeyDown={(e) => {
+                    // Allow typing and prevent modal close on Escape when editing
+                    if (e.key === 'Escape') {
+                      e.stopPropagation();
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                  rows={15}
+                  placeholder="Enter HTML content..."
+                />
+              ) : (
+                <RichTextEditor
+                  value={templateData.content}
+                  onChange={(value) => handleInputChange('content', value)}
+                  onKeyDown={(e) => {
+                    // Allow typing and prevent modal close on Escape when editing
+                    if (e.key === 'Escape') {
+                      e.stopPropagation();
+                    }
+                  }}
+                  placeholder="Enter your email content here. Use the toolbar above to format your text..."
+                  className="border border-gray-300 rounded-lg"
+                />
+              )}
             </div>
 
             {/* Personalization Tags */}
