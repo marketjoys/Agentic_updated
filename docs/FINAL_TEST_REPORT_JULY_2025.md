@@ -13,7 +13,7 @@ The AI Email Responder application has been comprehensively tested and verified 
 
 ## 📊 TESTING OVERVIEW
 
-- **Test Environment**: https://292b2cfa-1394-46f4-82db-100b80f4782f.preview.emergentagent.com
+- **Test Environment**: https://64e7fdde-dfd5-4b2b-b2c3-2f149d1e1d45.preview.emergentagent.com
 - **Test Credentials**: testuser / testpass123  
 - **Testing Date**: July 25, 2025
 - **Testing Scope**: Full-stack application testing (Backend + Frontend)

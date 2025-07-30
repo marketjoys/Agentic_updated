@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Test configuration
-BACKEND_URL = "https://292b2cfa-1394-46f4-82db-100b80f4782f.preview.emergentagent.com"
+BACKEND_URL = "https://64e7fdde-dfd5-4b2b-b2c3-2f149d1e1d45.preview.emergentagent.com"
 TEST_USER = "testuser"
 TEST_PASSWORD = "testpass123"
 
