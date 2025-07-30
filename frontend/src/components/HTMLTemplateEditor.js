@@ -148,11 +148,8 @@ const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
 </html>`;
   };
 
-  const generateHTMLFromText = (textContent) => {
-    if (!textContent) return getDefaultHTMLTemplate();
-    
-    const paragraphs = textContent.split('\n').filter(p => p.trim());
-    const htmlContent = paragraphs.map(p => `            <p>${p}</p>`).join('\n');
+  const generateHTMLFromRichText = (richTextContent) => {
+    if (!richTextContent) return getDefaultHTMLTemplate();
     
     return `<!DOCTYPE html>
 <html>
@@ -162,9 +159,9 @@ const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
     <title>{{subject}}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: ${templateData.style_settings.font};
             line-height: 1.6;
-            color: #1F2937;
+            color: ${templateData.style_settings.textColor};
             background-color: #f9fafb;
             margin: 0;
             padding: 20px;
@@ -172,18 +169,46 @@ const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
         .email-container {
             max-width: 600px;
             margin: 0 auto;
-            background-color: #FFFFFF;
-            border-radius: 8px;
+            background-color: ${templateData.style_settings.backgroundColor};
+            border-radius: ${templateData.style_settings.borderRadius};
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             padding: 30px;
         }
-        h1, h2, h3 { color: #1F2937; }
+        .header {
+            background-color: ${templateData.style_settings.primaryColor};
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: ${templateData.style_settings.borderRadius} ${templateData.style_settings.borderRadius} 0 0;
+            margin: -30px -30px 30px -30px;
+        }
+        h1, h2, h3 { color: ${templateData.style_settings.textColor}; }
         p { margin-bottom: 16px; }
+        .button {
+            display: inline-block;
+            background-color: ${templateData.style_settings.primaryColor};
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .ql-editor { border: none; padding: 0; }
+        .ql-editor p { margin-bottom: 16px; }
+        .ql-editor h1, .ql-editor h2, .ql-editor h3 { color: ${templateData.style_settings.textColor}; }
     </style>
 </head>
 <body>
     <div class="email-container">
-${htmlContent}
+        <div class="header">
+            <h1>Hello {{first_name}}!</h1>
+        </div>
+        <div class="ql-editor">
+            ${richTextContent}
+        </div>
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e5e7eb; margin-top: 20px; font-size: 12px; color: #6b7280;">
+            <p>This email was sent to {{email}}</p>
+        </div>
     </div>
 </body>
 </html>`;
