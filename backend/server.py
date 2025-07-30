@@ -1424,11 +1424,11 @@ async def start_all_services():
 async def stop_all_services():
     """Manually stop both follow-up and auto-responder services"""
     try:
-        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
         from app.services.email_processor import email_processor
         
         # Stop Follow-up Engine
-        follow_up_result = await smart_follow_up_engine.stop_follow_up_engine()
+        follow_up_result = await enhanced_smart_follow_up_engine.stop_follow_up_engine()
         
         # Stop Email Processor
         email_result = await email_processor.stop_monitoring()
