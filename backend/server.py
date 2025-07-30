@@ -1642,7 +1642,7 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
     try:
         from app.services.database import db_service
         from app.services.email_provider_service import email_provider_service
-        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
         from app.services.email_processor import email_processor
         from app.utils.helpers import generate_id, personalize_template
         
@@ -1652,8 +1652,8 @@ async def send_campaign_emails(campaign_id: str, send_request: EmailSendRequest)
         # Auto-start Follow-up and Auto-Response Services
         logging.info("Auto-starting follow-up and auto-response services...")
         
-        if not smart_follow_up_engine.processing:
-            await smart_follow_up_engine.start_follow_up_engine()
+        if not enhanced_smart_follow_up_engine.processing:
+            await enhanced_smart_follow_up_engine.start_follow_up_engine()
             logging.info("Smart Follow-up Engine started automatically")
         
         if not email_processor.processing:
