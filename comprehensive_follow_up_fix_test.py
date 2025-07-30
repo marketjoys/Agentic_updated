@@ -513,7 +513,7 @@ class ComprehensiveFollowUpTester:
                     await self.monitor_follow_up_delivery(campaign)
             
             # Determine overall status
-            test_statuses = [result["status"] for result in self.test_results.values() if result["status"] != "unknown"]
+            test_statuses = [result["status"] for result in self.test_results.values() if isinstance(result, dict) and result.get("status") != "unknown"]
             
             if all(status == "passed" for status in test_statuses):
                 self.test_results["overall_status"] = "passed"
