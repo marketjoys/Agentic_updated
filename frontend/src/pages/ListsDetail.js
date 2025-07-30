@@ -399,7 +399,7 @@ const ListsDetail = () => {
                     <th className="table-header">
                       <input
                         type="checkbox"
-                        checked={selectedProspects.length === filteredProspects.length}
+                        checked={filteredProspects.map(p => p.id).every(id => selectedProspects.includes(id)) && filteredProspects.length > 0}
                         onChange={handleSelectAll}
                         className="h-4 w-4 text-blue-600 rounded"
                       />
