@@ -294,7 +294,7 @@ ${htmlContent}
   };
 
   const convertTextToHTML = () => {
-    const htmlContent = generateHTMLFromText(templateData.content);
+    const htmlContent = generateHTMLFromRichText(templateData.content);
     setTemplateData(prev => ({
       ...prev,
       html_content: htmlContent,
