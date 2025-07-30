@@ -71,7 +71,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     }
   };
 
-  const startVoiceRecognition = (autoSearch = false) => {
+  const startVoiceRecognition = useCallback((autoSearch = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
@@ -131,7 +131,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
-  };
+  }, [resetActivity, goToSleep]);
 
   const speakResponse = (text) => {
     if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
