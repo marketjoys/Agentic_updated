@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Search, Sparkles, Users, Building, MapPin, AlertCircle, CheckCircle, Clock, Brain, Mic, MicOff } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
@@ -25,6 +25,12 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // Memoized wake word callback to prevent re-renders
+  const handleWakeWordDetected = useCallback(() => {
+    // When wake word is detected in prospector, start listening for search query
+    setTimeout(() => startVoiceRecognition(true), 1000);
+  }, []);
+
   // Wake word detection for Auto Prospector
   const {
     isListeningForWakeWord,
@@ -37,13 +43,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     activateVoiceMode,
     requestPermission,
     permissionGranted
-  } = useWakeWordDetection(
-    () => {
-      // When wake word is detected in prospector, start listening for search query
-      setTimeout(() => startVoiceRecognition(true), 1000);
-    },
-    voiceEnabled && isOpen
-  );
+  } = useWakeWordDetection(handleWakeWordDetected, voiceEnabled && isOpen);
 
   useEffect(() => {
     if (isOpen) {
