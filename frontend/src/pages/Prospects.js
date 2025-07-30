@@ -390,6 +390,9 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
 };
 
 const AddProspectModal = ({ onClose, onSubmit }) => {
+  // Add escape key functionality
+  useEscapeKey(onClose, true);
+  
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
