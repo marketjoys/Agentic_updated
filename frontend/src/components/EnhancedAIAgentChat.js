@@ -1,5 +1,5 @@
 // Enhanced Voice/Chat Interface for AI Agent with Confirmation Flow
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { 
   Send, Mic, MicOff, MessageCircle, Volume2, VolumeX, Settings, 
   CheckCircle, AlertCircle, Clock, Zap, History, RotateCcw
