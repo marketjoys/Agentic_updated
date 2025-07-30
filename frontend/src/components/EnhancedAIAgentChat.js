@@ -250,7 +250,7 @@ const EnhancedAIAgentChat = () => {
     }
   }, [sessionId, useEnhancedFlow]);
   
-  const startVoiceRecognition = async () => {
+  const startVoiceRecognition = useCallback(async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
@@ -299,6 +299,18 @@ const EnhancedAIAgentChat = () => {
         toast.error(`Voice recognition error: ${event.error}`);
       }
     };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+    
+    try {
+      recognition.start();
+    } catch (error) {
+      setIsListening(false);
+      toast.error('Failed to start voice recognition');
+    }
+  }, []);
     
     recognition.onend = () => {
       setIsListening(false);
