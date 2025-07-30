@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class EmailSendingTester:
     def __init__(self):
         # Use the production URL from frontend/.env
-        self.base_url = "https://9875c261-7164-46da-a66e-4f7aea2c987d.preview.emergentagent.com/api"
+        self.base_url = "https://2383b216-6221-4f25-b50c-73dce9a2ad0d.preview.emergentagent.com/api"
         self.session = None
         self.auth_token = None
         

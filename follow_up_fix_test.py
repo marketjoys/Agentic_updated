@@ -11,7 +11,7 @@ import sys
 import os
 
 # Backend URL from environment
-BACKEND_URL = "https://9875c261-7164-46da-a66e-4f7aea2c987d.preview.emergentagent.com/api"
+BACKEND_URL = "https://2383b216-6221-4f25-b50c-73dce9a2ad0d.preview.emergentagent.com/api"
 
 async def test_follow_up_fix():
     """Test if follow-up emails work after fixing the default provider issue"""
