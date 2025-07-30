@@ -204,16 +204,16 @@ const EnhancedAIAgentChat = () => {
     }
   }, [isConnected, sessionId, useEnhancedFlow]);
   
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
     sendMessage(inputMessage);
-  };
+  }, [sendMessage, inputMessage]);
   
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = useCallback((suggestion) => {
     sendMessage(suggestion);
-  };
+  }, [sendMessage]);
   
-  const updateTurnLimit = async (newLimit) => {
+  const updateTurnLimit = useCallback(async (newLimit) => {
     try {
       await apiService.post('/api/ai-agent/set-turn-limit', {
         session_id: sessionId,
@@ -224,9 +224,9 @@ const EnhancedAIAgentChat = () => {
     } catch (error) {
       toast.error('Failed to update turn limit');
     }
-  };
+  }, [sessionId]);
   
-  const loadConversationHistory = async () => {
+  const loadConversationHistory = useCallback(async () => {
     try {
       const response = await apiService.get(`/api/ai-agent/conversation-history/${sessionId}`);
       setConversationHistory(response.data.history);
@@ -234,9 +234,9 @@ const EnhancedAIAgentChat = () => {
     } catch (error) {
       toast.error('Failed to load conversation history');
     }
-  };
+  }, [sessionId]);
   
-  const clearConversation = async () => {
+  const clearConversation = useCallback(async () => {
     try {
       await apiService.delete(`/api/ai-agent/sessions/${sessionId}?enhanced=${useEnhancedFlow}`);
       setMessages([]);
@@ -248,7 +248,7 @@ const EnhancedAIAgentChat = () => {
     } catch (error) {
       toast.error('Failed to clear conversation');
     }
-  };
+  }, [sessionId, useEnhancedFlow]);
   
   const startVoiceRecognition = async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
