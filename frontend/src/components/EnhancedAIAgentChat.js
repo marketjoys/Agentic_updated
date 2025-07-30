@@ -228,7 +228,7 @@ const EnhancedAIAgentChat = () => {
   const loadConversationHistory = useCallback(async () => {
     try {
       const response = await apiService.get(`/api/ai-agent/conversation-history/${sessionId}`);
-      setConversationHistory(response.data.history);
+      // Just show success toast, no need to store history in state if not used
       toast.success('Conversation history loaded');
     } catch (error) {
       toast.error('Failed to load conversation history');
