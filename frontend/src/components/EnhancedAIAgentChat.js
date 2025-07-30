@@ -134,7 +134,7 @@ const EnhancedAIAgentChat = () => {
     }
   };
   
-  const sendMessage = async (message) => {
+  const sendMessage = useCallback(async (message) => {
     if (!message.trim()) return;
     
     // Add user message
@@ -202,7 +202,7 @@ const EnhancedAIAgentChat = () => {
       };
       setMessages(prev => [...prev, errorMessage]);
     }
-  };
+  }, [isConnected, sessionId, useEnhancedFlow]);
   
   const handleSubmit = (e) => {
     e.preventDefault();
