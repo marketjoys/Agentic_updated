@@ -294,9 +294,16 @@ Guidelines:
               <textarea
                 value={formData.prompt_text}
                 onChange={(e) => setFormData({...formData, prompt_text: e.target.value})}
+                onKeyDown={(e) => {
+                  // Allow typing and prevent modal close on Escape when editing
+                  if (e.key === 'Escape') {
+                    e.stopPropagation();
+                  }
+                }}
                 rows={12}
-                className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                className="w-full px-3 py-2 border rounded-md font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
+                placeholder="Enter your system prompt here..."
               />
             </div>
 
