@@ -16,6 +16,9 @@ const ProviderModal = React.memo(({
   formData,
   handleInputChange
 }) => {
+  // Add escape key functionality
+  useEscapeKey(onClose, show);
+  
   // Handle background click to close modal
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
