@@ -7,6 +7,9 @@ import VoiceIndicator from './VoiceIndicator';
 import useEscapeKey from '../hooks/useEscapeKey';
 
 const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
+  // Add escape key functionality
+  useEscapeKey(onClose, isOpen);
+  
   const [step, setStep] = useState('query'); // query, clarification, searching, results
   const [query, setQuery] = useState('');
   const [targetList, setTargetList] = useState('');
