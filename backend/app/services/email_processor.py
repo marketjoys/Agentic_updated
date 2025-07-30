@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List, Optional
 import os
 from app.services.database import db_service
+from app.services.enhanced_database import enhanced_db_service
 from app.services.groq_service import groq_service
 from app.utils.helpers import send_email, generate_id, personalize_template
 
