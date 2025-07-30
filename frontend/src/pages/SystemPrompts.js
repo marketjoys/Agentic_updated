@@ -411,14 +411,20 @@ Guidelines:
                 value={testInput}
                 onChange={(e) => setTestInput(e.target.value)}
                 onKeyDown={(e) => {
-                  // Allow typing and prevent modal close on Escape when editing
+                  // Allow typing and prevent modal close on Escape when focused
                   if (e.key === 'Escape') {
                     e.stopPropagation();
+                    // Only close modal if textarea is not focused or empty
+                    if (e.target !== document.activeElement || !testInput.trim()) {
+                      onClose();
+                    }
                   }
                 }}
                 rows={4}
-                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
                 placeholder="Enter your test input here..."
+                autoComplete="off"
+                spellCheck="false"
               />
             </div>
 
