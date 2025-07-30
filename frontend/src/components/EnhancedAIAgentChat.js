@@ -311,13 +311,6 @@ const EnhancedAIAgentChat = () => {
       toast.error('Failed to start voice recognition');
     }
   }, []);
-    
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-    
-    recognition.start();
-  };
   
   const getStateIcon = (state) => {
     switch (state) {
