@@ -941,10 +941,38 @@ async def get_provider_imap_status(provider_id: str):
 
 @app.post("/api/email-providers/{provider_id}/set-default")
 async def set_default_email_provider(provider_id: str):
-    return {
-        "id": provider_id,
-        "message": "Default provider updated successfully"
-    }
+    """Set an email provider as the default"""
+    try:
+        from app.services.database import db_service
+        
+        # Connect to database
+        await db_service.connect()
+        
+        # Check if provider exists
+        provider = await db_service.get_email_provider_by_id(provider_id)
+        if not provider:
+            raise HTTPException(status_code=404, detail="Email provider not found")
+        
+        # First, unset all other defaults
+        await db_service.unset_default_email_providers()
+        
+        # Set this provider as default
+        await db_service.update_email_provider(provider_id, {
+            "is_default": True,
+            "updated_at": datetime.utcnow()
+        })
+        
+        return {
+            "id": provider_id,
+            "message": "Default provider updated successfully",
+            "provider_name": provider.get("name", "Unknown")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error setting default email provider: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error setting default provider: {str(e)}")
 
 @app.get("/api/lists")
 async def get_lists():
