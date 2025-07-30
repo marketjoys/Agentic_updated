@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Code, Mail, Palette, Save, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import useEscapeKey from '../hooks/useEscapeKey';
+import RichTextEditor from './RichTextEditor';
 
 const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
   const [activeTab, setActiveTab] = useState('edit');
