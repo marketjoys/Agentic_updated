@@ -24,6 +24,12 @@ const AIAgentChat = () => {
   const websocketRef = useRef(null);
   const recognitionRef = useRef(null);
 
+  // Memoized callback for wake word detection to prevent re-renders
+  const handleWakeWordDetected = useCallback(() => {
+    // When wake word is detected, automatically start listening for command
+    setTimeout(() => startVoiceRecognition(true), 1000);
+  }, []);
+
   // Wake word detection
   const {
     isListeningForWakeWord,
@@ -37,20 +43,18 @@ const AIAgentChat = () => {
     requestPermission,
     permissionGranted,
     forceRestartListening
-  } = useWakeWordDetection(
-    () => {
-      // When wake word is detected, automatically start listening for command
-      setTimeout(() => startVoiceRecognition(true), 1000);
-    },
-    voiceEnabled
-  );
+  } = useWakeWordDetection(handleWakeWordDetected, voiceEnabled);
   
+  // Initialize component once
   useEffect(() => {
+    if (hasInitialized) return;
+    
     // Generate session ID only once on component mount
-    setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setSessionId(newSessionId);
     
     // Add welcome message only once
-    setMessages([{
+    const welcomeMessage = {
       id: 'welcome',
       type: 'agent',
       content: "Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to activate voice mode, or just type your message. I can help you manage campaigns, prospects, templates, and much more!",
@@ -62,30 +66,34 @@ const AIAgentChat = () => {
         "Upload prospects from CSV"
       ],
       timestamp: new Date()
-    }]);
+    };
     
-    setSuggestions([
-      "Hello Joy",
-      "Show me all my campaigns", 
-      "Create a new prospect",
-      "What are my analytics?",
-      "Upload prospects from CSV"
-    ]);
-  }, []); // Empty dependency array to run only once
+    setMessages([welcomeMessage]);
+    setSuggestions(welcomeMessage.suggestions);
+    setHasInitialized(true);
+  }, [hasInitialized]);
 
-  // Separate effect for voice-related functionality
-  useEffect(() => {
-    // Auto-speak welcome message if voice is enabled - only when voice is first enabled
-    if (voiceEnabled && messages.length === 1 && messages[0].id === 'welcome') {
-      setTimeout(() => {
-        speakResponse("Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to wake me up anytime.");
-      }, 1000);
-    }
-  }, [voiceEnabled, messages.length]); // Controlled dependencies
-  
+  // Optimized scroll effect
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
+
+  // Optimized voice effect - only run when needed
+  useEffect(() => {
+    if (!voiceEnabled || !hasInitialized || isSpeaking) return;
+    
+    // Auto-speak welcome message if voice is enabled and we have the welcome message
+    if (messages.length === 1 && messages[0]?.id === 'welcome') {
+      const timer = setTimeout(() => {
+        speakResponse("Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to wake me up anytime.");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [voiceEnabled, hasInitialized, messages.length, isSpeaking]);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
