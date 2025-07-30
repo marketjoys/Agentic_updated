@@ -5,6 +5,9 @@ import useEscapeKey from '../hooks/useEscapeKey';
 import RichTextEditor from './RichTextEditor';
 
 const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
+  // Add escape key functionality
+  useEscapeKey(onClose, isOpen);
+  
   const [activeTab, setActiveTab] = useState('edit');
   const [showPreview, setShowPreview] = useState(true);
   const [templateData, setTemplateData] = useState({
