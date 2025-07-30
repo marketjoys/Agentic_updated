@@ -148,6 +148,47 @@ const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
 </html>`;
   };
 
+  const generateHTMLFromText = (textContent) => {
+    if (!textContent) return getDefaultHTMLTemplate();
+    
+    const paragraphs = textContent.split('\n').filter(p => p.trim());
+    const htmlContent = paragraphs.map(p => `            <p>${p}</p>`).join('\n');
+    
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{subject}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #1F2937;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1, h2, h3 { color: #1F2937; }
+        p { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+${htmlContent}
+    </div>
+</body>
+</html>`;
+  };
+
   const generateHTMLFromRichText = (richTextContent) => {
     if (!richTextContent) return getDefaultHTMLTemplate();
     
