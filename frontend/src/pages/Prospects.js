@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Upload, Plus, Search, Users, Mail, Building, Phone, Download, RefreshCw, UserCheck, AlertCircle, X, Sparkles, CheckSquare, Square } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
