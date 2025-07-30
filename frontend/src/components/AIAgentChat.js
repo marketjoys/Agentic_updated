@@ -233,7 +233,7 @@ Please try again or ask for help.`,
     sendMessage(suggestion);
   }, [sendMessage]);
   
-  const startVoiceRecognition = (autoSend = false) => {
+  const startVoiceRecognition = useCallback((autoSend = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
@@ -309,9 +309,9 @@ Please try again or ask for help.`,
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
-  };
+  }, [resetActivity, goToSleep, sendMessage]);
   
-  const speakResponse = (text) => {
+  const speakResponse = useCallback((text) => {
     if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
     
     setIsSpeaking(true);
@@ -347,15 +347,15 @@ Please try again or ask for help.`,
     };
     
     speechSynthesis.speak(utterance);
-  };
+  }, [voiceEnabled, isAwake, resetActivity]);
   
-  const clearChat = () => {
+  const clearChat = useCallback(() => {
     setMessages([]);
     setSuggestions([]);
     toast.success('Chat cleared');
-  };
+  }, []);
   
-  const formatMessage = (message) => {
+  const formatMessage = useCallback((message) => {
     let content = message.content;
     
     // Format action results
