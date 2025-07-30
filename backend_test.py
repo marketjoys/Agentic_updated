@@ -12,7 +12,7 @@ import sys
 import os
 
 # Backend URL from environment
-BACKEND_URL = "http://localhost:8001/api"
+BACKEND_URL = "https://64e7fdde-dfd5-4b2b-b2c3-2f149d1e1d45.preview.emergentagent.com/api"
 
 class EmailCampaignSystemTester:
     def __init__(self):
