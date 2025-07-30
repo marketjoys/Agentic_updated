@@ -133,7 +133,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     }
   }, [resetActivity, goToSleep, handleSearch]);
 
-  const speakResponse = (text) => {
+  const speakResponse = useCallback((text) => {
     if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
     
     setIsSpeaking(true);
@@ -160,7 +160,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     };
     
     speechSynthesis.speak(utterance);
-  };
+  }, [voiceEnabled, isAwake, resetActivity]);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) {
