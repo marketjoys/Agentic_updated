@@ -95,10 +95,6 @@ const AIAgentChat = () => {
     }
   }, [voiceEnabled, hasInitialized, messages.length, isSpeaking]);
   
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-  
   const connectWebSocket = () => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
