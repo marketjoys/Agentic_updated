@@ -34,7 +34,7 @@ const HTMLTemplateEditor = ({ isOpen, onClose, template, onSave }) => {
         name: template.name || '',
         subject: template.subject || '',
         content: template.content || '',
-        html_content: template.html_content || generateHTMLFromText(template.content || ''),
+        html_content: template.html_content || generateHTMLFromRichText(template.content || ''),
         type: template.type || 'email',
         is_html_enabled: template.is_html_enabled !== false,
         style_settings: {
