@@ -1347,7 +1347,7 @@ async def search_industries(search_term: str):
 async def get_services_status():
     """Get status of auto follow-up and auto-responder services with provider details"""
     try:
-        from app.services.smart_follow_up_engine import smart_follow_up_engine
+        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
         from app.services.email_processor import email_processor
         
         # Get monitored providers info
@@ -1365,7 +1365,7 @@ async def get_services_status():
         return {
             "services": {
                 "smart_follow_up_engine": {
-                    "status": "running" if smart_follow_up_engine.processing else "stopped",
+                    "status": "running" if enhanced_smart_follow_up_engine.processing else "stopped",
                     "description": "Handles automatic follow-up emails"
                 },
                 "email_processor": {
@@ -1375,7 +1375,7 @@ async def get_services_status():
                     "monitored_providers": monitored_providers_info
                 }
             },
-            "overall_status": "healthy" if (smart_follow_up_engine.processing and email_processor.processing) else "degraded",
+            "overall_status": "healthy" if (enhanced_smart_follow_up_engine.processing and email_processor.processing) else "degraded",
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
