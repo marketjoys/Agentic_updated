@@ -382,15 +382,44 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
       {/* Prospects Table */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-xl font-bold text-gray-900">
-            All Prospects ({filteredProspects.length})
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900">
+              All Prospects ({filteredProspects.length})
+            </h3>
+            {filteredProspects.length > 0 && (
+              <button
+                onClick={handleSelectAll}
+                className="flex items-center space-x-2 text-sm text-blue-600 hover:text-blue-800"
+              >
+                {selectedProspects.size === filteredProspects.length ? (
+                  <CheckSquare className="h-4 w-4" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                <span>
+                  {selectedProspects.size === filteredProspects.length ? 'Deselect All' : 'Select All'}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
         <div className="card-body p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
+                  <th className="table-header w-12">
+                    <button
+                      onClick={handleSelectAll}
+                      className="p-1 hover:bg-gray-100 rounded"
+                    >
+                      {selectedProspects.size === filteredProspects.length && filteredProspects.length > 0 ? (
+                        <CheckSquare className="h-4 w-4 text-blue-600" />
+                      ) : (
+                        <Square className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </th>
                   <th className="table-header">Name</th>
                   <th className="table-header">Email</th>
                   <th className="table-header">Company</th>
@@ -401,7 +430,24 @@ mark.wilson@demo.org,Mark,Wilson,Demo Solutions,+1-555-0789,https://linkedin.com
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredProspects.map((prospect) => (
-                  <tr key={prospect.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr 
+                    key={prospect.id} 
+                    className={`hover:bg-gray-50/50 transition-colors ${
+                      selectedProspects.has(prospect.id) ? 'bg-blue-50' : ''
+                    }`}
+                  >
+                    <td className="table-cell">
+                      <button
+                        onClick={() => handleSelectProspect(prospect.id)}
+                        className="p-1 hover:bg-gray-100 rounded"
+                      >
+                        {selectedProspects.has(prospect.id) ? (
+                          <CheckSquare className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-3">
                         <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
