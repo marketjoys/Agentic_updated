@@ -629,27 +629,15 @@ class EmailProcessor:
             raise e
     
     async def _get_original_email_provider(self, prospect_id: str) -> Dict:
-        """Get the original email provider used for this prospect"""
+        """Get the original email provider used for this prospect using enhanced method"""
         try:
-            # Find the most recent email sent to this prospect from us
-            cursor = db_service.db.emails.find({
-                "prospect_id": prospect_id,
-                "sent_by_us": True,
-                "provider_id": {"$ne": None}
-            }).sort("sent_at", -1).limit(1)
+            # Use enhanced database service method
+            original_provider = await enhanced_db_service.get_prospect_original_provider(prospect_id)
+            if original_provider:
+                logger.info(f"Found original provider for prospect {prospect_id}: {original_provider.get('email_address')}")
+                return original_provider
             
-            email_records = await cursor.to_list(length=1)
-            
-            if email_records:
-                provider_id = email_records[0].get("provider_id")
-                if provider_id:
-                    # Get the provider details
-                    provider = await db_service.get_email_provider_by_id(provider_id)
-                    if provider:
-                        logger.info(f"Found original provider for prospect {prospect_id}: {provider.get('email_address')}")
-                        return provider
-            
-            # Fallback to default provider if no original provider found
+            # Final fallback to default provider
             logger.info(f"No original provider found for prospect {prospect_id}, using default provider")
             provider = await db_service.get_default_email_provider()
             return provider
