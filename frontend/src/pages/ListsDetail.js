@@ -368,7 +368,7 @@ const ListsDetail = () => {
               onClick={handleSelectAll}
               className="btn btn-secondary btn-sm"
             >
-              {selectedProspects.length === filteredProspects.length ? 'Deselect All' : 'Select All'}
+              {filteredProspects.map(p => p.id).every(id => selectedProspects.includes(id)) && filteredProspects.length > 0 ? 'Deselect All' : 'Select All'}
             </button>
           </div>
 
