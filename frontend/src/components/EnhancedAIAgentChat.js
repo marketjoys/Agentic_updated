@@ -52,6 +52,7 @@ const EnhancedAIAgentChat = () => {
     
     setMessages([welcomeMessage]);
     setSuggestions(welcomeMessage.suggestions);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array to run only once
   
   // Separate effect to handle useEnhancedFlow changes - properly memoized
