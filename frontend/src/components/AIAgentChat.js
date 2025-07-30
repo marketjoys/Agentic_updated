@@ -144,7 +144,7 @@ const AIAgentChat = () => {
     }
   };
   
-  const sendMessage = async (message) => {
+  const sendMessage = useCallback(async (message) => {
     if (!message.trim()) return;
     
     // Reset activity timer when sending message
@@ -222,16 +222,16 @@ Please try again or ask for help.`,
       };
       setMessages(prev => [...prev, errorMessage]);
     }
-  };
+  }, [isConnected, sessionId, resetActivity, voiceEnabled, isAwake]);
   
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
     sendMessage(inputMessage);
-  };
+  }, [inputMessage, sendMessage]);
   
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = useCallback((suggestion) => {
     sendMessage(suggestion);
-  };
+  }, [sendMessage]);
   
   const startVoiceRecognition = (autoSend = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
