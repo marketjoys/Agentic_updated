@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Settings, Edit, Trash2, Play, Star, Code, TestTube } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import useEscapeKey from '../hooks/useEscapeKey';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
