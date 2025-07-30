@@ -387,6 +387,38 @@ Please try again or ask for help.`,
     }
     
     return content;
+  }, []);
+    let content = message.content;
+    
+    // Format action results
+    if (message.actionTaken && message.data) {
+      content += '\n\n---';
+      if (message.actionTaken === 'list_campaigns' && Array.isArray(message.data)) {
+        content += '\n📋 **Campaigns Found:**';
+        message.data.slice(0, 5).forEach(campaign => {
+          content += `\n• ${campaign.name} (${campaign.status})`;
+        });
+        if (message.data.length > 5) {
+          content += `\n• ... and ${message.data.length - 5} more`;
+        }
+      } else if (message.actionTaken === 'list_prospects' && Array.isArray(message.data)) {
+        content += '\n👥 **Prospects Found:**';
+        message.data.slice(0, 5).forEach(prospect => {
+          content += `\n• ${prospect.first_name} ${prospect.last_name} - ${prospect.company || 'No company'}`;
+        });
+        if (message.data.length > 5) {
+          content += `\n• ... and ${message.data.length - 5} more`;
+        }
+      } else if (message.actionTaken === 'show_analytics' && message.data) {
+        content += '\n📊 **Analytics Summary:**';
+        content += `\n• Campaigns: ${message.data.total_campaigns}`;
+        content += `\n• Prospects: ${message.data.total_prospects}`;
+        content += `\n• Emails Sent: ${message.data.total_emails_sent}`;
+        content += `\n• Open Rate: ${message.data.average_open_rate}%`;
+      }
+    }
+    
+    return content;
   };
   
   return (
