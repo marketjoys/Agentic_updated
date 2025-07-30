@@ -373,6 +373,9 @@ Guidelines:
   };
 
   const TestModal = ({ show, onClose, prompt }) => {
+    // Add escape key functionality
+    useEscapeKey(onClose, show);
+    
     if (!show || !prompt) return null;
 
     return (
