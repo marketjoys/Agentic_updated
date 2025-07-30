@@ -4,6 +4,7 @@ import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 import useWakeWordDetection from '../hooks/useWakeWordDetection';
 import VoiceIndicator from './VoiceIndicator';
+import useEscapeKey from '../hooks/useEscapeKey';
 
 const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [step, setStep] = useState('query'); // query, clarification, searching, results
