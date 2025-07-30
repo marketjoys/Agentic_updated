@@ -55,17 +55,19 @@ const EnhancedAIAgentChat = () => {
     setSuggestions(welcomeMessage.suggestions);
   }, []); // Empty dependency array to run only once
   
-  // Separate effect to handle useEnhancedFlow changes
+  // Separate effect to handle useEnhancedFlow changes - properly memoized
   useEffect(() => {
     // Only update message content if messages exist and useEnhancedFlow changes
     if (messages.length > 0 && messages[0].id === 'welcome') {
-      const updatedWelcome = {
-        ...messages[0],
-        content: useEnhancedFlow 
-          ? "Hello! I'm your Enhanced AI assistant with confirmation flow. I'll ask for your confirmation before performing any actions. Tell me what you'd like to do!" 
-          : "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!"
-      };
-      setMessages([updatedWelcome]);
+      setMessages(prevMessages => {
+        const updatedWelcome = {
+          ...prevMessages[0],
+          content: useEnhancedFlow 
+            ? "Hello! I'm your Enhanced AI assistant with confirmation flow. I'll ask for your confirmation before performing any actions. Tell me what you'd like to do!" 
+            : "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!"
+        };
+        return [updatedWelcome, ...prevMessages.slice(1)];
+      });
     }
   }, [useEnhancedFlow]); // Only depend on useEnhancedFlow
   
