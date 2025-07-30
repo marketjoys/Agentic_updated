@@ -2395,12 +2395,12 @@ async def startup_event():
         
         # Auto-start critical services for Auto Follow-ups and Auto Responders
         try:
-            from app.services.smart_follow_up_engine import smart_follow_up_engine
+            from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
             from app.services.email_processor import email_processor
             
             # Start Follow-up Engine
-            if not smart_follow_up_engine.processing:
-                await smart_follow_up_engine.start_follow_up_engine()
+            if not enhanced_smart_follow_up_engine.processing:
+                await enhanced_smart_follow_up_engine.start_follow_up_engine()
                 logging.info("✅ Smart Follow-up Engine started automatically on startup")
             
             # Start Email Processor (Auto Responder)
