@@ -221,6 +221,9 @@ Guidelines:
   };
 
   const PromptModal = ({ show, onClose, onSubmit, title, isEdit = false }) => {
+    // Add escape key functionality
+    useEscapeKey(onClose, show);
+    
     if (!show) return null;
 
     return (
