@@ -390,7 +390,7 @@ ${htmlContent}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  {templateData.is_html_enabled ? 'HTML Content' : 'Text Content'}
+                  {templateData.is_html_enabled ? 'Template Content' : 'Text Content'}
                 </label>
                 <div className="flex space-x-2">
                   <button
@@ -416,19 +416,21 @@ ${htmlContent}
               </div>
 
               {templateData.is_html_enabled ? (
-                <textarea
-                  data-field="html_content"
+                <RichTextEditor
                   value={templateData.html_content}
-                  onChange={(e) => handleInputChange('html_content', e.target.value)}
+                  onChange={(value) => {
+                    handleInputChange('html_content', value);
+                    // Auto-convert rich text to HTML
+                    updateHTMLWithStyles();
+                  }}
                   onKeyDown={(e) => {
                     // Allow typing and prevent modal close on Escape when editing
                     if (e.key === 'Escape') {
                       e.stopPropagation();
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                  rows={15}
-                  placeholder="Enter HTML content..."
+                  placeholder="Create your email template here. Use the toolbar above to format your content..."
+                  className="border border-gray-300 rounded-lg min-h-[300px]"
                 />
               ) : (
                 <RichTextEditor
