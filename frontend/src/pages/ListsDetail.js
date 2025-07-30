@@ -104,10 +104,23 @@ const ListsDetail = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedProspects.length === filteredProspects.length) {
-      setSelectedProspects([]);
+    const filteredProspectIds = filteredProspects.map(p => p.id);
+    const allSelected = filteredProspectIds.every(id => selectedProspects.includes(id));
+    
+    if (allSelected) {
+      // Remove all filtered prospects from selection
+      setSelectedProspects(prev => prev.filter(id => !filteredProspectIds.includes(id)));
     } else {
-      setSelectedProspects(filteredProspects.map(p => p.id));
+      // Add all filtered prospects to selection (merge with existing)
+      setSelectedProspects(prev => {
+        const newSelected = [...prev];
+        filteredProspectIds.forEach(id => {
+          if (!newSelected.includes(id)) {
+            newSelected.push(id);
+          }
+        });
+        return newSelected;
+      });
     }
   };
 
