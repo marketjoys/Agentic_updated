@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 class VoiceCapabilitiesBackendTester:
-    def __init__(self, base_url="https://b40c5c4f-de80-4df5-bbd3-3623f2621a6f.preview.emergentagent.com"):
+    def __init__(self, base_url="https://292b2cfa-1394-46f4-82db-100b80f4782f.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0

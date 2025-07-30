@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 import pytz
 
 # Configuration
-BASE_URL = "https://b40c5c4f-de80-4df5-bbd3-3623f2621a6f.preview.emergentagent.com/api"
+BASE_URL = "https://292b2cfa-1394-46f4-82db-100b80f4782f.preview.emergentagent.com/api"
 USERNAME = "testuser"
 PASSWORD = "testpass123"
 
