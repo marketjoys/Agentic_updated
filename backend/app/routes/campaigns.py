@@ -5,8 +5,10 @@ from app.services.email_provider_service import email_provider_service
 from app.utils.helpers import generate_id, personalize_template
 from datetime import datetime
 import asyncio
+import logging
 from typing import List
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/campaigns")
@@ -34,7 +36,7 @@ async def get_campaign(campaign_id: str):
 
 @router.post("/campaigns/{campaign_id}/send")
 async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, send_data: dict = {}):
-    """Send campaign emails"""
+    """Send campaign emails with enhanced follow-up provider tracking"""
     campaign = await db_service.get_campaign_by_id(campaign_id)
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
@@ -42,6 +44,27 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, sen
     template = await db_service.get_template_by_id(campaign["template_id"])
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Determine email provider to use
+    provider_id = send_data.get("email_provider_id") or campaign.get("email_provider_id")
+    if not provider_id:
+        # Get default provider
+        default_provider = await email_provider_service.get_default_provider()
+        if not default_provider:
+            raise HTTPException(status_code=400, detail="No email provider available")
+        provider_id = default_provider["id"]
+    
+    # Validate provider exists
+    provider = await email_provider_service.get_email_provider_by_id(provider_id)
+    if not provider:
+        raise HTTPException(status_code=400, detail="Email provider not found")
+    
+    # Update campaign with provider information for follow-ups
+    await db_service.update_campaign(campaign_id, {
+        "email_provider_id": provider_id,
+        "status": "sending",  # Keep as sending initially, will become active after first emails
+        "updated_at": datetime.utcnow()
+    })
     
     # Get prospects from campaign lists
     prospects = []
@@ -58,35 +81,48 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, sen
             unique_prospects.append(prospect)
     
     # Limit to max_emails
-    max_emails = campaign.get("max_emails", 100)
+    max_emails = send_data.get("max_emails") or campaign.get("max_emails", 100)
     prospects = unique_prospects[:max_emails]
     
-    # Schedule email sending
-    background_tasks.add_task(process_campaign_emails, campaign_id, prospects, template)
+    logger.info(f"Starting campaign {campaign_id} with provider {provider['name']} for {len(prospects)} prospects")
     
-    # Update campaign status
-    await db_service.update_campaign(campaign_id, {
-        "status": "active", 
-        "prospect_count": len(prospects)
-    })
+    # Schedule email sending with enhanced provider tracking
+    background_tasks.add_task(
+        process_campaign_emails_with_follow_up_tracking, 
+        campaign_id, 
+        prospects, 
+        template, 
+        provider_id,
+        send_data
+    )
     
     return {
         "campaign_id": campaign_id,
-        "status": "active",
+        "status": "sending",
+        "email_provider_id": provider_id,
+        "email_provider_name": provider.get("name"),
         "total_prospects": len(prospects),
-        "message": f"Campaign started. Sending to {len(prospects)} prospects"
+        "message": f"Campaign started with provider {provider.get('name')}. Sending to {len(prospects)} prospects"
     }
 
-async def process_campaign_emails(campaign_id: str, prospects: List[dict], template: dict):
-    """Process campaign emails in background"""
+async def process_campaign_emails_with_follow_up_tracking(
+    campaign_id: str, 
+    prospects: List[dict], 
+    template: dict, 
+    provider_id: str,
+    send_data: dict = {}
+):
+    """Process campaign emails with enhanced follow-up and provider tracking"""
     sent_count = 0
     failed_count = 0
     
-    # Get default email provider
-    default_provider = await email_provider_service.get_default_provider()
-    if not default_provider:
-        print(f"No default email provider found for campaign {campaign_id}")
+    # Get provider details
+    provider = await email_provider_service.get_email_provider_by_id(provider_id)
+    if not provider:
+        logger.error(f"Provider {provider_id} not found for campaign {campaign_id}")
         return
+    
+    logger.info(f"Processing campaign {campaign_id} emails with provider: {provider.get('name')}")
     
     for prospect in prospects:
         try:
@@ -94,47 +130,99 @@ async def process_campaign_emails(campaign_id: str, prospects: List[dict], templ
             personalized_content = personalize_template(template["content"], prospect)
             personalized_subject = personalize_template(template["subject"], prospect)
             
-            # Send email using email provider service
+            # Send email using the specific provider
             success, error = await email_provider_service.send_email(
-                default_provider["id"],
+                provider_id,
                 prospect["email"],
                 personalized_subject,
                 personalized_content
             )
             
             if not success and error:
-                print(f"Email sending failed to {prospect['email']}: {error}")
+                logger.error(f"Email sending failed to {prospect['email']}: {error}")
             
-            # Create email record
-            email_record = EmailMessage(
-                id=generate_id(),
-                prospect_id=prospect["id"],
-                campaign_id=campaign_id,
-                subject=personalized_subject,
-                content=personalized_content,
-                status="sent" if success else "failed",
-                sent_at=datetime.utcnow() if success else None
-            )
+            # Create enhanced email record with proper tracking
+            email_id = generate_id()
+            email_record = {
+                "id": email_id,
+                "prospect_id": prospect["id"],
+                "campaign_id": campaign_id,
+                "email_provider_id": provider_id,  # CRITICAL: Store provider for follow-ups
+                "recipient_email": prospect["email"],
+                "subject": personalized_subject,
+                "content": personalized_content,
+                "status": "sent" if success else "failed",
+                "sent_at": datetime.utcnow() if success else None,
+                "created_at": datetime.utcnow(),
+                "is_follow_up": False,
+                "follow_up_sequence": 0,
+                "sent_by_us": True,  # Mark as sent by our system
+                "thread_id": f"thread_{prospect['id']}",
+                "template_id": template["id"],
+                "provider_name": provider.get("name")
+            }
             
-            await db_service.create_email_record(email_record.dict())
+            await db_service.create_email_record(email_record)
             
             if success:
                 sent_count += 1
+                
+                # Update prospect with campaign and follow-up tracking
+                await db_service.update_prospect(prospect["id"], {
+                    "last_contact": datetime.utcnow(),
+                    "campaign_id": campaign_id,
+                    "follow_up_status": "active" if send_data.get("follow_up_enabled", True) else "inactive",
+                    "follow_up_count": 0,
+                    "email_provider_id": provider_id,  # Track which provider was used
+                    "updated_at": datetime.utcnow()
+                })
+                
+                # Create or update thread context for this prospect
+                await db_service.create_or_update_thread_context(
+                    prospect["id"], 
+                    campaign_id, 
+                    provider_id,
+                    {
+                        "type": "sent",
+                        "recipient": prospect["email"],
+                        "subject": personalized_subject,
+                        "content": personalized_content,
+                        "timestamp": datetime.utcnow(),
+                        "email_id": email_id,
+                        "template_id": template["id"],
+                        "provider_id": provider_id,
+                        "sent_by_us": True,
+                        "is_follow_up": False
+                    }
+                )
+                
+                logger.info(f"Email sent successfully to {prospect['email']} via {provider.get('name')}")
             else:
                 failed_count += 1
-            
-            # Update prospect last contact
-            await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
             
             # Small delay to avoid overwhelming SMTP server
             await asyncio.sleep(0.1)
             
         except Exception as e:
-            print(f"Error sending email to {prospect['email']}: {str(e)}")
+            logger.error(f"Error sending email to {prospect['email']}: {str(e)}")
             failed_count += 1
             continue
     
-    # Update campaign with final results
-    await db_service.update_campaign(campaign_id, {"status": "completed"})
+    # Update campaign status - CRITICAL: Keep as 'active' for follow-ups, not 'completed'
+    campaign_status = "active" if send_data.get("follow_up_enabled", True) else "completed"
     
-    print(f"Campaign {campaign_id} completed: {sent_count} sent, {failed_count} failed")
+    await db_service.update_campaign(campaign_id, {
+        "status": campaign_status,  # Keep active for follow-ups
+        "sent_count": sent_count,
+        "prospect_count": len(prospects),
+        "updated_at": datetime.utcnow()
+    })
+    
+    logger.info(f"Campaign {campaign_id} initial send completed: {sent_count} sent, {failed_count} failed. Status: {campaign_status}")
+    
+    return {
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_prospects": len(prospects),
+        "status": campaign_status
+    }
