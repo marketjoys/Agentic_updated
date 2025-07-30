@@ -24,7 +24,6 @@ const EnhancedAIAgentChat = () => {
   const [contextInfo, setContextInfo] = useState({});
   const [turnLimit, setTurnLimit] = useState(10);
   const [showSettings, setShowSettings] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([]);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
