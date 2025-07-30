@@ -13,7 +13,7 @@ import os
 import time
 
 # Backend URL from environment
-BACKEND_URL = "https://e2d006e6-5820-4930-ac58-04ed7fb92265.preview.emergentagent.com/api"
+BACKEND_URL = "https://b40c5c4f-de80-4df5-bbd3-3623f2621a6f.preview.emergentagent.com/api"
 
 class CampaignExecutionTester:
     def __init__(self):

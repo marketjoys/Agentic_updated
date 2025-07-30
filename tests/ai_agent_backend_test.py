@@ -27,7 +27,7 @@ import time
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://e2d006e6-5820-4930-ac58-04ed7fb92265.preview.emergentagent.com"
+BACKEND_URL = "https://b40c5c4f-de80-4df5-bbd3-3623f2621a6f.preview.emergentagent.com"
 
 class AIAgentTester:
     def __init__(self):
