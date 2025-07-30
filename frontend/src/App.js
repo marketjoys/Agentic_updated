@@ -1,25 +1,29 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import RealTimeDashboard from './components/RealTimeDashboard';
-import Campaigns from './pages/Campaigns';
-import Prospects from './pages/Prospects';
-import Lists from './pages/Lists';
-import ListsDetail from './pages/ListsDetail';
-import Templates from './pages/Templates';
-import Intents from './pages/Intents';
-import Analytics from './pages/Analytics';
-import EmailProcessing from './pages/EmailProcessing';
-import EmailProviders from './pages/EmailProviders';
-import KnowledgeBase from './pages/KnowledgeBase';
-import SystemPrompts from './pages/SystemPrompts';
-import ResponseVerification from './pages/ResponseVerification';
-import AIAgentChat from './components/AIAgentChat';
-import EnhancedAIAgentChat from './components/EnhancedAIAgentChat';
+import ErrorBoundary from './components/ErrorBoundary';
+import { LoadingSpinner } from './components/LazyLoadWrapper';
+
+// Lazy load components for better performance
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const RealTimeDashboard = lazy(() => import('./components/RealTimeDashboard'));
+const Campaigns = lazy(() => import('./pages/Campaigns'));
+const Prospects = lazy(() => import('./pages/Prospects'));
+const Lists = lazy(() => import('./pages/Lists'));
+const ListsDetail = lazy(() => import('./pages/ListsDetail'));
+const Templates = lazy(() => import('./pages/Templates'));
+const Intents = lazy(() => import('./pages/Intents'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const EmailProcessing = lazy(() => import('./pages/EmailProcessing'));
+const EmailProviders = lazy(() => import('./pages/EmailProviders'));
+const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
+const SystemPrompts = lazy(() => import('./pages/SystemPrompts'));
+const ResponseVerification = lazy(() => import('./pages/ResponseVerification'));
+const AIAgentChat = lazy(() => import('./components/AIAgentChat'));
+const EnhancedAIAgentChat = lazy(() => import('./components/EnhancedAIAgentChat'));
 
 // Protected Routes Component
 const ProtectedRoutes = () => {
