@@ -210,7 +210,7 @@ const EnhancedAIAgentChat = () => {
   
   const updateTurnLimit = useCallback(async (newLimit) => {
     try {
-      await apiService.post('/api/ai-agent/set-turn-limit', {
+      await api.post('/api/ai-agent/set-turn-limit', {
         session_id: sessionId,
         max_turns: newLimit
       });
