@@ -71,6 +71,44 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     }
   };
 
+  const speakResponse = useCallback((text) => {
+    if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
+    
+    setIsSpeaking(true);
+    
+    // Clean up text for better speech
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
+      .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
+      .replace(/#{1,6}\s/g, '') // Remove markdown headers
+      .replace(/```[\s\S]*?```/g, 'code block') // Replace code blocks
+      .replace(/`([^`]+)`/g, '$1') // Remove inline code
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Replace links with text
+      .replace(/---+/g, '') // Remove horizontal rules
+      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
+      .substring(0, 300); // Limit length for speech
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    utterance.volume = 0.9;
+    
+    utterance.onstart = () => {
+      resetActivity();
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      resetActivity();
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+    
+    speechSynthesis.speak(utterance);
+  }, [voiceEnabled, isAwake, resetActivity]);
+
   const startVoiceRecognition = useCallback((autoSearch = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
@@ -132,35 +170,6 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       setIsListening(false);
     }
   }, [resetActivity, goToSleep, speakResponse, handleSearch]);
-
-  const speakResponse = useCallback((text) => {
-    if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
-    
-    setIsSpeaking(true);
-    
-    // Clean up text for better speech
-    const cleanText = text.substring(0, 200); // Limit length for speech
-    
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.1;
-    utterance.volume = 0.9;
-    
-    utterance.onstart = () => {
-      resetActivity();
-    };
-    
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      resetActivity();
-    };
-    
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-    
-    speechSynthesis.speak(utterance);
-  }, [voiceEnabled, isAwake, resetActivity]);
 
   const handleSearch = useCallback(async () => {
     if (!query.trim()) {
