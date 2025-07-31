@@ -22,7 +22,7 @@ const EmailProviders = lazy(() => import('./pages/EmailProviders'));
 const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'));
 const SystemPrompts = lazy(() => import('./pages/SystemPrompts'));
 const ResponseVerification = lazy(() => import('./pages/ResponseVerification'));
-const AIAgentChat = lazy(() => import('./components/AIAgentChat'));
+const AIAgentChat = lazy(() => import('./components/EnhancedAIAgentChat'));
 const EnhancedAIAgentChat = lazy(() => import('./components/EnhancedAIAgentChat'));
 
 // Protected Routes Component
