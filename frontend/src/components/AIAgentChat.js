@@ -1,111 +1,120 @@
-// Voice/Chat Interface for AI Agent - React Component with Wake Word
+// AI Agent Chat Interface with Voice Recognition
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Mic, MicOff, MessageCircle, Headphones, Volume2, VolumeX, Settings } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import apiService from '../services/api';
-import useWakeWordDetection from '../hooks/useWakeWordDetection';
+import { Send, Mic, MicOff, MessageCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { apiService } from '../services/api';
 import VoiceIndicator from './VoiceIndicator';
 import VoiceTroubleshootingModal from './VoiceTroubleshootingModal';
+import useWakeWordDetection from '../hooks/useWakeWordDetection';
 
 const AIAgentChat = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [sessionId, setSessionId] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(true); // Default to enabled for wake word
   const [suggestions, setSuggestions] = useState([]);
   const [showTroubleshootingModal, setShowTroubleshootingModal] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  // Voice features
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
   const recognitionRef = useRef(null);
-
-  // Memoized callback for wake word detection to prevent re-renders
-  const handleWakeWordDetected = useCallback(() => {
-    // When wake word is detected, automatically start listening for command
-    setTimeout(() => startVoiceRecognition(true), 1000);
+  const lastActivityRef = useRef(Date.now());
+  const activityTimeoutRef = useRef(null);
+  const welcomeMessageInitialized = useRef(false);
+  
+  // Initialize session ID only once
+  useEffect(() => {
+    setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   }, []);
 
-  // Wake word detection
-  const {
-    isListeningForWakeWord,
-    isAwake,
-    error: wakeWordError,
-    goToSleep,
-    resetActivity,
-    startWakeWordListening,
-    stopWakeWordListening,
-    activateVoiceMode,
-    requestPermission,
-    permissionGranted,
-    forceRestartListening
-  } = useWakeWordDetection(handleWakeWordDetected, voiceEnabled);
-  
-  // Initialize component once
-  useEffect(() => {
-    if (hasInitialized) return;
-    
-    // Generate session ID only once on component mount
-    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    setSessionId(newSessionId);
-    
-    // Add welcome message only once
-    const welcomeMessage = {
-      id: 'welcome',
-      type: 'agent',
-      content: "Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to activate voice mode, or just type your message. I can help you manage campaigns, prospects, templates, and much more!",
-      suggestions: [
-        "Hello Joy",
-        "Show me all my campaigns",
-        "Create a new prospect",
-        "What are my analytics?",
-        "Upload prospects from CSV"
-      ],
-      timestamp: new Date()
-    };
-    
-    setMessages([welcomeMessage]);
-    setSuggestions(welcomeMessage.suggestions);
-    setHasInitialized(true);
-  }, [hasInitialized]);
+  // Memoize welcome message to prevent recreation
+  const welcomeMessage = useMemo(() => ({
+    id: 'welcome',
+    type: 'agent',
+    content: "👋 Hello! I'm Joy, your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!\n\n🎤 Enable voice mode by clicking the microphone icon, then say 'Hello Joy' to wake me up for hands-free interaction!",
+    suggestions: [
+      "Show me all my campaigns",
+      "Create a new campaign named Summer Sale", 
+      "Add John Smith from TechCorp as a prospect",
+      "What are my analytics?",
+      "Show me all prospects from technology companies"
+    ],
+    timestamp: new Date()
+  }), []);
 
-  // Optimized scroll effect
+  // Initialize welcome message only once
+  useEffect(() => {
+    if (!welcomeMessageInitialized.current) {
+      setMessages([welcomeMessage]);
+      setSuggestions(welcomeMessage.suggestions);
+      welcomeMessageInitialized.current = true;
+    }
+  }, [welcomeMessage]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Optimized voice effect - only run when needed
-  useEffect(() => {
-    if (!voiceEnabled || !hasInitialized || isSpeaking) return;
-    
-    // Auto-speak welcome message if voice is enabled and we have the welcome message
-    if (messages.length === 1 && messages[0]?.id === 'welcome') {
-      const timer = setTimeout(() => {
-        speakResponse("Hello! I'm Joy, your AI assistant. Say 'Hello Joy' to wake me up anytime.");
-      }, 1000);
-      return () => clearTimeout(timer);
+  // Activity management
+  const resetActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    if (activityTimeoutRef.current) {
+      clearTimeout(activityTimeoutRef.current);
     }
-  }, [voiceEnabled, hasInitialized, messages.length, isSpeaking]);
-  
-  const connectWebSocket = () => {
+  }, []);
+
+  const { 
+    isAwake, 
+    isListeningForWakeWord, 
+    wakeWordError, 
+    activateVoiceMode, 
+    goToSleep,
+    requestPermission,
+    forceRestartListening 
+  } = useWakeWordDetection({
+    enabled: voiceEnabled,
+    onWakeUp: useCallback(() => {
+      resetActivity();
+      toast.success('Voice activated! You can now speak commands.');
+    }, [resetActivity]),
+    onSleep: useCallback(() => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+      setIsListening(false);
+    }, []),
+    onPermissionGranted: useCallback(() => {
+      setPermissionGranted(true);
+    }, [])
+  });
+
+  const connectWebSocket = useCallback(() => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
       const wsUrl = backendUrl.replace('http', 'ws') + `/api/ai-agent/ws/${sessionId}`;
+      
+      if (websocketRef.current) {
+        websocketRef.current.close();
+      }
       
       websocketRef.current = new WebSocket(wsUrl);
       
       websocketRef.current.onopen = () => {
         setIsConnected(true);
         console.log('WebSocket connected');
-        toast.success('Connected to AI Agent');
+        toast.success('Connected to Joy AI Agent');
       };
       
       websocketRef.current.onmessage = (event) => {
@@ -124,6 +133,11 @@ const AIAgentChat = () => {
         setMessages(prev => [...prev, agentMessage]);
         setSuggestions(response.suggestions || []);
         setIsLoading(false);
+        
+        // Speak response if voice is enabled
+        if (voiceEnabled && isAwake) {
+          speakResponse(response.response);
+        }
       };
       
       websocketRef.current.onclose = () => {
@@ -140,14 +154,13 @@ const AIAgentChat = () => {
       
     } catch (error) {
       console.error('Failed to connect WebSocket:', error);
-      toast.error('Failed to connect to AI Agent');
+      toast.error('Failed to connect to Joy AI Agent');
     }
-  };
-  
+  }, [sessionId, voiceEnabled, isAwake]);
+
   const sendMessage = useCallback(async (message) => {
     if (!message.trim()) return;
     
-    // Reset activity timer when sending message
     resetActivity();
     
     // Add user message
@@ -161,9 +174,9 @@ const AIAgentChat = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setIsLoading(true);
-
+    
     try {
-      if (isConnected && websocketRef.current) {
+      if (isConnected && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
         // Send via WebSocket
         websocketRef.current.send(JSON.stringify({
           message: message,
@@ -193,108 +206,103 @@ const AIAgentChat = () => {
         setSuggestions(response.data.suggestions || []);
         setIsLoading(false);
         
-        // Speak response if voice is enabled and user is awake
+        // Speak response if voice is enabled
         if (voiceEnabled && isAwake) {
-          setTimeout(() => speakResponse(response.data.response), 500);
+          speakResponse(response.data.response);
         }
       }
     } catch (error) {
-      console.error('Detailed error sending message:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Error message:', error.message);
-      
+      console.error('Error sending message:', error);
       toast.error(`Failed to send message: ${error.message}`);
       setIsLoading(false);
       
-      // Add detailed error message for debugging
       const errorMessage = {
         id: `error_${Date.now()}`,
         type: 'agent',
-        content: `I apologize, but I'm having trouble processing your request right now. 
-        
-Error details: ${error.message}
-Status: ${error.response?.status || 'Unknown'}
-Response: ${JSON.stringify(error.response?.data) || 'No response data'}
-
-Please try again or ask for help.`,
+        content: `I apologize, but I'm having trouble processing your request right now. Error: ${error.message}. Please try again.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
     }
   }, [isConnected, sessionId, resetActivity, voiceEnabled, isAwake]);
-  
+
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     sendMessage(inputMessage);
-  }, [inputMessage, sendMessage]);
-  
+  }, [sendMessage, inputMessage]);
+
   const handleSuggestionClick = useCallback((suggestion) => {
     sendMessage(suggestion);
   }, [sendMessage]);
-  
-  const startVoiceRecognition = useCallback((autoSend = false) => {
+
+  const startVoiceRecognition = useCallback(async (fromWakeWord = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
     }
     
-    // Reset activity timer when user interacts
-    resetActivity();
+    if (!permissionGranted) {
+      toast.error('Please enable voice mode first by clicking the voice indicator');
+      return;
+    }
+    
+    if (!isAwake && !fromWakeWord) {
+      toast.error('Say "Hello Joy" first to wake me up, or click the voice indicator');
+      return;
+    }
+    
+    // Stop any existing recognition
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
-    // Windows-optimized settings
     recognitionRef.current.lang = 'en-US';
+    recognitionRef.current.continuous = false;
     recognitionRef.current.interimResults = false;
     recognitionRef.current.maxAlternatives = 1;
-    recognitionRef.current.continuous = false; // Set to false for single command
-    
-    // Windows compatibility: Add service hints
-    if (window.webkitSpeechRecognition) {
-      recognitionRef.current.serviceURI = 'wss://www.google.com/speech-api/full-duplex/v1/up';
-    }
     
     recognitionRef.current.onstart = () => {
       setIsListening(true);
-      toast('🎤 Listening... Speak now', { 
-        icon: '🎤',
-        duration: 2000 
-      });
+      resetActivity();
+      if (!fromWakeWord) {
+        toast('🎤 Listening... Speak your command', { duration: 2000 });
+      }
     };
     
     recognitionRef.current.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
+      const transcript = event.results[0][0].transcript.trim();
+      console.log('Speech recognized:', transcript);
       
-      // Check for sleep command
+      // Handle sleep command
       if (transcript.toLowerCase().includes('sleep') || transcript.toLowerCase().includes('go to sleep')) {
-        toast('Going to sleep. Say "Hello Joy" to wake me up.', { icon: '😴' });
         goToSleep();
+        toast.success('Voice mode deactivated. Say "Hello Joy" to reactivate.');
         return;
       }
       
-      setInputMessage(transcript);
-      toast.success(`Heard: "${transcript}"`);
-      
-      // Auto-send if triggered by wake word
-      if (autoSend) {
-        setTimeout(() => sendMessage(transcript), 500);
+      // Send the message
+      if (transcript.length > 0) {
+        setInputMessage(transcript);
+        sendMessage(transcript);
+        if (!fromWakeWord) {
+          toast.success(`Command received: "${transcript}"`);
+        }
       }
     };
     
     recognitionRef.current.onerror = (event) => {
       setIsListening(false);
-      console.error('Voice recognition error:', event.error);
-      
       if (event.error === 'not-allowed') {
-        toast.error('Microphone permission denied. Please allow microphone access.');
+        toast.error('Microphone permission denied');
       } else if (event.error === 'no-speech') {
-        toast.error('No speech detected. Please try again.');
-      } else if (event.error === 'network') {
-        toast.error('Network error. Check your internet connection.');
+        if (!fromWakeWord) {
+          toast.error('No speech detected. Try again.');
+        }
       } else if (event.error !== 'aborted') {
-        toast.error(`Voice recognition error: ${event.error}`);
+        console.error(`Voice recognition error: ${event.error}`);
       }
     };
     
@@ -309,7 +317,7 @@ Please try again or ask for help.`,
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
-  }, [resetActivity, goToSleep, sendMessage]);
+  }, [resetActivity, goToSleep, sendMessage, permissionGranted, isAwake]);
   
   const speakResponse = useCallback((text) => {
     if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
@@ -350,10 +358,10 @@ Please try again or ask for help.`,
   }, [voiceEnabled, isAwake, resetActivity]);
   
   const clearChat = useCallback(() => {
-    setMessages([]);
-    setSuggestions([]);
+    setMessages([welcomeMessage]);
+    setSuggestions(welcomeMessage.suggestions);
     toast.success('Chat cleared');
-  }, []);
+  }, [welcomeMessage]);
   
   const formatMessage = useCallback((message) => {
     let content = message.content;

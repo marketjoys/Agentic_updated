@@ -1,5 +1,5 @@
 // Enhanced Voice/Chat Interface for AI Agent with Confirmation Flow
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { 
   Send, Mic, MicOff, MessageCircle, Volume2, VolumeX, Settings, 
   CheckCircle, AlertCircle, Zap, History
@@ -27,61 +27,57 @@ const EnhancedAIAgentChat = () => {
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
+  const welcomeMessageInitialized = useRef(false);
   
+  // Memoize welcome message to prevent recreation
+  const welcomeMessage = useMemo(() => ({
+    id: 'welcome',
+    type: 'agent',
+    content: useEnhancedFlow 
+      ? "Hello! I'm your Enhanced AI assistant with confirmation flow. I'll ask for your confirmation before performing any actions. Tell me what you'd like to do!" 
+      : "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!",
+    suggestions: [
+      "Show me all my campaigns",
+      "Create a new campaign named Summer Sale",
+      "Add John Smith from TechCorp",
+      "What are my analytics?",
+      "Set turn limit to 25"
+    ],
+    timestamp: new Date(),
+    conversationState: 'analyzing'
+  }), [useEnhancedFlow]);
+
+  // Initialize session ID only once
   useEffect(() => {
-    // Generate session ID only once on component mount
     setSessionId(`session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
-    
-    // Add welcome message only once
-    const welcomeMessage = {
-      id: 'welcome',
-      type: 'agent',
-      content: useEnhancedFlow 
-        ? "Hello! I'm your Enhanced AI assistant with confirmation flow. I'll ask for your confirmation before performing any actions. Tell me what you'd like to do!" 
-        : "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!",
-      suggestions: [
-        "Show me all my campaigns",
-        "Create a new campaign named Summer Sale",
-        "Add John Smith from TechCorp",
-        "What are my analytics?",
-        "Set turn limit to 25"
-      ],
-      timestamp: new Date(),
-      conversationState: 'analyzing'
-    };
-    
-    setMessages([welcomeMessage]);
-    setSuggestions(welcomeMessage.suggestions);
-  }, []); // Intentionally empty - run only once on mount
-  
-  // Separate effect to handle useEnhancedFlow changes - properly memoized
+  }, []);
+
+  // Initialize welcome message only once
   useEffect(() => {
-    // Only update message content if messages exist and useEnhancedFlow changes
-    if (messages.length > 0 && messages[0].id === 'welcome') {
-      setMessages(prevMessages => {
-        const updatedWelcome = {
-          ...prevMessages[0],
-          content: useEnhancedFlow 
-            ? "Hello! I'm your Enhanced AI assistant with confirmation flow. I'll ask for your confirmation before performing any actions. Tell me what you'd like to do!" 
-            : "Hello! I'm your AI assistant. I can help you manage campaigns, prospects, templates, and much more. Just tell me what you'd like to do in natural language!"
-        };
-        return [updatedWelcome, ...prevMessages.slice(1)];
-      });
+    if (!welcomeMessageInitialized.current) {
+      setMessages([welcomeMessage]);
+      setSuggestions(welcomeMessage.suggestions);
+      welcomeMessageInitialized.current = true;
     }
-  }, [useEnhancedFlow]); // Only depend on useEnhancedFlow
-  
+  }, [welcomeMessage]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
   
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
   
-  const connectWebSocket = () => {
+  const connectWebSocket = useCallback(() => {
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
       const wsUrl = backendUrl.replace('http', 'ws') + `/api/ai-agent/ws/${sessionId}?enhanced=${useEnhancedFlow}`;
+      
+      if (websocketRef.current) {
+        websocketRef.current.close();
+      }
       
       websocketRef.current = new WebSocket(wsUrl);
       
@@ -131,7 +127,7 @@ const EnhancedAIAgentChat = () => {
       console.error('Failed to connect WebSocket:', error);
       toast.error('Failed to connect to AI Agent');
     }
-  };
+  }, [sessionId, useEnhancedFlow]);
   
   const sendMessage = useCallback(async (message) => {
     if (!message.trim()) return;
@@ -149,7 +145,7 @@ const EnhancedAIAgentChat = () => {
     setIsLoading(true);
     
     try {
-      if (isConnected && websocketRef.current) {
+      if (isConnected && websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
         // Send via WebSocket
         websocketRef.current.send(JSON.stringify({
           message: message,
@@ -228,7 +224,6 @@ const EnhancedAIAgentChat = () => {
   const loadConversationHistory = useCallback(async () => {
     try {
       const response = await apiService.get(`/api/ai-agent/conversation-history/${sessionId}`);
-      // Just show success toast, no need to store history in state if not used
       toast.success('Conversation history loaded');
     } catch (error) {
       toast.error('Failed to load conversation history');
@@ -238,8 +233,8 @@ const EnhancedAIAgentChat = () => {
   const clearConversation = useCallback(async () => {
     try {
       await apiService.delete(`/api/ai-agent/sessions/${sessionId}?enhanced=${useEnhancedFlow}`);
-      setMessages([]);
-      setSuggestions([]);
+      setMessages([welcomeMessage]);
+      setSuggestions(welcomeMessage.suggestions);
       setConversationState('analyzing');
       setPendingAction(null);
       setContextInfo({});
@@ -247,7 +242,7 @@ const EnhancedAIAgentChat = () => {
     } catch (error) {
       toast.error('Failed to clear conversation');
     }
-  }, [sessionId, useEnhancedFlow]);
+  }, [sessionId, useEnhancedFlow, welcomeMessage]);
   
   const startVoiceRecognition = useCallback(async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -311,7 +306,7 @@ const EnhancedAIAgentChat = () => {
     }
   }, []);
   
-  const getStateIcon = (state) => {
+  const getStateIcon = useCallback((state) => {
     switch (state) {
       case 'analyzing': return <MessageCircle className="h-4 w-4" />;
       case 'gathering_info': return <AlertCircle className="h-4 w-4" />;
@@ -321,9 +316,9 @@ const EnhancedAIAgentChat = () => {
       case 'error': return <AlertCircle className="h-4 w-4" />;
       default: return <MessageCircle className="h-4 w-4" />;
     }
-  };
+  }, []);
   
-  const getStateColor = (state) => {
+  const getStateColor = useCallback((state) => {
     switch (state) {
       case 'analyzing': return 'text-blue-600';
       case 'gathering_info': return 'text-yellow-600';
@@ -333,9 +328,9 @@ const EnhancedAIAgentChat = () => {
       case 'error': return 'text-red-600';
       default: return 'text-gray-600';
     }
-  };
+  }, []);
   
-  const formatMessage = (message) => {
+  const formatMessage = useCallback((message) => {
     let content = message.content;
     
     // Format action results
@@ -361,7 +356,7 @@ const EnhancedAIAgentChat = () => {
     }
     
     return content;
-  };
+  }, []);
   
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-purple-50">
