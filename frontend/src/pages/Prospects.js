@@ -17,11 +17,7 @@ const Prospects = () => {
   const [selectedProspects, setSelectedProspects] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  useEffect(() => {
-    loadProspects();
-  }, []);
-
-  const loadProspects = async () => {
+  const loadProspects = useCallback(async () => {
     try {
       const response = await apiService.getProspects();
       setProspects(response.data);
