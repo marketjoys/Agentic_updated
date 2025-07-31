@@ -21,7 +21,6 @@ const AIAgentChat = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
   
   const messagesEndRef = useRef(null);
   const websocketRef = useRef(null);
