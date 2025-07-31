@@ -5,7 +5,7 @@ import {
   CheckCircle, AlertCircle, Zap, History
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import apiService from '../services/api';
+import api from '../services/api';
 
 const EnhancedAIAgentChat = () => {
   const [messages, setMessages] = useState([]);
