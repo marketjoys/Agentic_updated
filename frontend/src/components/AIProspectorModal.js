@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Search, Sparkles, Users, Building, MapPin, AlertCircle, CheckCircle, Clock, Brain, Mic, MicOff } from 'lucide-react';
+import { X, Search, Sparkles, Users, Building, AlertCircle, CheckCircle, Clock, Brain, Mic, MicOff } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
 import useWakeWordDetection from '../hooks/useWakeWordDetection';
