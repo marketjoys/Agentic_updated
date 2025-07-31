@@ -58,7 +58,6 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     setSearchResults(null);
     setClarificationQuestions([]);
     setClarifications({});
-    setExtractedParameters(null);
   };
 
   const loadLists = async () => {
