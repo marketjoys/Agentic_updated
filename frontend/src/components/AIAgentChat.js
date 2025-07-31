@@ -76,22 +76,11 @@ const AIAgentChat = () => {
     }
   }, []);
 
-  // Memoize wake word callbacks to prevent recreation
-  const handleWakeUp = useCallback(() => {
+  // Memoize wake word detection callback
+  const handleWakeWordDetected = useCallback(() => {
     resetActivity();
     toast.success('Voice activated! You can now speak commands.');
   }, [resetActivity]);
-
-  const handleSleep = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.abort();
-    }
-    setIsListening(false);
-  }, []);
-
-  const handlePermissionGranted = useCallback(() => {
-    setPermissionGranted(true);
-  }, []);
 
   const { 
     isAwake, 
@@ -100,13 +89,9 @@ const AIAgentChat = () => {
     activateVoiceMode, 
     goToSleep,
     requestPermission,
-    forceRestartListening 
-  } = useWakeWordDetection({
-    enabled: voiceEnabled,
-    onWakeUp: handleWakeUp,
-    onSleep: handleSleep,
-    onPermissionGranted: handlePermissionGranted
-  });
+    forceRestartListening,
+    permissionGranted
+  } = useWakeWordDetection(handleWakeWordDetected, voiceEnabled);
 
   const connectWebSocket = useCallback(() => {
     try {
