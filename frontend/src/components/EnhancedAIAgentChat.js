@@ -232,7 +232,7 @@ const EnhancedAIAgentChat = () => {
   
   const clearConversation = useCallback(async () => {
     try {
-      await apiService.delete(`/api/ai-agent/sessions/${sessionId}?enhanced=${useEnhancedFlow}`);
+      await api.delete(`/api/ai-agent/sessions/${sessionId}?enhanced=${useEnhancedFlow}`);
       setMessages([welcomeMessage]);
       setSuggestions(welcomeMessage.suggestions);
       setConversationState('analyzing');
