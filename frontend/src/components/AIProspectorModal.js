@@ -109,6 +109,76 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     speechSynthesis.speak(utterance);
   }, [voiceEnabled, isAwake, resetActivity]);
 
+  const handleSearch = useCallback(async () => {
+    if (!query.trim()) {
+      toast.error('Please enter a search query');
+      return;
+    }
+
+    resetActivity();
+    setLoading(true);
+    setStep('searching');
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai-prospecting/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          query: query,
+          target_list: targetList || null,
+          max_results: 25
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.needs_clarification) {
+          setClarificationQuestions(result.questions || []);
+          setExtractedParameters(result.extracted_parameters);
+          setStep('clarification');
+          
+          // Voice feedback for clarification
+          if (voiceEnabled && isAwake) {
+            const clarificationText = `I need more information. ${result.questions?.[0] || 'Please provide additional details.'}`;
+            setTimeout(() => speakResponse(clarificationText), 500);
+          }
+        } else {
+          setSearchResults(result);
+          setStep('results');
+          if (result.prospects_count > 0) {
+            const successMessage = `Found ${result.prospects_count} prospects!`;
+            toast.success(successMessage);
+            if (voiceEnabled && isAwake) {
+              setTimeout(() => speakResponse(successMessage), 500);
+            }
+            if (onProspectsAdded) {
+              onProspectsAdded(result.prospects_count);
+            }
+          } else {
+            toast.info('No prospects found for this search.');
+            if (voiceEnabled && isAwake) {
+              setTimeout(() => speakResponse('No prospects found. Try a different search.'), 500);
+            }
+          }
+        }
+      } else {
+        throw new Error(result.error || 'Search failed');
+      }
+    } catch (error) {
+      console.error('AI Prospecting search error:', error);
+      toast.error(`Search failed: ${error.message}`);
+      if (voiceEnabled && isAwake) {
+        setTimeout(() => speakResponse(`Search failed: ${error.message}`), 500);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [query, targetList, resetActivity, voiceEnabled, isAwake, speakResponse, onProspectsAdded]);
+
   const startVoiceRecognition = useCallback((autoSearch = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
