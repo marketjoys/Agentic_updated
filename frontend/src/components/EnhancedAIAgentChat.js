@@ -155,7 +155,7 @@ const EnhancedAIAgentChat = () => {
         }));
       } else {
         // Send via HTTP API
-        const response = await apiService.post('/api/ai-agent/chat', {
+        const response = await api.post('/api/ai-agent/chat', {
           message: message,
           user_id: 'default',
           session_id: sessionId,
