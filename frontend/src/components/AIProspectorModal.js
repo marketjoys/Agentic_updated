@@ -18,7 +18,6 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [searchResults, setSearchResults] = useState(null);
   const [clarificationQuestions, setClarificationQuestions] = useState([]);
   const [clarifications, setClarifications] = useState({});
-  const [extractedParameters, setExtractedParameters] = useState(null);
   
   // Voice capabilities
   const [voiceEnabled, setVoiceEnabled] = useState(true);
