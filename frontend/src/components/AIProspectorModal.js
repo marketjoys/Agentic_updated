@@ -200,7 +200,6 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       if (result.success) {
         if (result.needs_clarification) {
           setClarificationQuestions(result.questions || []);
-          setExtractedParameters(result.extracted_parameters);
           setStep('clarification');
           
           // Voice feedback for clarification
