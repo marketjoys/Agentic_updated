@@ -37,8 +37,6 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     error: wakeWordError,
     goToSleep,
     resetActivity,
-    startWakeWordListening,
-    stopWakeWordListening,
     activateVoiceMode,
     requestPermission,
     permissionGranted
