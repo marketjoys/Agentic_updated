@@ -47,7 +47,7 @@ const AIAgentChat = () => {
       "What are my analytics?",
       "Show me all prospects from technology companies"
     ],
-    timestamp: new Date()
+    timestamp: new Date('2024-01-01') // Fixed timestamp to prevent re-creation
   }), []);
 
   // Initialize welcome message only once
