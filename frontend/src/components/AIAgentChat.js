@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Send, Mic, MicOff, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiService } from '../services/api';
+import api from '../services/api';
 import VoiceIndicator from './VoiceIndicator';
 import VoiceTroubleshootingModal from './VoiceTroubleshootingModal';
 import useWakeWordDetection from '../hooks/useWakeWordDetection';
