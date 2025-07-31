@@ -17,6 +17,7 @@ const Prospects = () => {
   const [selectedProspects, setSelectedProspects] = useState(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
 
+  // Load prospects data
   const loadProspects = useCallback(async () => {
     try {
       const response = await apiService.getProspects();
@@ -26,7 +27,11 @@ const Prospects = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadProspects();
+  }, [loadProspects]);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
