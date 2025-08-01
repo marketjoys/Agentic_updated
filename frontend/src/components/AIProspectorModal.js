@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { X, Search, Sparkles, Users, Building, AlertCircle, CheckCircle, Clock, Brain, Mic, MicOff } from 'lucide-react';
 import { apiService } from '../services/api';
 import toast from 'react-hot-toast';
-import useWakeWordDetection from '../hooks/useWakeWordDetection';
-import VoiceIndicator from './VoiceIndicator';
 import useEscapeKey from '../hooks/useEscapeKey';
 
 const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
@@ -19,35 +17,46 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
   const [clarificationQuestions, setClarificationQuestions] = useState([]);
   const [clarifications, setClarifications] = useState({});
   
-  // Voice capabilities
+  // Voice capabilities - simplified
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-
-  // Memoized wake word callback to prevent re-renders
-  const handleWakeWordDetected = useCallback(() => {
-    // When wake word is detected in prospector, start listening for search query
-    setTimeout(() => startVoiceRecognition(true), 1000);
-  }, []);
-
-  // Wake word detection for Auto Prospector
-  const {
-    isListeningForWakeWord,
-    isAwake,
-    error: wakeWordError,
-    goToSleep,
-    resetActivity,
-    activateVoiceMode,
-    requestPermission,
-    permissionGranted
-  } = useWakeWordDetection(handleWakeWordDetected, voiceEnabled && isOpen);
+  const [isAwake, setIsAwake] = useState(false);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  
+  // Refs to avoid stale closures
+  const recognitionRef = useRef(null);
+  const speechUtteranceRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       loadLists();
       resetModal();
+      checkMicrophonePermission();
     }
+    
+    return () => {
+      // Cleanup on unmount
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (speechUtteranceRef.current) {
+        speechSynthesis.cancel();
+      }
+    };
   }, [isOpen]);
+
+  const checkMicrophonePermission = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setPermissionGranted(true);
+        stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      }
+    } catch (error) {
+      setPermissionGranted(false);
+    }
+  };
 
   const resetModal = () => {
     setStep('query');
@@ -56,6 +65,8 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     setSearchResults(null);
     setClarificationQuestions([]);
     setClarifications({});
+    setIsListening(false);
+    setIsSpeaking(false);
   };
 
   const loadLists = async () => {
@@ -67,51 +78,51 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     }
   };
 
-  const speakResponse = useCallback((text) => {
-    if (!voiceEnabled || !('speechSynthesis' in window) || !isAwake) return;
+  const speakResponse = (text) => {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    
+    // Cancel any existing speech
+    speechSynthesis.cancel();
     
     setIsSpeaking(true);
     
     // Clean up text for better speech
     const cleanText = text
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove markdown bold
-      .replace(/\*(.*?)\*/g, '$1') // Remove markdown italic
-      .replace(/#{1,6}\s/g, '') // Remove markdown headers
-      .replace(/```[\s\S]*?```/g, 'code block') // Replace code blocks
-      .replace(/`([^`]+)`/g, '$1') // Remove inline code
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Replace links with text
-      .replace(/---+/g, '') // Remove horizontal rules
-      .replace(/\n{3,}/g, '\n\n') // Reduce multiple newlines
-      .substring(0, 300); // Limit length for speech
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/```[\s\S]*?```/g, 'code block')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/---+/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .substring(0, 300);
     
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = 0.95;
     utterance.pitch = 1.1;
     utterance.volume = 0.9;
     
-    utterance.onstart = () => {
-      resetActivity();
-    };
-    
     utterance.onend = () => {
       setIsSpeaking(false);
-      resetActivity();
+      speechUtteranceRef.current = null;
     };
     
     utterance.onerror = () => {
       setIsSpeaking(false);
+      speechUtteranceRef.current = null;
     };
     
+    speechUtteranceRef.current = utterance;
     speechSynthesis.speak(utterance);
-  }, [voiceEnabled, isAwake, resetActivity]);
+  };
 
-  const handleSearch = useCallback(async () => {
+  const handleSearch = async () => {
     if (!query.trim()) {
       toast.error('Please enter a search query');
       return;
     }
 
-    resetActivity();
     setLoading(true);
     setStep('searching');
 
@@ -179,15 +190,18 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     } finally {
       setLoading(false);
     }
-  }, [query, targetList, resetActivity, voiceEnabled, isAwake, onProspectsAdded, speakResponse]);
+  };
 
-  const startVoiceRecognition = useCallback((autoSearch = false) => {
+  const startVoiceRecognition = (autoSearch = false) => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast.error('Voice recognition not supported in this browser');
       return;
     }
-    
-    resetActivity();
+
+    if (!permissionGranted) {
+      toast.error('Microphone permission not granted');
+      return;
+    }
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -209,8 +223,8 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
       
       // Check for sleep command
       if (transcript.toLowerCase().includes('sleep') || transcript.toLowerCase().includes('go to sleep')) {
-        toast('Going to sleep. Say "Hello Joy" to wake me up.', { icon: '😴' });
-        goToSleep();
+        toast('Going to sleep. Click the microphone to use voice again.', { icon: '😴' });
+        setIsAwake(false);
         return;
       }
       
@@ -233,15 +247,42 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
     
     recognition.onend = () => {
       setIsListening(false);
+      recognitionRef.current = null;
     };
     
     try {
+      recognitionRef.current = recognition;
       recognition.start();
     } catch (error) {
       toast.error('Failed to start voice recognition');
       setIsListening(false);
     }
-  }, [resetActivity, goToSleep, speakResponse, handleSearch]);
+  };
+
+  const handleVoiceButtonClick = async () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      return;
+    }
+
+    if (!permissionGranted) {
+      try {
+        await checkMicrophonePermission();
+        if (!permissionGranted) {
+          toast.error('Please allow microphone access to use voice features');
+          return;
+        }
+      } catch (error) {
+        toast.error('Could not access microphone');
+        return;
+      }
+    }
+
+    setIsAwake(true);
+    startVoiceRecognition(false);
+  };
 
   const handleClarificationSubmit = async () => {
     if (clarificationQuestions.some(q => !clarifications[q])) {
@@ -302,26 +343,10 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
           <p className="text-gray-600">
             {isAwake 
               ? "🎙️ I'm listening! Describe the prospects you're looking for"
-              : "Say 'Hello Joy' for voice mode, or describe prospects you're looking for"
+              : "Click the microphone for voice mode, or describe prospects you're looking for"
             }
           </p>
         </div>
-      </div>
-
-      {/* Voice Indicator for Prospector */}
-      <div className="flex items-center justify-center mb-4">
-        <VoiceIndicator
-          isListeningForWakeWord={isListeningForWakeWord}
-          isAwake={isAwake}
-          isListening={isListening}
-          isSpeaking={isSpeaking}
-          error={wakeWordError}
-          voiceEnabled={voiceEnabled}
-          permissionGranted={permissionGranted}
-          onToggleVoice={() => setVoiceEnabled(!voiceEnabled)}
-          onGoToSleep={goToSleep}
-          onRequestPermission={requestPermission}
-        />
       </div>
 
       <div className="space-y-4">
@@ -332,37 +357,27 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
             </label>
             <button
               type="button"
-              onClick={async () => {
-                if (!permissionGranted || !isAwake) {
-                  // If no permission or not awake, try to activate voice mode first
-                  const activated = await activateVoiceMode();
-                  if (activated) {
-                    // Small delay then start voice recognition
-                    setTimeout(() => startVoiceRecognition(false), 500);
-                  }
-                } else {
-                  // If already awake and have permission, start voice recognition directly
-                  startVoiceRecognition(false);
-                }
-              }}
-              disabled={isListening || loading}
+              onClick={handleVoiceButtonClick}
+              disabled={loading}
               className={`flex items-center space-x-1 px-2 py-1 rounded text-xs transition-colors ${
                 isListening 
                   ? 'bg-red-100 text-red-600' 
-                  : permissionGranted && isAwake
-                  ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : isAwake
+                  ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
               }`}
               title={
                 !permissionGranted 
                   ? "Click to enable microphone and voice search" 
-                  : !isAwake 
-                  ? "Click to activate voice mode for search" 
-                  : "Voice input for search query"
+                  : isListening
+                  ? "Click to stop listening"
+                  : "Click to start voice input"
               }
             >
               {isListening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-              <span>{isListening ? 'Stop' : 'Voice'}</span>
+              <span>
+                {isListening ? 'Stop' : isAwake ? 'Listening' : 'Voice'}
+              </span>
             </button>
           </div>
           <textarea
@@ -410,7 +425,7 @@ const AIProspectorModal = ({ isOpen, onClose, onProspectsAdded }) => {
             <p className="text-sm text-blue-800 mt-1">
               Joy will analyze your query and search Apollo.io's database for matching prospects. 
               You can specify job titles, industries, company sizes, and locations in natural language.
-              {voiceEnabled && permissionGranted && " Use voice commands by saying 'Hello Joy' to activate voice mode."}
+              {voiceEnabled && permissionGranted && " Use the microphone button to enable voice commands."}
               {voiceEnabled && !permissionGranted && " Click the microphone button to enable voice commands."}
             </p>
           </div>
