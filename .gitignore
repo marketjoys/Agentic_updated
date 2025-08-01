@@ -1,0 +1,59 @@
+# --- Node.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+.cache/
+.next/
+out/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+venv/
+ENV/
+ENV.bak/
+venv.bak/
+*.egg-info/
+.eggs/
+*.log
+*.cache/
+*.coverage
+coverage.xml
+.tox/
+.mypy_cache/
+.pytest_cache/
+.dmypy.json
+.pyre/
+
+# --- System/Editor ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.old
+*.log
+.idea/
+.vscode/
+*.code-workspace
+
+# --- Misc ---
+*.sqlite3
+*.db
+*.tgz
+*.tar.gz
+*.zip
+*.gz
+*.pid
+
+# --- Git ---
+*.lock

@@ -24,9 +24,10 @@ const Lists = () => {
         apiService.getLists(),
         apiService.getProspects()
       ]);
-      setLists(listsResponse.data);
-      setProspects(prospectsResponse.data);
+      setLists(listsResponse.data || []);
+      setProspects(prospectsResponse.data || []);
     } catch (error) {
+      console.error('Failed to load data:', error);
       toast.error('Failed to load data');
     } finally {
       setLoading(false);
@@ -38,8 +39,9 @@ const Lists = () => {
       await apiService.createList(listData);
       toast.success('List created successfully');
       setShowCreateModal(false);
-      loadData();
+      await loadData();
     } catch (error) {
+      console.error('Failed to create list:', error);
       toast.error('Failed to create list');
     }
   };
@@ -50,8 +52,9 @@ const Lists = () => {
       toast.success('List updated successfully');
       setShowEditModal(false);
       setSelectedList(null);
-      loadData();
+      await loadData();
     } catch (error) {
+      console.error('Failed to update list:', error);
       toast.error('Failed to update list');
     }
   };
@@ -62,8 +65,9 @@ const Lists = () => {
     try {
       await apiService.deleteList(listId);
       toast.success('List deleted successfully');
-      loadData();
+      await loadData();
     } catch (error) {
+      console.error('Failed to delete list:', error);
       toast.error('Failed to delete list');
     }
   };
@@ -98,6 +102,19 @@ const Lists = () => {
   const handleShowAddProspects = (list) => {
     setSelectedList(list);
     setShowAddProspectsModal(true);
+  };
+
+  // Safe calculation functions to prevent errors
+  const calculateAverageListSize = () => {
+    if (!lists || lists.length === 0) return 0;
+    const totalProspects = lists.reduce((sum, list) => sum + (list.prospect_count || 0), 0);
+    return Math.round(totalProspects / lists.length);
+  };
+
+  const calculateActiveTags = () => {
+    if (!lists || lists.length === 0) return 0;
+    const allTags = lists.flatMap(list => list.tags || []);
+    return new Set(allTags).size;
   };
 
   if (loading) {
@@ -162,7 +179,7 @@ const Lists = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg. List Size</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {lists.length > 0 ? Math.round(lists.reduce((sum, list) => sum + list.prospect_count, 0) / lists.length) : 0}
+                  {calculateAverageListSize()}
                 </p>
               </div>
               <div className="icon-wrapper bg-gradient-to-r from-purple-500 to-purple-600">
@@ -177,7 +194,7 @@ const Lists = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Tags</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {new Set(lists.flatMap(list => list.tags || [])).size}
+                  {calculateActiveTags()}
                 </p>
               </div>
               <div className="icon-wrapper bg-gradient-to-r from-orange-500 to-orange-600">
@@ -197,11 +214,11 @@ const Lists = () => {
                 <div className="flex items-center space-x-3">
                   <div 
                     className="w-4 h-4 rounded-full" 
-                    style={{ backgroundColor: list.color }}
+                    style={{ backgroundColor: list.color || '#3B82F6' }}
                   ></div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{list.name}</h3>
-                    <p className="text-sm text-gray-600">{list.description}</p>
+                    <p className="text-sm text-gray-600">{list.description || ''}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -240,10 +257,10 @@ const Lists = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">{list.prospect_count} prospects</span>
+                  <span className="text-sm text-gray-600">{list.prospect_count || 0} prospects</span>
                 </div>
                 <div className="text-xs text-gray-500">
-                  {new Date(list.created_at).toLocaleDateString()}
+                  {list.created_at ? new Date(list.created_at).toLocaleDateString() : ''}
                 </div>
               </div>
 
@@ -311,6 +328,10 @@ const CreateListModal = ({ onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error('List name is required');
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -380,7 +401,7 @@ const CreateListModal = ({ onClose, onSubmit }) => {
                   key={color}
                   type="button"
                   onClick={() => setFormData({ ...formData, color })}
-                  className={`w-8 h-8 rounded-full border-2 ${
+                  className={`w-8 h-8 rounded-full border-2 transition-colors ${
                     formData.color === color ? 'border-gray-400' : 'border-gray-200'
                   }`}
                   style={{ backgroundColor: color }}
@@ -398,7 +419,12 @@ const CreateListModal = ({ onClose, onSubmit }) => {
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
                 className="input flex-1"
                 placeholder="Add a tag..."
               />
@@ -451,15 +477,19 @@ const CreateListModal = ({ onClose, onSubmit }) => {
 
 const EditListModal = ({ list, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    name: list.name,
-    description: list.description || '',
-    color: list.color,
-    tags: list.tags || []
+    name: list?.name || '',
+    description: list?.description || '',
+    color: list?.color || '#3B82F6',
+    tags: list?.tags || []
   });
   const [tagInput, setTagInput] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error('List name is required');
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -484,6 +514,10 @@ const EditListModal = ({ list, onClose, onSubmit }) => {
     '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
     '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
   ];
+
+  if (!list) {
+    return null;
+  }
 
   return (
     <div className="modal-overlay">
@@ -527,7 +561,7 @@ const EditListModal = ({ list, onClose, onSubmit }) => {
                   key={color}
                   type="button"
                   onClick={() => setFormData({ ...formData, color })}
-                  className={`w-8 h-8 rounded-full border-2 ${
+                  className={`w-8 h-8 rounded-full border-2 transition-colors ${
                     formData.color === color ? 'border-gray-400' : 'border-gray-200'
                   }`}
                   style={{ backgroundColor: color }}
@@ -545,7 +579,12 @@ const EditListModal = ({ list, onClose, onSubmit }) => {
                 type="text"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
                 className="input flex-1"
                 placeholder="Add a tag..."
               />
@@ -600,40 +639,92 @@ const AddProspectsToListModal = ({ list, prospects, onClose, onSubmit }) => {
   const [selectedProspects, setSelectedProspects] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Debug logging
+  console.log('AddProspectsToListModal rendered with:', { 
+    listId: list?.id, 
+    prospectsCount: prospects?.length,
+    selectedCount: selectedProspects.length 
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedProspects.length === 0) {
       toast.error('Please select at least one prospect');
       return;
     }
+    console.log('Submitting selected prospects:', selectedProspects);
     onSubmit(selectedProspects);
   };
 
-  const handleProspectToggle = (prospectId) => {
-    setSelectedProspects(prev => 
-      prev.includes(prospectId) 
-        ? prev.filter(id => id !== prospectId)
-        : [...prev, prospectId]
-    );
+  // Simplified toggle function
+  const toggleProspect = (prospectId) => {
+    console.log('Toggling prospect ID:', prospectId, 'Current selected:', selectedProspects);
+    
+    setSelectedProspects(prevSelected => {
+      let newSelected;
+      if (prevSelected.includes(prospectId)) {
+        newSelected = prevSelected.filter(id => id !== prospectId);
+        console.log('Removing prospect:', prospectId);
+      } else {
+        newSelected = [...prevSelected, prospectId];
+        console.log('Adding prospect:', prospectId);
+      }
+      console.log('New selected array:', newSelected);
+      return newSelected;
+    });
   };
 
-  const filteredProspects = prospects.filter(prospect => 
-    !prospect.list_ids?.includes(list.id) && // Don't show prospects already in this list
-    (prospect.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     prospect.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     prospect.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     prospect.company.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Simple checkbox handler - only handle the toggle
+  const handleCheckboxClick = (e, prospectId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Checkbox clicked for prospect:', prospectId);
+    toggleProspect(prospectId);
+  };
+
+  const filteredProspects = prospects?.filter(prospect => {
+    // Don't show prospects already in this list
+    if (prospect.list_ids?.includes(list.id)) return false;
+    
+    // Apply search filter
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (prospect.first_name || '').toLowerCase().includes(searchLower) ||
+      (prospect.last_name || '').toLowerCase().includes(searchLower) ||
+      (prospect.email || '').toLowerCase().includes(searchLower) ||
+      (prospect.company || '').toLowerCase().includes(searchLower)
+    );
+  }) || [];
+
+  console.log('Filtered prospects count:', filteredProspects.length);
+
+  if (!list) {
+    console.log('No list provided to modal');
+    return null;
+  }
 
   return (
     <div className="modal-overlay">
       <div className="modal-content max-w-4xl">
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-xl font-bold text-gray-900">Add Prospects to {list.name}</h3>
-          <p className="text-gray-600 mt-1">Select prospects to add to this list</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Add Prospects to {list.name}</h3>
+              <p className="text-gray-600 mt-1">Select prospects to add to this list</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600"
+              type="button"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6">
+        <div className="p-6">
           {/* Search */}
           <div className="mb-6">
             <div className="relative">
@@ -648,74 +739,114 @@ const AddProspectsToListModal = ({ list, prospects, onClose, onSubmit }) => {
             </div>
           </div>
 
+          {/* Debug Info */}
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+            <strong>Debug Info:</strong> {prospects?.length || 0} total, {filteredProspects.length} filtered, {selectedProspects.length} selected
+            {selectedProspects.length > 0 && (
+              <div className="mt-1 text-xs">Selected IDs: [{selectedProspects.join(', ')}]</div>
+            )}
+          </div>
+
+          {/* Test Selection Button */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                if (filteredProspects.length > 0) {
+                  toggleProspect(filteredProspects[0].id);
+                }
+              }}
+              className="btn btn-secondary text-sm"
+            >
+              Test: Toggle First Prospect
+            </button>
+          </div>
+
           {/* Prospects List */}
-          <div className="max-h-96 overflow-y-auto mb-6">
+          <div className="max-h-96 overflow-y-auto mb-6 border border-gray-200 rounded">
             {filteredProspects.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No prospects available to add to this list
+                {searchTerm ? 'No prospects match your search' : 'No prospects available to add to this list'}
               </div>
             ) : (
-              <div className="space-y-2">
-                {filteredProspects.map((prospect) => (
-                  <div
-                    key={prospect.id}
-                    className={`p-4 border rounded-lg transition-colors ${
-                      selectedProspects.includes(prospect.id) 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedProspects.includes(prospect.id)}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleProspectToggle(prospect.id);
-                          }}
-                          className="h-4 w-4 text-blue-600 rounded"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {prospect.first_name} {prospect.last_name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {prospect.email} • {prospect.company || 'No company'}
-                          </div>
+              <div className="divide-y divide-gray-200">
+                {filteredProspects.map((prospect, index) => {
+                  const isSelected = selectedProspects.includes(prospect.id);
+                  console.log(`Prospect ${prospect.id} selected state:`, isSelected);
+                  
+                  return (
+                    <div
+                      key={prospect.id}
+                      className={`p-4 transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                          : 'bg-white hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="flex items-center h-5">
+                          <input
+                            type="checkbox"
+                            id={`prospect-${prospect.id}`}
+                            checked={isSelected}
+                            onClick={(e) => handleCheckboxClick(e, prospect.id)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                          />
                         </div>
+                        <label 
+                          htmlFor={`prospect-${prospect.id}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <div className="font-medium text-gray-900">
+                            {prospect.first_name || ''} {prospect.last_name || ''}
+                            {(!prospect.first_name && !prospect.last_name) && 'Unnamed Prospect'}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {prospect.email || 'No email'} • {prospect.company || 'No company'}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            ID: {prospect.id} | Index: {index} | Selected: {isSelected ? 'YES' : 'NO'}
+                          </div>
+                        </label>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Selected Count */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <div className="text-sm text-blue-800">
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-sm font-medium text-blue-800">
               {selectedProspects.length} prospect(s) selected
             </div>
+            {selectedProspects.length > 0 && (
+              <div className="text-xs text-blue-600 mt-2 font-mono">
+                Selected IDs: [{selectedProspects.join(', ')}]
+              </div>
+            )}
           </div>
 
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={selectedProspects.length === 0}
-            >
-              Add {selectedProspects.length} Prospect(s)
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit}>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={selectedProspects.length === 0}
+              >
+                Add {selectedProspects.length} Prospect(s)
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
