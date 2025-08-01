@@ -63,8 +63,7 @@ const ProtectedRoutes = () => {
             <Route path="/knowledge-base" element={<KnowledgeBase />} />
             <Route path="/system-prompts" element={<SystemPrompts />} />
             <Route path="/response-verification" element={<ResponseVerification />} />
-            <Route path="/ai-agent" element={<AIAgentChat />} />
-            <Route path="/ai-agent-enhanced" element={<EnhancedAIAgentChat />} />
+            <Route path="/ai-agent" element={<EnhancedAIAgentChat />} />
           </Routes>
         </Suspense>
       </Layout>
