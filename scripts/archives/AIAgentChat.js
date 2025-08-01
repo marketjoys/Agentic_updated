@@ -2,11 +2,11 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, Mic, MicOff, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { apiService } from '../services/api';
-import api from '../services/api';
-import VoiceIndicator from './VoiceIndicator';
-import VoiceTroubleshootingModal from './VoiceTroubleshootingModal';
-import useWakeWordDetection from '../hooks/useWakeWordDetection';
+import { apiService } from '../../frontend/src/services/api';
+import api from '../../frontend/src/services/api';
+import VoiceIndicator from '../../frontend/src/components/VoiceIndicator';
+import VoiceTroubleshootingModal from '../../frontend/src/components/VoiceTroubleshootingModal';
+import useWakeWordDetection from '../../frontend/src/hooks/useWakeWordDetection';
 
 const AIAgentChat = () => {
   const [messages, setMessages] = useState([]);
