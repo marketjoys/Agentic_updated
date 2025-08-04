@@ -365,10 +365,10 @@ ${htmlContent}
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-7xl h-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-7xl my-8 flex flex-col max-h-[calc(100vh-4rem)]">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <div className="flex items-center space-x-3">
             <Mail className="w-6 h-6 text-blue-600" />
             <h2 className="text-2xl font-bold">
@@ -378,15 +378,16 @@ ${htmlContent}
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg"
+            title="Close (ESC)"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex">
+        <div className="flex-1 flex min-h-0">
           {/* Left Panel - Form */}
-          <div className="w-1/2 p-6 border-r overflow-y-auto">
+          <div className="w-1/2 p-6 border-r overflow-y-auto")
             {/* Basic Information */}
             <div className="space-y-4 mb-6">
               <div>
