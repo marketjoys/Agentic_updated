@@ -588,15 +588,15 @@ ${htmlContent}
           </div>
 
           {/* Right Panel - Preview */}
-          <div className="w-1/2 p-6 bg-gray-50">
-            <div className="flex items-center justify-between mb-4">
+          <div className="w-1/2 p-6 bg-gray-50 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h3 className="text-lg font-medium text-gray-800">Preview</h3>
               <div className="text-sm text-gray-600">
                 {templateData.is_html_enabled ? 'HTML Preview' : 'Text Preview'}
               </div>
             </div>
             
-            <div className="bg-white border border-gray-300 rounded-lg h-full overflow-auto">
+            <div className="bg-white border border-gray-300 rounded-lg flex-1 overflow-auto">
               {templateData.is_html_enabled && showPreview ? (
                 <iframe
                   srcDoc={htmlPreview}
