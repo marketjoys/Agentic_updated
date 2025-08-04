@@ -387,7 +387,7 @@ ${htmlContent}
         {/* Main Content */}
         <div className="flex-1 flex min-h-0">
           {/* Left Panel - Form */}
-          <div className="w-1/2 p-6 border-r overflow-y-auto")
+          <div className="w-1/2 p-6 border-r overflow-y-auto">
             {/* Basic Information */}
             <div className="space-y-4 mb-6">
               <div>
