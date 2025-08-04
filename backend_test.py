@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Test for Email Campaign System
-Tests the current state of email providers, lists, prospects, campaigns, and services
+Comprehensive Backend Test for Follow-up Scheduling System
+Tests the current state of follow-up engine, email providers, campaigns, and services
 """
 
 import asyncio
