@@ -9,7 +9,7 @@ Testing duplicate prevention functionality specifically to verify that:
 4. Verify that the error messages are meaningful and indicate the duplicate issue
 5. Test that normal creation still works without issues
 
-URL: https://030d008b-cc85-4bf3-afdd-411b8004d718.preview.emergentagent.com
+URL: https://6464b8e1-a5e1-4bb7-b2f5-42bbc07856fb.preview.emergentagent.com
 Login: testuser / testpass123
 """
 
@@ -20,7 +20,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://030d008b-cc85-4bf3-afdd-411b8004d718.preview.emergentagent.com/api"
+BASE_URL = "https://6464b8e1-a5e1-4bb7-b2f5-42bbc07856fb.preview.emergentagent.com/api"
 USERNAME = "testuser"
 PASSWORD = "testpass123"
 

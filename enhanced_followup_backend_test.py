@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 
 class EnhancedFollowUpTester:
-    def __init__(self, base_url="https://030d008b-cc85-4bf3-afdd-411b8004d718.preview.emergentagent.com"):
+    def __init__(self, base_url="https://6464b8e1-a5e1-4bb7-b2f5-42bbc07856fb.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
