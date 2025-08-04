@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 import os
 from app.services.database import db_service
 from app.services.enhanced_database import enhanced_db_service
-from app.services.groq_service import groq_service
+from app.services.groq_service_fixed import groq_service  # Use fixed version
 from app.utils.helpers import send_email, generate_id, personalize_template
 
 # Configure logging
@@ -283,7 +283,7 @@ class EmailProcessor:
         return scan_result
     
     async def _process_email(self, email_message, provider_config: dict = None):
-        """Process individual email with enhanced follow-up detection"""
+        """Process individual email with enhanced follow-up detection and auto-response"""
         try:
             # Extract email details
             sender = email_message.get("From", "")
@@ -332,7 +332,7 @@ class EmailProcessor:
             if is_response_to_our_email:
                 await self._handle_prospect_response(prospect, content, subject, thread_context)
             
-            # Classify intents using Groq AI
+            # FIXED: Enhanced intent classification and auto-response
             classified_intents = await groq_service.classify_intents(content, subject)
             
             if not classified_intents:
@@ -341,26 +341,26 @@ class EmailProcessor:
             
             logger.info(f"Classified intents: {classified_intents}")
             
-            # Get conversation context
-            conversation_context = await self._get_conversation_context(thread_context["id"])
-            
-            # Generate response using Groq AI
-            response_data = await groq_service.generate_response(
-                content, 
-                subject, 
-                classified_intents, 
-                conversation_context, 
-                prospect
-            )
-            
-            if response_data.get("error"):
-                logger.error(f"Response generation failed: {response_data['error']}")
-                return True
-            
             # Check if any intent requires auto-response
             should_auto_respond = await self._should_auto_respond(classified_intents)
             
             if should_auto_respond:
+                # Get conversation context
+                conversation_context = await self._get_conversation_context(thread_context["id"])
+                
+                # Generate response using Groq AI
+                response_data = await groq_service.generate_response(
+                    content, 
+                    subject, 
+                    classified_intents, 
+                    conversation_context, 
+                    prospect
+                )
+                
+                if response_data.get("error"):
+                    logger.error(f"Response generation failed: {response_data['error']}")
+                    return True
+                
                 # Send automatic response
                 await self._send_automatic_response(
                     prospect, 
@@ -376,35 +376,47 @@ class EmailProcessor:
                 
         except Exception as e:
             logger.error(f"Error processing email: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     async def _check_if_response_to_our_email(self, prospect_id: str, content: str, subject: str, thread_context: dict):
-        """Check if this email is a response to our email"""
+        """Enhanced check if this email is a response to our email"""
         try:
             # Check if subject contains Re: or similar reply indicators
-            reply_indicators = ["re:", "reply:", "response:", "regarding:", "about:"]
-            subject_lower = subject.lower()
+            reply_indicators = ["re:", "reply:", "response:", "regarding:", "about:", "fwd:", "forward:"]
+            subject_lower = subject.lower().strip()
             
             for indicator in reply_indicators:
-                if indicator in subject_lower:
+                if subject_lower.startswith(indicator):
                     logger.info(f"Email appears to be a reply based on subject: {subject}")
                     return True
             
-            # Check if we sent any emails to this prospect recently
+            # Check if we sent any emails to this prospect recently (within last 30 days)
+            from datetime import timedelta
+            recent_cutoff = datetime.utcnow() - timedelta(days=30)
+            
             thread_messages = thread_context.get("messages", [])
             our_recent_emails = [
                 msg for msg in thread_messages 
-                if msg.get("type") == "sent" and msg.get("sent_by_us", False)
+                if (msg.get("type") == "sent" and 
+                    msg.get("sent_by_us", False) and
+                    msg.get("timestamp", datetime.utcnow()) > recent_cutoff)
             ]
             
             if our_recent_emails:
-                logger.info(f"Found {len(our_recent_emails)} emails we sent to this prospect")
+                logger.info(f"Found {len(our_recent_emails)} recent emails we sent to this prospect")
                 return True
             
             # Check database for sent emails
-            sent_emails = await db_service.get_sent_emails_in_thread(thread_context["id"])
+            sent_emails = await db_service.db.emails.find({
+                "prospect_id": prospect_id,
+                "sent_by_us": True,
+                "sent_at": {"$gte": recent_cutoff}
+            }).to_list(length=None)
+            
             if sent_emails:
-                logger.info(f"Found {len(sent_emails)} sent emails in thread {thread_context['id']}")
+                logger.info(f"Found {len(sent_emails)} sent emails in database for prospect {prospect_id}")
                 return True
             
             return False
@@ -414,7 +426,7 @@ class EmailProcessor:
             return False
     
     async def _handle_prospect_response(self, prospect: dict, content: str, subject: str, thread_context: dict):
-        """Handle when a prospect responds to our email"""
+        """Enhanced handling when a prospect responds to our email"""
         try:
             prospect_id = prospect["id"]
             
@@ -453,19 +465,21 @@ class EmailProcessor:
             logger.error(f"Error handling prospect response: {str(e)}")
     
     async def _detect_auto_reply(self, content: str, subject: str):
-        """Enhanced auto-reply detection"""
+        """Enhanced auto-reply detection with more patterns"""
         try:
             content_lower = content.lower()
             subject_lower = subject.lower()
             
             # Extended auto-reply indicators
             auto_reply_indicators = [
-                "out of office", "vacation", "away", "automatic reply", "auto-reply",
+                "out of office", "vacation", "away", "automatic reply", "auto-reply", "autoreply",
                 "currently unavailable", "on holiday", "leave", "maternity leave",
                 "sick leave", "conference", "traveling", "will be back",
                 "not available", "away message", "vacation message", "out of the office",
                 "currently out", "temporarily unavailable", "on leave", "parental leave",
-                "sabbatical", "business trip", "attending conference", "away from desk"
+                "sabbatical", "business trip", "attending conference", "away from desk",
+                "thank you for your email", "i will respond when i return",
+                "limited access to email", "checking email less frequently"
             ]
             
             # Check for indicators in content and subject
@@ -485,11 +499,13 @@ class EmailProcessor:
                 r"currently unavailable",
                 r"thank you for your (email|message)",
                 r"i will (respond|reply) when i return",
-                r"limited access to email"
+                r"limited access to email",
+                r"this is an automated response"
             ]
             
+            combined_text = content_lower + " " + subject_lower
             for pattern in auto_reply_patterns:
-                if re.search(pattern, content_lower) or re.search(pattern, subject_lower):
+                if re.search(pattern, combined_text):
                     logger.info(f"Auto-reply detected: matched pattern '{pattern}'")
                     return True
             
@@ -500,7 +516,7 @@ class EmailProcessor:
             return False
     
     async def _get_or_create_thread_context(self, prospect_id: str, sender_email: str) -> Dict:
-        """Get or create thread context for prospect"""
+        """Get or create thread context for prospect with consistent thread ID"""
         try:
             # Check if thread exists
             existing_thread = await db_service.get_thread_by_prospect_id(prospect_id)
@@ -508,9 +524,10 @@ class EmailProcessor:
             if existing_thread:
                 return existing_thread
             
-            # Create new thread
+            # Create new thread with consistent ID format
+            thread_id = f"thread_{prospect_id}"
             thread_data = {
-                "id": generate_id(),
+                "id": thread_id,
                 "prospect_id": prospect_id,
                 "campaign_id": "",  # Will be set if part of campaign
                 "messages": [],
@@ -545,12 +562,20 @@ class EmailProcessor:
             return []
     
     async def _should_auto_respond(self, classified_intents: List[Dict]) -> bool:
-        """Check if any intent requires auto-response"""
+        """Enhanced check if any intent requires auto-response"""
         try:
             for intent in classified_intents:
+                # Check if intent has auto_respond flag set to true
+                if intent.get("auto_respond", False):
+                    logger.info(f"Auto-response required for intent: {intent.get('intent_name')}")
+                    return True
+                
+                # Also check database intent record
                 intent_details = await db_service.get_intent_by_id(intent["intent_id"])
                 if intent_details and intent_details.get("auto_respond", False):
+                    logger.info(f"Auto-response required for intent (from database): {intent_details.get('name')}")
                     return True
+            
             return False
         except Exception as e:
             logger.error(f"Error checking auto-response: {str(e)}")
@@ -565,6 +590,10 @@ class EmailProcessor:
             
             # Find the original email provider used for this prospect
             original_provider = await self._get_original_email_provider(prospect["id"])
+            
+            if not original_provider:
+                logger.error(f"No email provider available for auto-response to {prospect['email']}")
+                return
             
             # Send email with proper error handling using the original provider
             try:
@@ -591,7 +620,7 @@ class EmailProcessor:
                         "thread_id": thread_id,
                         "ai_generated": True,
                         "is_auto_response": True,
-                        "provider_id": original_provider["id"] if original_provider else None,
+                        "provider_id": original_provider["id"],
                         "recipient_email": prospect["email"]
                     }
                     
@@ -611,11 +640,11 @@ class EmailProcessor:
                         "is_auto_response": True,
                         "template_used": response_data.get("template_used"),
                         "email_id": email_id,
-                        "provider_id": original_provider["id"] if original_provider else None,
-                        "provider_email": original_provider["email_address"] if original_provider else None
+                        "provider_id": original_provider["id"],
+                        "provider_email": original_provider["email_address"]
                     })
                     
-                    provider_email = original_provider["email_address"] if original_provider else "default"
+                    provider_email = original_provider["email_address"]
                     logger.info(f"Automatic response sent successfully to: {prospect['email']} from provider: {provider_email}")
                 else:
                     logger.error(f"Failed to send automatic response to: {prospect['email']}")
