@@ -621,7 +621,7 @@ ${htmlContent}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t">
+        <div className="flex items-center justify-between p-6 border-t flex-shrink-0 bg-white">
           <div className="text-sm text-gray-600">
             {templateData.is_html_enabled ? 
               'HTML template with rich formatting' : 
