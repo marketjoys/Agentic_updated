@@ -352,7 +352,13 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
     schedule_type: 'immediate',
     start_time: '',
     follow_up_enabled: true,
+    follow_up_schedule_type: 'interval',
     follow_up_intervals: [3, 7, 14],
+    follow_up_dates: [],
+    follow_up_timezone: 'UTC',
+    follow_up_time_window_start: '09:00',
+    follow_up_time_window_end: '17:00',
+    follow_up_days_of_week: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
     follow_up_templates: []
   });
 
