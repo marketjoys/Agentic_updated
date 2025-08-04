@@ -435,6 +435,48 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
     }));
   };
 
+  const addFollowUpDate = () => {
+    const newDate = new Date();
+    newDate.setDate(newDate.getDate() + formData.follow_up_dates.length + 1);
+    const dateStr = newDate.toISOString().slice(0, 16);
+    setFormData(prev => ({
+      ...prev,
+      follow_up_dates: [...prev.follow_up_dates, dateStr]
+    }));
+  };
+
+  const updateFollowUpDate = (index, dateValue) => {
+    const newDates = [...formData.follow_up_dates];
+    newDates[index] = dateValue;
+    setFormData(prev => ({
+      ...prev,
+      follow_up_dates: newDates
+    }));
+  };
+
+  const removeFollowUpDate = (index) => {
+    const newDates = formData.follow_up_dates.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      follow_up_dates: newDates
+    }));
+  };
+
+  const handleDayOfWeekToggle = (day) => {
+    const isSelected = formData.follow_up_days_of_week.includes(day);
+    if (isSelected) {
+      setFormData(prev => ({
+        ...prev,
+        follow_up_days_of_week: prev.follow_up_days_of_week.filter(d => d !== day)
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        follow_up_days_of_week: [...prev.follow_up_days_of_week, day]
+      }));
+    }
+  };
+
   const initialTemplates = templates.filter(t => t.type === 'initial');
   const followUpTemplates = templates.filter(t => t.type === 'follow_up');
 
