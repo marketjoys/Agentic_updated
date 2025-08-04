@@ -672,26 +672,166 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
 
                 {formData.follow_up_enabled && (
                   <>
+                    {/* Follow-up Schedule Type */}
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">
-                        Follow-up Intervals (days)
+                        Schedule Type
                       </label>
-                      <div className="flex space-x-2">
-                        {formData.follow_up_intervals.map((interval, index) => (
-                          <input
-                            key={index}
-                            type="number"
-                            value={interval}
-                            onChange={(e) => handleIntervalChange(index, e.target.value)}
-                            className="input w-20"
-                            min="1"
-                            max="30"
-                            placeholder={`Day ${index + 1}`}
-                          />
+                      <select
+                        name="follow_up_schedule_type"
+                        value={formData.follow_up_schedule_type}
+                        onChange={handleChange}
+                        className="input w-full"
+                      >
+                        <option value="interval">Interval-based (days after last contact)</option>
+                        <option value="datetime">Specific date and time</option>
+                      </select>
+                    </div>
+
+                    {/* Timezone Configuration */}
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Timezone
+                      </label>
+                      <select
+                        name="follow_up_timezone"
+                        value={formData.follow_up_timezone}
+                        onChange={handleChange}
+                        className="input w-full"
+                      >
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">Eastern Time</option>
+                        <option value="America/Chicago">Central Time</option>
+                        <option value="America/Denver">Mountain Time</option>
+                        <option value="America/Los_Angeles">Pacific Time</option>
+                        <option value="Europe/London">London</option>
+                        <option value="Europe/Paris">Paris</option>
+                        <option value="Asia/Tokyo">Tokyo</option>
+                        <option value="Asia/Shanghai">Shanghai</option>
+                        <option value="Asia/Kolkata">India</option>
+                      </select>
+                    </div>
+
+                    {/* Interval-based Configuration */}
+                    {formData.follow_up_schedule_type === 'interval' && (
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-2">
+                          Follow-up Intervals (days)
+                        </label>
+                        <div className="flex space-x-2">
+                          {formData.follow_up_intervals.map((interval, index) => (
+                            <input
+                              key={index}
+                              type="number"
+                              value={interval}
+                              onChange={(e) => handleIntervalChange(index, e.target.value)}
+                              className="input w-20"
+                              min="1"
+                              max="30"
+                              placeholder={`Day ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Days after initial contact or last follow-up
+                        </p>
+                      </div>
+                    )}
+
+                    {/* DateTime-based Configuration */}
+                    {formData.follow_up_schedule_type === 'datetime' && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-medium text-secondary-700">
+                            Follow-up Date & Times
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addFollowUpDate}
+                            className="text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200"
+                          >
+                            Add Date
+                          </button>
+                        </div>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {formData.follow_up_dates.map((date, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <input
+                                type="datetime-local"
+                                value={date}
+                                onChange={(e) => updateFollowUpDate(index, e.target.value)}
+                                className="input flex-1"
+                                min={new Date().toISOString().slice(0, 16)}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeFollowUpDate(index)}
+                                className="text-red-600 hover:text-red-800 px-2 py-1"
+                                title="Remove date"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                          {formData.follow_up_dates.length === 0 && (
+                            <p className="text-sm text-gray-500">No specific dates set. Click "Add Date" to schedule follow-ups.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Time Window Configuration */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
+                          Send Time Window Start
+                        </label>
+                        <input
+                          type="time"
+                          name="follow_up_time_window_start"
+                          value={formData.follow_up_time_window_start}
+                          onChange={handleChange}
+                          className="input"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 mb-1">
+                          Send Time Window End
+                        </label>
+                        <input
+                          type="time"
+                          name="follow_up_time_window_end"
+                          value={formData.follow_up_time_window_end}
+                          onChange={handleChange}
+                          className="input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Days of Week Configuration */}
+                    <div>
+                      <label className="block text-sm font-medium text-secondary-700 mb-2">
+                        Send Days (Select days when follow-ups can be sent)
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => handleDayOfWeekToggle(day)}
+                            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                              formData.follow_up_days_of_week.includes(day)
+                                ? 'bg-primary-100 text-primary-700 border-primary-300'
+                                : 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'
+                            }`}
+                          >
+                            {day.charAt(0).toUpperCase() + day.slice(1)}
+                          </button>
                         ))}
                       </div>
                     </div>
 
+                    {/* Follow-up Templates */}
                     <div>
                       <label className="block text-sm font-medium text-secondary-700 mb-2">
                         Follow-up Templates (Optional)
