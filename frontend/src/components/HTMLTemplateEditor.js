@@ -499,7 +499,7 @@ ${htmlContent}
                   className="border border-gray-300 rounded-lg min-h-[300px]"
                 />
               ) : (
-                <RichTextEditor
+                <SimpleRichEditor
                   value={templateData.content}
                   onChange={(value) => handleInputChange('content', value)}
                   onKeyDown={(e) => {
