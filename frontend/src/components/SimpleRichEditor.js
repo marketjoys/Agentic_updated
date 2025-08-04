@@ -100,7 +100,7 @@ const SimpleRichEditor = forwardRef(({ value, onChange, placeholder, onKeyDown, 
 
       {/* Helper text */}
       <div className="text-sm text-gray-600 mt-2">
-        <span className="font-medium">Simple & Powerful:</span> Use toolbar buttons to add formatting, switch to HTML mode for advanced editing, or add variables like {{first_name}} for personalization.
+        <span className="font-medium">Simple & Powerful:</span> Use toolbar buttons to add formatting, switch to HTML mode for advanced editing, or add variables like {'{'}first_name{'}'} for personalization.
       </div>
     </div>
   );
