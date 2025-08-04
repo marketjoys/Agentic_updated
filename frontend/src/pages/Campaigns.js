@@ -395,7 +395,8 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
     const campaignData = {
       ...formData,
       start_time: formData.start_time ? new Date(formData.start_time).toISOString() : null,
-      follow_up_intervals: formData.follow_up_intervals.filter(interval => interval > 0)
+      follow_up_intervals: formData.follow_up_intervals.filter(interval => interval > 0),
+      follow_up_dates: formData.follow_up_dates.map(date => new Date(date).toISOString())
     };
     onSave(campaignData);
   };
