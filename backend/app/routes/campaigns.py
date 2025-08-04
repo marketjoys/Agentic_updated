@@ -36,7 +36,7 @@ async def get_campaign(campaign_id: str):
 
 @router.post("/campaigns/{campaign_id}/send")
 async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, send_data: dict = {}):
-    """Send campaign emails with enhanced follow-up provider tracking"""
+    """Send campaign emails with enhanced follow-up provider tracking and duplicate prevention"""
     campaign = await db_service.get_campaign_by_id(campaign_id)
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
@@ -44,6 +44,22 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, sen
     template = await db_service.get_template_by_id(campaign["template_id"])
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
+    
+    # CRITICAL FIX: Check if campaign has already been sent
+    existing_emails = await db_service.db.emails.find({
+        "campaign_id": campaign_id,
+        "is_follow_up": False,
+        "status": "sent"
+    }).to_list(length=None)
+    
+    if existing_emails:
+        logger.warning(f"Campaign {campaign_id} has already been sent to {len(existing_emails)} prospects")
+        # Check if force resend is requested
+        if not send_data.get("force_resend", False):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Campaign has already been sent to {len(existing_emails)} prospects. Use 'force_resend': true to resend."
+            )
     
     # Determine email provider to use
     provider_id = send_data.get("email_provider_id") or campaign.get("email_provider_id")
@@ -80,9 +96,30 @@ async def send_campaign(campaign_id: str, background_tasks: BackgroundTasks, sen
             seen_emails.add(prospect["email"])
             unique_prospects.append(prospect)
     
+    # CRITICAL FIX: Filter out prospects who have already received this campaign
+    if not send_data.get("force_resend", False):
+        already_sent_emails = {email.get("recipient_email") for email in existing_emails}
+        filtered_prospects = [
+            prospect for prospect in unique_prospects 
+            if prospect["email"] not in already_sent_emails
+        ]
+        logger.info(f"Filtered out {len(unique_prospects) - len(filtered_prospects)} prospects who already received this campaign")
+        unique_prospects = filtered_prospects
+    
     # Limit to max_emails
     max_emails = send_data.get("max_emails") or campaign.get("max_emails", 100)
     prospects = unique_prospects[:max_emails]
+    
+    if not prospects:
+        logger.warning(f"No prospects to send to for campaign {campaign_id}")
+        return {
+            "campaign_id": campaign_id,
+            "status": "completed",
+            "email_provider_id": provider_id,
+            "email_provider_name": provider.get("name"),
+            "total_prospects": 0,
+            "message": "No prospects to send to (all have already received this campaign)"
+        }
     
     logger.info(f"Starting campaign {campaign_id} with provider {provider['name']} for {len(prospects)} prospects")
     
@@ -112,9 +149,10 @@ async def process_campaign_emails_with_follow_up_tracking(
     provider_id: str,
     send_data: dict = {}
 ):
-    """Process campaign emails with enhanced follow-up and provider tracking"""
+    """Process campaign emails with enhanced follow-up and provider tracking - FIXED VERSION"""
     sent_count = 0
     failed_count = 0
+    skipped_count = 0
     
     # Get provider details
     provider = await email_provider_service.get_email_provider_by_id(provider_id)
@@ -126,6 +164,18 @@ async def process_campaign_emails_with_follow_up_tracking(
     
     for prospect in prospects:
         try:
+            # CRITICAL FIX: Double-check if email already sent to this prospect for this campaign
+            existing_email = await db_service.db.emails.find_one({
+                "campaign_id": campaign_id,
+                "prospect_id": prospect["id"],
+                "is_follow_up": False
+            })
+            
+            if existing_email and not send_data.get("force_resend", False):
+                logger.info(f"Skipping {prospect['email']} - already sent for campaign {campaign_id}")
+                skipped_count += 1
+                continue
+            
             # Personalize email content
             personalized_content = personalize_template(template["content"], prospect)
             personalized_subject = personalize_template(template["subject"], prospect)
@@ -157,7 +207,7 @@ async def process_campaign_emails_with_follow_up_tracking(
                 "is_follow_up": False,
                 "follow_up_sequence": 0,
                 "sent_by_us": True,  # Mark as sent by our system
-                "thread_id": f"thread_{prospect['id']}",
+                "thread_id": f"thread_{prospect['id']}",  # CONSISTENT THREADING
                 "template_id": template["id"],
                 "provider_name": provider.get("name")
             }
@@ -177,7 +227,8 @@ async def process_campaign_emails_with_follow_up_tracking(
                     "updated_at": datetime.utcnow()
                 })
                 
-                # Create or update thread context for this prospect
+                # FIXED: Create or update thread context with consistent thread ID
+                thread_id = f"thread_{prospect['id']}"
                 await db_service.create_or_update_thread_context(
                     prospect["id"], 
                     campaign_id, 
@@ -192,7 +243,8 @@ async def process_campaign_emails_with_follow_up_tracking(
                         "template_id": template["id"],
                         "provider_id": provider_id,
                         "sent_by_us": True,
-                        "is_follow_up": False
+                        "is_follow_up": False,
+                        "thread_id": thread_id  # ENSURE CONSISTENT THREAD ID
                     }
                 )
                 
@@ -215,14 +267,16 @@ async def process_campaign_emails_with_follow_up_tracking(
         "status": campaign_status,  # Keep active for follow-ups
         "sent_count": sent_count,
         "prospect_count": len(prospects),
+        "last_sent_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     })
     
-    logger.info(f"Campaign {campaign_id} initial send completed: {sent_count} sent, {failed_count} failed. Status: {campaign_status}")
+    logger.info(f"Campaign {campaign_id} send completed: {sent_count} sent, {failed_count} failed, {skipped_count} skipped. Status: {campaign_status}")
     
     return {
         "sent_count": sent_count,
         "failed_count": failed_count,
+        "skipped_count": skipped_count,
         "total_prospects": len(prospects),
         "status": campaign_status
     }
