@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class FollowUpSystemTester:
-    def __init__(self, base_url="https://6464b8e1-a5e1-4bb7-b2f5-42bbc07856fb.preview.emergentagent.com"):
+    def __init__(self, base_url="https://24e4a959-d97d-4946-9c07-cd62f1a8669c.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
