@@ -482,7 +482,7 @@ ${htmlContent}
               </div>
 
               {templateData.is_html_enabled ? (
-                <RichTextEditor
+                <SimpleRichEditor
                   value={templateData.html_content}
                   onChange={(value) => {
                     handleInputChange('html_content', value);
