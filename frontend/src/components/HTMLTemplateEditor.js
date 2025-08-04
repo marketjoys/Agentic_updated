@@ -365,8 +365,19 @@ ${htmlContent}
   ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-7xl my-8 flex flex-col max-h-[calc(100vh-4rem)]">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+      onClick={(e) => {
+        // Close modal when clicking on backdrop
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-lg w-full max-w-7xl my-8 flex flex-col max-h-[calc(100vh-4rem)]"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <div className="flex items-center space-x-3">
