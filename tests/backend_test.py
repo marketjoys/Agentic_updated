@@ -16,7 +16,7 @@ import os
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://24e4a959-d97d-4946-9c07-cd62f1a8669c.preview.emergentagent.com/api"
+BACKEND_URL = "https://4d303141-d619-4207-95ed-7492ac6f7b72.preview.emergentagent.com/api"
 
 class AutoResponderSystemTester:
     def __init__(self):
