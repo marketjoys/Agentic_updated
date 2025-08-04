@@ -392,6 +392,27 @@ const CreateCampaignModal = ({ templates, onClose, onSave }) => {
       return;
     }
     
+    // Enhanced follow-up validation
+    if (formData.follow_up_enabled) {
+      if (formData.follow_up_schedule_type === 'datetime' && formData.follow_up_dates.length === 0) {
+        toast.error('Please add at least one follow-up date or switch to interval-based scheduling');
+        return;
+      }
+      
+      if (formData.follow_up_schedule_type === 'interval') {
+        const validIntervals = formData.follow_up_intervals.filter(interval => interval > 0);
+        if (validIntervals.length === 0) {
+          toast.error('Please set at least one valid follow-up interval');
+          return;
+        }
+      }
+
+      if (formData.follow_up_days_of_week.length === 0) {
+        toast.error('Please select at least one day for sending follow-ups');
+        return;
+      }
+    }
+    
     const campaignData = {
       ...formData,
       start_time: formData.start_time ? new Date(formData.start_time).toISOString() : null,
