@@ -11,7 +11,7 @@ from datetime import datetime
 import sys
 
 # Backend URL from the review request
-BACKEND_URL = "https://490a8160-ede6-4588-9bdf-949db8af8943.preview.emergentagent.com"
+BACKEND_URL = "https://ae48834a-85ee-471e-b115-ca275e953d9f.preview.emergentagent.com"
 
 class ComprehensiveAPITester:
     def __init__(self):
