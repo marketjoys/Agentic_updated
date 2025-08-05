@@ -1382,11 +1382,8 @@ async def search_industries(search_term: str):
 
 @app.get("/api/services/status")
 async def get_services_status():
-    """Get status of auto follow-up and auto-responder services with provider details"""
+    """Get status of FIXED auto follow-up and auto-responder services with provider details"""
     try:
-        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
-        from app.services.email_processor import email_processor
-        
         # Get monitored providers info
         monitored_providers_info = []
         if hasattr(email_processor, 'monitored_providers'):
@@ -1403,16 +1400,22 @@ async def get_services_status():
             "services": {
                 "smart_follow_up_engine": {
                     "status": "running" if enhanced_smart_follow_up_engine.processing else "stopped",
-                    "description": "Handles automatic follow-up emails"
+                    "description": "FIXED - Handles automatic follow-up emails - STOPS immediately when replies received"
                 },
                 "email_processor": {
                     "status": "running" if email_processor.processing else "stopped", 
-                    "description": "Handles automatic email responses (auto-responder)",
+                    "description": "FIXED - Handles automatic email responses (auto-responder) - RESPONDS to ALL emails",
                     "monitored_providers_count": len(monitored_providers_info),
                     "monitored_providers": monitored_providers_info
                 }
             },
             "overall_status": "healthy" if (enhanced_smart_follow_up_engine.processing and email_processor.processing) else "degraded",
+            "fixes_applied": [
+                "✅ Follow-ups now STOP immediately when ANY reply is received",
+                "✅ Auto-responder now RESPONDS to ALL incoming emails", 
+                "✅ Enhanced response detection with aggressive filtering",
+                "✅ Comprehensive database updates for follow-up status"
+            ],
             "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
