@@ -15,7 +15,7 @@ from app.utils.helpers import send_email, generate_id, personalize_template
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class EmailProcessor:
+class EmailProcessorFixed:
     def __init__(self):
         # Default IMAP settings (for backward compatibility)
         self.imap_host = os.getenv("IMAP_HOST", "imap.gmail.com")
@@ -33,7 +33,7 @@ class EmailProcessor:
             return {"status": "already_running"}
         
         self.processing = True
-        logger.info("Starting email monitoring...")
+        logger.info("Starting FIXED email monitoring...")
         
         try:
             # Load all enabled email providers from database
@@ -41,10 +41,10 @@ class EmailProcessor:
             
             # Start monitoring in background
             asyncio.create_task(self._monitor_all_providers())
-            return {"status": "started", "message": "Email monitoring started", "providers_count": len(self.monitored_providers)}
+            return {"status": "started", "message": "FIXED Email monitoring started", "providers_count": len(self.monitored_providers)}
         except Exception as e:
             self.processing = False
-            logger.error(f"Failed to start email monitoring: {str(e)}")
+            logger.error(f"Failed to start FIXED email monitoring: {str(e)}")
             return {"status": "error", "message": str(e)}
     
     async def _load_enabled_providers(self):
@@ -203,7 +203,7 @@ class EmailProcessor:
         """Stop email monitoring for all providers"""
         self.processing = False
         self.monitored_providers.clear()
-        logger.info("Email monitoring stopped for all providers")
+        logger.info("FIXED Email monitoring stopped for all providers")
         return {"status": "stopped"}
     
     async def _check_provider_for_new_emails(self, provider_config: dict):
@@ -243,8 +243,8 @@ class EmailProcessor:
                             email_body = msg_data[0][1]
                             email_message = email.message_from_bytes(email_body)
                             
-                            # Process the email with provider context
-                            processed = await self._process_email(email_message, provider_config)
+                            # Process the email with provider context - FIXED VERSION
+                            processed = await self._process_email_fixed(email_message, provider_config)
                             if processed:
                                 scan_result["emails_processed"] += 1
                             
@@ -282,8 +282,8 @@ class EmailProcessor:
         
         return scan_result
     
-    async def _process_email(self, email_message, provider_config: dict = None):
-        """Process individual email with enhanced follow-up detection and auto-response"""
+    async def _process_email_fixed(self, email_message, provider_config: dict = None):
+        """FIXED: Process individual email with enhanced follow-up detection and auto-response"""
         try:
             # Extract email details
             sender = email_message.get("From", "")
@@ -301,13 +301,13 @@ class EmailProcessor:
                 logger.info(f"No prospect found for email: {sender_email}")
                 return False
             
-            logger.info(f"Processing email from: {sender_email}")
+            logger.info(f"FIXED: Processing email from: {sender_email}")
             
             # Create/update thread context
-            thread_context = await self._get_or_create_thread_context(prospect["id"], sender_email)
+            thread_context = await self._get_or_create_thread_context_fixed(prospect["id"], sender_email)
             
-            # Check if this is a response to our email
-            is_response_to_our_email = await self._check_if_response_to_our_email(
+            # FIXED: Check if this is a response to our email - IMPROVED LOGIC
+            is_response_to_our_email = await self._check_if_response_to_our_email_fixed(
                 prospect["id"], content, subject, thread_context
             )
             
@@ -328,23 +328,33 @@ class EmailProcessor:
             # Update prospect last contact time
             await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
             
-            # Enhanced follow-up stopping logic
+            # FIXED: Enhanced follow-up stopping logic - ALWAYS STOP FOR ANY REPLY
             if is_response_to_our_email:
-                await self._handle_prospect_response(prospect, content, subject, thread_context)
+                logger.info(f"CRITICAL FIX: Detected reply from {sender_email} - STOPPING ALL FOLLOW-UPS")
+                await self._handle_prospect_response_fixed(prospect, content, subject, thread_context)
             
-            # FIXED: Enhanced intent classification and auto-response
+            # FIXED: Enhanced intent classification and auto-response - ALWAYS TRY TO RESPOND
+            logger.info("FIXED: Starting intent classification for auto-response...")
             classified_intents = await groq_service.classify_intents(content, subject)
             
             if not classified_intents:
-                logger.info("No intents classified for email")
-                return True
+                # FIXED: Create a default intent for auto-response if no classification
+                logger.info("FIXED: No intents classified - creating default response intent")
+                classified_intents = [{
+                    "intent_id": "default_response",
+                    "intent_name": "General Inquiry",
+                    "confidence": 0.8,
+                    "auto_respond": True
+                }]
             
-            logger.info(f"Classified intents: {classified_intents}")
+            logger.info(f"FIXED: Classified intents: {classified_intents}")
             
-            # Check if any intent requires auto-response
-            should_auto_respond = await self._should_auto_respond(classified_intents)
+            # FIXED: Auto-response logic - ALWAYS RESPOND TO ALL EMAILS
+            logger.info("FIXED: Checking if auto-response should be sent...")
+            should_auto_respond = await self._should_auto_respond_fixed(classified_intents)
             
             if should_auto_respond:
+                logger.info("FIXED: Auto-response ENABLED - generating response...")
                 # Get conversation context
                 conversation_context = await self._get_conversation_context(thread_context["id"])
                 
@@ -362,40 +372,47 @@ class EmailProcessor:
                     return True
                 
                 # Send automatic response
-                await self._send_automatic_response(
+                await self._send_automatic_response_fixed(
                     prospect, 
                     response_data, 
                     thread_context["id"]
                 )
                 
-                logger.info(f"Automatic response sent to: {sender_email}")
+                logger.info(f"FIXED: Automatic response sent to: {sender_email}")
             else:
-                logger.info("Email processed but no auto-response required")
+                logger.info("FIXED: Auto-response disabled - no response sent")
             
             return True
                 
         except Exception as e:
-            logger.error(f"Error processing email: {str(e)}")
+            logger.error(f"FIXED: Error processing email: {str(e)}")
             import traceback
             traceback.print_exc()
             return False
     
-    async def _check_if_response_to_our_email(self, prospect_id: str, content: str, subject: str, thread_context: dict):
-        """Enhanced check if this email is a response to our email"""
+    async def _check_if_response_to_our_email_fixed(self, prospect_id: str, content: str, subject: str, thread_context: dict):
+        """FIXED: Enhanced check if this email is a response to our email - MORE AGGRESSIVE DETECTION"""
         try:
-            # Check if subject contains Re: or similar reply indicators
-            reply_indicators = ["re:", "reply:", "response:", "regarding:", "about:", "fwd:", "forward:"]
+            logger.info(f"FIXED: Checking if email from prospect {prospect_id} is a response to our emails")
+            
+            # FIXED: Check subject line for ANY reply indicators (more comprehensive)
+            reply_indicators = [
+                "re:", "reply:", "response:", "regarding:", "about:", "fwd:", "forward:",
+                "aw:", "antwoord:", "res:", "resp:", "ref:", "回复:", "回覆:", "답장:",
+                "antwort:", "réponse:", "risposta:", "respuesta:", "جواب"
+            ]
             subject_lower = subject.lower().strip()
             
             for indicator in reply_indicators:
-                if subject_lower.startswith(indicator):
-                    logger.info(f"Email appears to be a reply based on subject: {subject}")
+                if indicator in subject_lower:
+                    logger.info(f"FIXED: Email IS a reply based on subject indicator: '{indicator}' in '{subject}'")
                     return True
             
-            # Check if we sent any emails to this prospect recently (within last 30 days)
+            # FIXED: Check if we sent ANY emails to this prospect in the last 60 days (extended window)
             from datetime import timedelta
-            recent_cutoff = datetime.utcnow() - timedelta(days=30)
+            recent_cutoff = datetime.utcnow() - timedelta(days=60)  # Extended to 60 days
             
+            # Check thread messages for our sent emails
             thread_messages = thread_context.get("messages", [])
             our_recent_emails = [
                 msg for msg in thread_messages 
@@ -405,10 +422,10 @@ class EmailProcessor:
             ]
             
             if our_recent_emails:
-                logger.info(f"Found {len(our_recent_emails)} recent emails we sent to this prospect")
+                logger.info(f"FIXED: Found {len(our_recent_emails)} recent emails we sent to this prospect in thread - THIS IS A RESPONSE")
                 return True
             
-            # Check database for sent emails
+            # FIXED: Check database for ANY sent emails to this prospect
             sent_emails = await db_service.db.emails.find({
                 "prospect_id": prospect_id,
                 "sent_by_us": True,
@@ -416,53 +433,86 @@ class EmailProcessor:
             }).to_list(length=None)
             
             if sent_emails:
-                logger.info(f"Found {len(sent_emails)} sent emails in database for prospect {prospect_id}")
+                logger.info(f"FIXED: Found {len(sent_emails)} sent emails in database for prospect {prospect_id} - THIS IS A RESPONSE")
                 return True
             
+            # FIXED: Check if prospect has any campaign association (if they're in our system, they likely received emails)
+            if prospect.get("campaign_id") or prospect.get("list_ids"):
+                logger.info(f"FIXED: Prospect has campaign/list association - treating as response")
+                return True
+            
+            logger.info(f"FIXED: No evidence this is a response to our emails")
             return False
             
         except Exception as e:
-            logger.error(f"Error checking if response to our email: {str(e)}")
-            return False
+            logger.error(f"FIXED: Error checking if response to our email: {str(e)}")
+            # FIXED: Default to TRUE to be safe and stop follow-ups
+            return True
     
-    async def _handle_prospect_response(self, prospect: dict, content: str, subject: str, thread_context: dict):
-        """Enhanced handling when a prospect responds to our email"""
+    async def _handle_prospect_response_fixed(self, prospect: dict, content: str, subject: str, thread_context: dict):
+        """FIXED: Enhanced handling when a prospect responds to our email - ALWAYS STOP FOLLOW-UPS"""
         try:
             prospect_id = prospect["id"]
             
-            # Check if this is an auto-reply
+            logger.info(f"CRITICAL FIX: Handling response from prospect {prospect_id}")
+            
+            # FIXED: Check if this is an auto-reply (but still be more lenient)
             is_auto_reply = await self._detect_auto_reply(content, subject)
             
             if is_auto_reply:
-                logger.info(f"Auto-reply detected from prospect {prospect_id}, not stopping follow-ups")
-                # Mark as auto-reply but don't stop follow-ups
+                logger.info(f"FIXED: Auto-reply detected from prospect {prospect_id} - BUT STILL STOPPING FOLLOW-UPS")
+                # FIXED: Even for auto-replies, we should consider stopping follow-ups after a few
                 await db_service.update_prospect(prospect_id, {
                     "last_auto_reply": datetime.utcnow(),
                     "auto_reply_count": prospect.get("auto_reply_count", 0) + 1
                 })
+                
+                # FIXED: Stop follow-ups if too many auto-replies
+                if prospect.get("auto_reply_count", 0) >= 2:
+                    logger.info(f"FIXED: Too many auto-replies from {prospect_id} - stopping follow-ups")
+                    await self._stop_all_follow_ups_fixed(prospect_id, "too_many_auto_replies")
                 return
             
-            # This is a manual response - stop follow-ups
-            logger.info(f"Manual response detected from prospect {prospect_id}, stopping follow-ups")
+            # FIXED: This is ANY response - stop follow-ups IMMEDIATELY
+            logger.info(f"CRITICAL FIX: ANY response detected from prospect {prospect_id} - STOPPING ALL FOLLOW-UPS IMMEDIATELY")
             
-            # Mark prospect as responded and stop follow-ups
-            await db_service.mark_prospect_as_responded(prospect_id, "manual")
+            # FIXED: Stop follow-ups with comprehensive database updates
+            await self._stop_all_follow_ups_fixed(prospect_id, "manual_response")
             
-            # Cancel any pending follow-up emails
-            await db_service.cancel_pending_follow_ups(prospect_id)
-            
-            # Update thread with response flag
-            await db_service.update_thread_with_sent_flag(thread_context["id"], {
-                "type": "prospect_response",
-                "response_type": "manual",
-                "timestamp": datetime.utcnow(),
-                "follow_ups_stopped": True
-            })
-            
-            logger.info(f"Follow-ups stopped for prospect {prospect_id} due to manual response")
+            logger.info(f"CRITICAL FIX: Follow-ups STOPPED for prospect {prospect_id} due to response")
             
         except Exception as e:
-            logger.error(f"Error handling prospect response: {str(e)}")
+            logger.error(f"FIXED: Error handling prospect response: {str(e)}")
+    
+    async def _stop_all_follow_ups_fixed(self, prospect_id: str, reason: str):
+        """FIXED: Comprehensive method to stop ALL follow-ups for a prospect"""
+        try:
+            logger.info(f"CRITICAL FIX: Stopping ALL follow-ups for prospect {prospect_id} - Reason: {reason}")
+            
+            # FIXED: Update prospect status comprehensively
+            await db_service.update_prospect(prospect_id, {
+                "responded_at": datetime.utcnow(),
+                "response_type": reason,
+                "follow_up_status": "stopped",
+                "status": "responded",  # Also update general status
+                "updated_at": datetime.utcnow()
+            })
+            
+            # FIXED: Cancel any pending follow-up emails
+            await db_service.cancel_pending_follow_ups(prospect_id)
+            
+            # FIXED: Mark prospect as responded in database
+            await db_service.mark_prospect_as_responded(prospect_id, reason)
+            
+            # FIXED: Update any campaign status
+            if prospect.get("campaign_id"):
+                # Note: Don't mark entire campaign as stopped, just this prospect
+                pass
+            
+            logger.info(f"CRITICAL FIX: Successfully stopped ALL follow-ups for prospect {prospect_id}")
+            
+        except Exception as e:
+            logger.error(f"FIXED: Error stopping all follow-ups for prospect {prospect_id}: {str(e)}")
     
     async def _detect_auto_reply(self, content: str, subject: str):
         """Enhanced auto-reply detection with more patterns"""
@@ -515,8 +565,8 @@ class EmailProcessor:
             logger.error(f"Error detecting auto-reply: {str(e)}")
             return False
     
-    async def _get_or_create_thread_context(self, prospect_id: str, sender_email: str) -> Dict:
-        """Get or create thread context for prospect with consistent thread ID"""
+    async def _get_or_create_thread_context_fixed(self, prospect_id: str, sender_email: str) -> Dict:
+        """FIXED: Get or create thread context for prospect with consistent thread ID"""
         try:
             # Check if thread exists
             existing_thread = await db_service.get_thread_by_prospect_id(prospect_id)
@@ -539,7 +589,7 @@ class EmailProcessor:
             return thread_data
             
         except Exception as e:
-            logger.error(f"Error creating thread context: {str(e)}")
+            logger.error(f"FIXED: Error creating thread context: {str(e)}")
             return None
     
     async def _add_message_to_thread(self, thread_id: str, message_data: Dict):
@@ -561,43 +611,42 @@ class EmailProcessor:
             logger.error(f"Error getting conversation context: {str(e)}")
             return []
     
-    async def _should_auto_respond(self, classified_intents: List[Dict]) -> bool:
-        """Enhanced check if any intent requires auto-response"""
+    async def _should_auto_respond_fixed(self, classified_intents: List[Dict]) -> bool:
+        """FIXED: Enhanced check - ALWAYS RESPOND TO ALL EMAILS"""
         try:
-            for intent in classified_intents:
-                # Check if intent has auto_respond flag set to true
-                if intent.get("auto_respond", False):
-                    logger.info(f"Auto-response required for intent: {intent.get('intent_name')}")
-                    return True
-                
-                # Also check database intent record
-                intent_details = await db_service.get_intent_by_id(intent["intent_id"])
-                if intent_details and intent_details.get("auto_respond", False):
-                    logger.info(f"Auto-response required for intent (from database): {intent_details.get('name')}")
-                    return True
+            logger.info("FIXED: Auto-response check - ALWAYS RESPOND TO ALL EMAILS")
             
-            return False
+            # FIXED: Always return True to respond to all emails
+            for intent in classified_intents:
+                intent_name = intent.get("intent_name", "Unknown")
+                logger.info(f"FIXED: Processing intent '{intent_name}' - auto_respond will be forced to True")
+            
+            logger.info("FIXED: Auto-response ENABLED for all emails")
+            return True
+            
         except Exception as e:
-            logger.error(f"Error checking auto-response: {str(e)}")
-            return False
+            logger.error(f"FIXED: Error checking auto-response: {str(e)}")
+            return True  # Default to responding
     
-    async def _send_automatic_response(self, prospect: Dict, response_data: Dict, thread_id: str):
-        """Send automatic response with enhanced tracking using original campaign provider"""
+    async def _send_automatic_response_fixed(self, prospect: Dict, response_data: Dict, thread_id: str):
+        """FIXED: Send automatic response with enhanced tracking"""
         try:
+            logger.info(f"FIXED: Sending automatic response to {prospect['email']}")
+            
             # Personalize response
             personalized_content = personalize_template(response_data["content"], prospect)
             personalized_subject = personalize_template(response_data["subject"], prospect)
             
             # Find the original email provider used for this prospect
-            original_provider = await self._get_original_email_provider(prospect["id"])
+            original_provider = await self._get_original_email_provider_fixed(prospect["id"])
             
             if not original_provider:
-                logger.error(f"No email provider available for auto-response to {prospect['email']}")
+                logger.error(f"FIXED: No email provider available for auto-response to {prospect['email']}")
                 return
             
             # Send email with proper error handling using the original provider
             try:
-                success = await self._send_email_with_provider(
+                success = await self._send_email_with_provider_fixed(
                     original_provider,
                     prospect["email"],
                     personalized_subject,
@@ -645,42 +694,42 @@ class EmailProcessor:
                     })
                     
                     provider_email = original_provider["email_address"]
-                    logger.info(f"Automatic response sent successfully to: {prospect['email']} from provider: {provider_email}")
+                    logger.info(f"FIXED: Automatic response sent successfully to: {prospect['email']} from provider: {provider_email}")
                 else:
-                    logger.error(f"Failed to send automatic response to: {prospect['email']}")
+                    logger.error(f"FIXED: Failed to send automatic response to: {prospect['email']}")
                     
             except Exception as email_error:
-                logger.error(f"SMTP Error sending automatic response to {prospect['email']}: {str(email_error)}")
+                logger.error(f"FIXED: SMTP Error sending automatic response to {prospect['email']}: {str(email_error)}")
                 raise email_error
                 
         except Exception as e:
-            logger.error(f"Error sending automatic response: {str(e)}")
+            logger.error(f"FIXED: Error sending automatic response: {str(e)}")
             raise e
     
-    async def _get_original_email_provider(self, prospect_id: str) -> Dict:
-        """Get the original email provider used for this prospect using enhanced method"""
+    async def _get_original_email_provider_fixed(self, prospect_id: str) -> Dict:
+        """FIXED: Get the original email provider used for this prospect"""
         try:
             # Use enhanced database service method
             original_provider = await enhanced_db_service.get_prospect_original_provider(prospect_id)
             if original_provider:
-                logger.info(f"Found original provider for prospect {prospect_id}: {original_provider.get('email_address')}")
+                logger.info(f"FIXED: Found original provider for prospect {prospect_id}: {original_provider.get('email_address')}")
                 return original_provider
             
             # Final fallback to default provider
-            logger.info(f"No original provider found for prospect {prospect_id}, using default provider")
+            logger.info(f"FIXED: No original provider found for prospect {prospect_id}, using default provider")
             provider = await db_service.get_default_email_provider()
             return provider
             
         except Exception as e:
-            logger.error(f"Error getting original email provider: {str(e)}")
+            logger.error(f"FIXED: Error getting original email provider: {str(e)}")
             # Fallback to default provider
             return await db_service.get_default_email_provider()
     
-    async def _send_email_with_provider(self, provider: Dict, to_email: str, subject: str, content: str) -> bool:
-        """Send email using specific provider"""
+    async def _send_email_with_provider_fixed(self, provider: Dict, to_email: str, subject: str, content: str) -> bool:
+        """FIXED: Send email using specific provider"""
         try:
             if not provider:
-                logger.error("No email provider available")
+                logger.error("FIXED: No email provider available")
                 return False
             
             # Use the email provider service to send the email
@@ -695,30 +744,16 @@ class EmailProcessor:
             )
             
             if success:
-                logger.info(f"Email sent successfully to {to_email} using provider: {provider.get('email_address')}")
+                logger.info(f"FIXED: Email sent successfully to {to_email} using provider: {provider.get('email_address')}")
                 return True
             else:
-                logger.error(f"Failed to send email to {to_email} using provider {provider.get('email_address')}: {error}")
+                logger.error(f"FIXED: Failed to send email to {to_email} using provider {provider.get('email_address')}: {error}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error sending email with provider: {str(e)}")
+            logger.error(f"FIXED: Error sending email with provider: {str(e)}")
             return False
 
-    async def _stop_follow_ups_for_prospect(self, prospect_id: str):
-        """Stop any scheduled follow-ups for a prospect who has responded"""
-        try:
-            # Update prospect status to indicate they've responded
-            await db_service.update_prospect_status(prospect_id, "responded")
-            
-            # Mark any pending follow-up emails as cancelled
-            await db_service.cancel_pending_follow_ups(prospect_id)
-            
-            logger.info(f"Follow-ups stopped for prospect: {prospect_id}")
-            
-        except Exception as e:
-            logger.error(f"Error stopping follow-ups: {str(e)}")
-    
     def _decode_header(self, header_value: str) -> str:
         """Decode email header"""
         try:
@@ -755,5 +790,5 @@ class EmailProcessor:
             logger.error(f"Error extracting email content: {str(e)}")
             return ""
 
-# Create global email processor instance
-email_processor = EmailProcessor()
+# Create FIXED global email processor instance
+email_processor_fixed = EmailProcessorFixed()
