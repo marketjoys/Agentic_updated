@@ -468,7 +468,8 @@ class EmailProcessorFixed:
                 })
                 
                 # FIXED: Stop follow-ups if too many auto-replies
-                if prospect.get("auto_reply_count", 0) >= 2:
+                current_auto_reply_count = prospect.get("auto_reply_count", 0)
+                if current_auto_reply_count >= 2:
                     logger.info(f"FIXED: Too many auto-replies from {prospect_id} - stopping follow-ups")
                     await self._stop_all_follow_ups_fixed(prospect_id, "too_many_auto_replies")
                 return
