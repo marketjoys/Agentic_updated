@@ -1,4 +1,4 @@
-# AI Email Responder - Working Backend
+# AI Email Responder - Working Backend with FIXES
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,6 +11,10 @@ from email.mime.multipart import MIMEMultipart
 import asyncio
 import re
 import json
+
+# FIXED: Import fixed email services instead of original ones
+from app.services.email_processor_fixed import email_processor_fixed as email_processor
+from app.services.smart_follow_up_engine_fixed import fixed_smart_follow_up_engine as enhanced_smart_follow_up_engine
 
 # Import EmailProviderType from the main models file
 import sys
