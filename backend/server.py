@@ -1430,21 +1430,18 @@ async def get_services_status():
 
 @app.post("/api/services/start-all")
 async def start_all_services():
-    """Manually start both follow-up and auto-responder services"""
+    """Manually start both FIXED follow-up and auto-responder services"""
     try:
-        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
-        from app.services.email_processor import email_processor
-        
         results = {}
         
-        # Start Follow-up Engine
+        # Start FIXED Follow-up Engine
         if not enhanced_smart_follow_up_engine.processing:
             follow_up_result = await enhanced_smart_follow_up_engine.start_follow_up_engine()
             results["smart_follow_up_engine"] = follow_up_result
         else:
             results["smart_follow_up_engine"] = {"status": "already_running"}
         
-        # Start Email Processor
+        # Start FIXED Email Processor
         if not email_processor.processing:
             email_result = await email_processor.start_monitoring()
             results["email_processor"] = email_result
@@ -1452,29 +1449,26 @@ async def start_all_services():
             results["email_processor"] = {"status": "already_running"}
         
         return {
-            "message": "All services start initiated",
+            "message": "All FIXED services start initiated",
             "results": results,
             "timestamp": datetime.utcnow().isoformat()
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting services: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error starting FIXED services: {str(e)}")
 
 @app.post("/api/services/stop-all")
 async def stop_all_services():
-    """Manually stop both follow-up and auto-responder services"""
+    """Manually stop both FIXED follow-up and auto-responder services"""
     try:
-        from app.services.smart_follow_up_engine_enhanced import enhanced_smart_follow_up_engine
-        from app.services.email_processor import email_processor
-        
-        # Stop Follow-up Engine
+        # Stop FIXED Follow-up Engine
         follow_up_result = await enhanced_smart_follow_up_engine.stop_follow_up_engine()
         
-        # Stop Email Processor
+        # Stop FIXED Email Processor
         email_result = await email_processor.stop_monitoring()
         
         return {
-            "message": "All services stopped",
+            "message": "All FIXED services stopped",
             "results": {
                 "smart_follow_up_engine": follow_up_result,
                 "email_processor": email_result
@@ -1483,7 +1477,7 @@ async def stop_all_services():
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error stopping services: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error stopping FIXED services: {str(e)}")
 @app.get("/api/analytics/campaign/{campaign_id}")
 async def get_campaign_analytics(campaign_id: str):
     return {
