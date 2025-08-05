@@ -437,7 +437,8 @@ class EmailProcessorFixed:
                 return True
             
             # FIXED: Check if prospect has any campaign association (if they're in our system, they likely received emails)
-            if prospect.get("campaign_id") or prospect.get("list_ids"):
+            prospect = await db_service.get_prospect_by_id(prospect_id)
+            if prospect and (prospect.get("campaign_id") or prospect.get("list_ids")):
                 logger.info(f"FIXED: Prospect has campaign/list association - treating as response")
                 return True
             
