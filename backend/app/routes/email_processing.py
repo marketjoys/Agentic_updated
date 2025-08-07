@@ -220,11 +220,11 @@ async def simulate_email_processing(request: Dict):
             }
         
         # Check if any intent requires auto-response
-        should_auto_respond = await email_processor._should_auto_respond(classified_intents)
+        should_auto_respond = await email_processor._should_auto_respond_fixed(classified_intents)
         
         if should_auto_respond:
             # Send automatic response
-            await email_processor._send_automatic_response(
+            await email_processor._send_automatic_response_fixed(
                 prospect, 
                 response_data, 
                 thread_context["id"]
