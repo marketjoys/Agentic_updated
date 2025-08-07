@@ -52,10 +52,9 @@ class EmailProcessor:
         try:
             await db_service.connect()
             
-            # Get all providers with IMAP enabled
+            # Get all active providers with valid IMAP configuration
             providers = await db_service.db.email_providers.find({
                 "is_active": True,
-                "imap_enabled": True,
                 "$and": [
                     {"imap_host": {"$ne": ""}},
                     {"imap_username": {"$ne": ""}},
