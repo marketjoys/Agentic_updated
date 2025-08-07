@@ -490,6 +490,9 @@ class EmailProcessorFixed:
         try:
             logger.info(f"CRITICAL FIX: Stopping ALL follow-ups for prospect {prospect_id} - Reason: {reason}")
             
+            # FIXED: Get prospect data first
+            prospect = await db_service.get_prospect_by_id(prospect_id)
+            
             # FIXED: Update prospect status comprehensively
             await db_service.update_prospect(prospect_id, {
                 "responded_at": datetime.utcnow(),
@@ -506,7 +509,7 @@ class EmailProcessorFixed:
             await db_service.mark_prospect_as_responded(prospect_id, reason)
             
             # FIXED: Update any campaign status
-            if prospect.get("campaign_id"):
+            if prospect and prospect.get("campaign_id"):
                 # Note: Don't mark entire campaign as stopped, just this prospect
                 pass
             
