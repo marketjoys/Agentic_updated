@@ -31,14 +31,17 @@ class MockGroqClient:
                 confidence = 0.7
                 
                 if any(word in user_message for word in ["interested", "interest", "tell me more", "learn more"]):
-                    intent_name = "Interest Intent"
+                    intent_name = "Interested - Auto Respond"
                     confidence = 0.9
                 elif any(word in user_message for word in ["pricing", "price", "cost", "quote"]):
-                    intent_name = "Pricing Intent"
+                    intent_name = "Pricing Request - Auto Respond"
                     confidence = 0.85
                 elif any(word in user_message for word in ["demo", "meeting", "call", "schedule"]):
                     intent_name = "Demo Request"
                     confidence = 0.8
+                elif any(word in user_message for word in ["question", "how does", "what is", "can you explain"]):
+                    intent_name = "Question - Auto Respond"
+                    confidence = 0.85
                 elif any(word in user_message for word in ["unsubscribe", "stop", "remove"]):
                     intent_name = "Unsubscribe"
                     confidence = 0.95
