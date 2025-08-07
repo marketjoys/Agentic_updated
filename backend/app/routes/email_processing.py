@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from app.services.email_processor import email_processor
-from app.services.groq_service import groq_service
+from app.services.email_processor_fixed import email_processor_fixed as email_processor
+from app.services.groq_service_fixed import groq_service_fixed as groq_service
 from app.services.database import db_service
 from app.models import ThreadContext
 from app.utils.helpers import generate_id
