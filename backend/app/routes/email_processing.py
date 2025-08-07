@@ -164,7 +164,7 @@ async def simulate_email_processing(request: Dict):
         logger.info(f"Simulating email processing from: {sender_email}")
         
         # Create/update thread context
-        thread_context = await email_processor._get_or_create_thread_context(prospect["id"], sender_email)
+        thread_context = await email_processor._get_or_create_thread_context_fixed(prospect["id"], sender_email)
         
         # Add message to thread
         message_data = {
