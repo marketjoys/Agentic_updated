@@ -182,6 +182,16 @@ async def simulate_email_processing(request: Dict):
         # Update prospect last contact time
         await db_service.update_prospect_last_contact(prospect["id"], datetime.utcnow())
         
+        # FIXED: Check if this is a response to our email - for follow-up stopping
+        is_response_to_our_email = await email_processor._check_if_response_to_our_email_fixed(
+            prospect["id"], content, subject, thread_context
+        )
+        
+        if is_response_to_our_email:
+            # Handle prospect response (this will stop follow-ups)
+            await email_processor._handle_prospect_response_fixed(prospect, content, subject, thread_context)
+            logger.info(f"FIXED: Detected response from {sender_email} - follow-ups stopped")
+        
         # Classify intents using Groq AI
         classified_intents = await groq_service.classify_intents(content, subject)
         
